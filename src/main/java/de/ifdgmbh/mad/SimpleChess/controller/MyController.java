@@ -39,6 +39,12 @@ public class MyController {
 	 */
 	int[] selectedButton = { 0, 0 };
 
+	/**
+	 * [0] = X</br>
+	 * [1] = Y
+	 */
+	int[] problemKing = { 0, 0 };
+
 	// selectedButtonStyles
 	String player1SelectedButton = "-fx-border-color: #2AB4FF; -fx-border-width: 4px; ";
 	String player2SelectedButton = "-fx-border-color: #FE2B2B; -fx-border-width: 4px; ";
@@ -136,7 +142,9 @@ public class MyController {
 							selectedButton[0] = 0;
 							selectedButton[1] = 0;
 
-							if (checkSchach()) {
+							if (checkSchach(tempZ)) {
+								myAlert = new Alert(Alert.AlertType.INFORMATION, "SCHACH!");
+								myAlert.showAndWait();
 								// check if the game has ended
 								if (checkMatt()) {
 									game_active = false;
@@ -146,7 +154,16 @@ public class MyController {
 									myAlert.show();
 									return;
 								}
-								// TODO: force the player to move the king
+								// force the player to move the king
+								switchPlayer();
+								selectedButton[0] = giveIndex(problemKing[0], problemKing[1]);
+								selectedButton[1] = getActivePlayer();
+								if (getActivePlayer() == 1) {
+									buttons[selectedButton[0]].setStyle(player1SelectedButton);
+								} else if (getActivePlayer() == 2) {
+									buttons[selectedButton[0]].setStyle(player2SelectedButton);
+								}
+								return;
 							}
 							// end the move --> switch player
 							switchPlayer();
@@ -221,7 +238,7 @@ public class MyController {
 			} else {
 				// Sprung schraeg nach vorn (rechts, links)
 				if (getActivePlayer() == 1) {
-					if ((newX == oldX - 1 || newX == oldX + 1) && oldY < newY) {
+					if ((newX == oldX - 1 || newX == oldX + 1) && newY == oldY + 1) {
 						// valid distance & direction
 						if (gamefield[newX][newY] > 6) {
 							gamefield[newX][newY] = gamefield[oldX][oldY];
@@ -230,7 +247,7 @@ public class MyController {
 						}
 					}
 				} else if (getActivePlayer() == 2) {
-					if ((newX == oldX - 1 || newX == oldX + 1) && oldY > newY) {
+					if ((newX == oldX - 1 || newX == oldX + 1) && newY + 1 == oldY) {
 						// valid distance & direction
 						if (gamefield[newX][newY] < 7 && gamefield[newX][newY] > 0) {
 							gamefield[newX][newY] = gamefield[oldX][oldY];
@@ -265,7 +282,406 @@ public class MyController {
 					break;
 				} else {
 					// way is free for the figure to move
-					doSetMove(oldX, oldY, newX, newY);
+					if (doSetMove(oldX, oldY, newX, newY))
+						success = true;
+				}
+			} else if (newY == oldY) {
+				// moves within x
+				int counter = 0;
+				if (getActivePlayer() == 1) {
+					for (int x = oldX + 1; x < newX; x++) {
+						if (gamefield[x][newY] > 0) {
+							counter++;
+						}
+					}
+				} else if (getActivePlayer() == 2) {
+					for (int x = oldX - 1; x > newX; x--) {
+						if (gamefield[x][newY] > 0) {
+							counter++;
+						}
+					}
+				}
+				if (counter > 0) {
+					break;
+				} else {
+					// way is free for the figure to move
+					if (doSetMove(oldX, oldY, newX, newY))
+						success = true;
+				}
+			} else {
+				break;
+			}
+		}
+		/////////////////////////////////////////////////////////////////////////////
+		case 3: {
+			// Pferd
+			if ((oldY + 1 == newY && oldX + 2 == newX) || (oldY + 2 == newY && oldX + 1 == newX)) {
+				// down, right, right && down, down, right
+				if (doSetMove(oldX, oldY, newX, newY))
+					success = true;
+				break;
+			} else if ((oldY + 1 == newY && oldX - 2 == newX) || (oldY + 2 == newY && oldX - 1 == newX)) {
+				// down, left, left && down, down, left
+				if (doSetMove(oldX, oldY, newX, newY))
+					success = true;
+				break;
+			} else if ((oldY - 1 == newY && oldX + 2 == newX) || (oldY - 2 == newY && oldX + 1 == newX)) {
+				// up, right, right && up, up, right
+				if (doSetMove(oldX, oldY, newX, newY))
+					success = true;
+				break;
+			} else if ((oldY - 1 == newY && oldX - 2 == newX) || (oldY - 2 == newY && oldX - 1 == newX)) {
+				// up, left, left && up, up, left
+				if (doSetMove(oldX, oldY, newX, newY))
+					success = true;
+				break;
+			} else {
+				break;
+			}
+		}
+		/////////////////////////////////////////////////////////////////////////////
+		case 4: {
+			// Springer
+			int temp1 = oldX - newX;
+			int temp2 = oldY - newY;
+			if (temp1 < 0)
+				temp1 *= (-1);
+			if (temp2 < 0)
+				temp2 *= (-1);
+
+			if (temp1 == temp2) {
+				// move is diagonally
+				// up, left
+				int counter = 0;
+				if (newY < oldY && newX < oldX) {
+					for (int k = 1; k < temp1; k++) {
+						if (gamefield[oldX - k][oldY - k] > 0)
+							counter++;
+					}
+				}
+				// up, right
+				if (newY < oldY && newX > oldX) {
+					for (int k = 1; k < temp1; k++) {
+						if (gamefield[oldX + k][oldY - k] > 0)
+							counter++;
+					}
+				}
+				// down, left
+				if (newY > oldY && newX < oldX) {
+					for (int k = 1; k < temp1; k++) {
+						if (gamefield[oldX - k][oldY + k] > 0)
+							counter++;
+					}
+				}
+				// down, right
+				if (newY > oldY && newX > oldX) {
+					for (int k = 1; k < temp1; k++) {
+						if (gamefield[oldX + k][oldY + k] > 0)
+							counter++;
+					}
+				}
+				if (counter > 0) {
+					break;
+				} else {
+					// way is free for the figure to move
+					if (doSetMove(oldX, oldY, newX, newY))
+						success = true;
+				}
+			} else {
+				break;
+			}
+
+			break;
+		}
+		/////////////////////////////////////////////////////////////////////////////
+		case 5: {
+			// Dame = Turm oder Springer
+			// you could create func for Turm and Springer and just call it here, to safe
+			// some lines
+			// (TURM:)
+			if (newX == oldX) {
+				// moves within y
+				int counter = 0;
+				if (newY > oldY) {
+					for (int y = oldY + 1; y < newY; y++) {
+						if (gamefield[newX][y] > 0) {
+							counter++;
+						}
+					}
+				} else if (newY < oldY) {
+					for (int y = oldY - 1; y > newY; y--) {
+						if (gamefield[newX][y] > 0) {
+							counter++;
+						}
+					}
+				}
+				if (counter > 0) {
+					break;
+				} else {
+					// way is free for the figure to move
+					if (doSetMove(oldX, oldY, newX, newY))
+						success = true;
+				}
+			} else if (newY == oldY) {
+				// moves within x
+				int counter = 0;
+				if (getActivePlayer() == 1) {
+					for (int x = oldX + 1; x < newX; x++) {
+						if (gamefield[x][newY] > 0) {
+							counter++;
+						}
+					}
+				} else if (getActivePlayer() == 2) {
+					for (int x = oldX - 1; x > newX; x--) {
+						if (gamefield[x][newY] > 0) {
+							counter++;
+						}
+					}
+				}
+				if (counter > 0) {
+					break;
+				} else {
+					// way is free for the figure to move
+					if (doSetMove(oldX, oldY, newX, newY))
+						success = true;
+				}
+			} else {
+				// (SPRINGER:)
+				int temp1 = oldX - newX;
+				int temp2 = oldY - newY;
+				if (temp1 < 0)
+					temp1 *= (-1);
+				if (temp2 < 0)
+					temp2 *= (-1);
+
+				if (temp1 == temp2) {
+					// move is diagonally
+					// up, left
+					int counter = 0;
+					if (newY < oldY && newX < oldX) {
+						for (int k = 1; k < temp1; k++) {
+							if (gamefield[oldX - k][oldY - k] > 0)
+								counter++;
+						}
+					}
+					// up, right
+					if (newY < oldY && newX > oldX) {
+						for (int k = 1; k < temp1; k++) {
+							if (gamefield[oldX + k][oldY - k] > 0)
+								counter++;
+						}
+					}
+					// down, left
+					if (newY > oldY && newX < oldX) {
+						for (int k = 1; k < temp1; k++) {
+							if (gamefield[oldX - k][oldY + k] > 0)
+								counter++;
+						}
+					}
+					// down, right
+					if (newY > oldY && newX > oldX) {
+						for (int k = 1; k < temp1; k++) {
+							if (gamefield[oldX + k][oldY + k] > 0)
+								counter++;
+						}
+					}
+					if (counter > 0) {
+						break;
+					} else {
+						// way is free for the figure to move
+						if (doSetMove(oldX, oldY, newX, newY))
+							success = true;
+					}
+				}
+			}
+			break;
+		}
+		/////////////////////////////////////////////////////////////////////////////
+		case 6: {
+			// Koenig
+			// zu weit?
+			int temp = oldY - newY;
+			int temp2 = oldX - newX;
+			if (temp2 < 0)
+				temp2 *= (-1);
+			if (temp < 0)
+				temp *= (-1);
+
+			if (temp > 1 || temp2 > 1) {
+				break;
+			}
+
+			if (doSetMove(oldX, oldY, newX, newY))
+				success = true;
+
+			break;
+		}
+		/////////////////////////////////////////////////////////////////////////////
+		default: {
+			myAlert.show();
+			return false;
+		}
+		}
+
+		printField();
+		setPlayers();
+
+		if (success) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Called in makeMove-Function to actually make the move, depending on what
+	 * player is active
+	 * 
+	 * @param oldX
+	 * @param oldY
+	 * @param newX
+	 * @param newY
+	 */
+	private boolean doSetMove(int oldX, int oldY, int newX, int newY) {
+		if (getActivePlayer() == 1) {
+			if (gamefield[newX][newY] > 6 || gamefield[newX][newY] == 0) {
+				gamefield[newX][newY] = gamefield[oldX][oldY];
+				gamefield[oldX][oldY] = 0;
+				return true;
+			}
+		} else {
+			if (gamefield[newX][newY] < 7 && gamefield[newX][newY] > -1) {
+				gamefield[newX][newY] = gamefield[oldX][oldY];
+				gamefield[oldX][oldY] = 0;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Switches the active player visually
+	 */
+	protected void updateActiveLabel() {
+		if (active1Label.getBackground().equals(red)) {
+			active1Label.setBackground(green);
+			active2Label.setBackground(red);
+		} else {
+			active1Label.setBackground(red);
+			active2Label.setBackground(green);
+		}
+	}
+
+	public void switchPlayer() {
+		if (player1_active) {
+			player1_active = false;
+			player2_active = true;
+		} else {
+			player1_active = true;
+			player2_active = false;
+		}
+		updateActiveLabel();
+	}
+
+	/**
+	 * Checks weather the enemies king is in a problematic game situation and has to
+	 * move or not
+	 * 
+	 * @return
+	 */
+	public boolean checkSchach(int var) {
+		int enemyX = giveXY(var)[0];
+		int enemyY = giveXY(var)[1];
+		int kingX = 0;
+		int kingY = 0;
+		for (int y = 1; y < 9; y++) {
+			for (int x = 1; x < 9; x++) {
+				if (gamefield[x][y] == 6 && getInActivePlayer() == 1) {
+					kingX = x;
+					kingY = y;
+				} else if (gamefield[x][y] == 12 && getInActivePlayer() == 2) {
+					kingX = x;
+					kingY = y;
+				}
+			}
+		}
+		if (kingX == 0 || kingY == 0) {
+			myAlert = new Alert(Alert.AlertType.ERROR, "Problem!");
+			myAlert.show();
+			return false;
+		}
+		if (tryMove(enemyX, enemyY, kingX, kingY)) {
+			problemKing[0] = kingX;
+			problemKing[1] = kingY;
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Tries to move the given figure to the given position (actually moves nothing)
+	 * 
+	 * @return true or false, depending on if the move is valid or not
+	 */
+	public boolean tryMove(int oldX, int oldY, int newX, int newY) {
+		boolean success = false;
+		myAlert = new Alert(Alert.AlertType.ERROR, "Something went wrong!");
+		int type = gamefield[oldX][oldY];
+
+		if (type > 6)
+			type -= 6;
+
+		switch (type) {
+		/////////////////////////////////////////////////////////////////////////////
+		case 1: {
+			// Bauer:
+			// 1 oder 2 Felder nach vorn
+			if (oldX == newX) {
+				break;
+			} else {
+				// Sprung schraeg nach vorn (rechts, links)
+				if (getActivePlayer() == 1) {
+					if ((newX == oldX - 1 || newX == oldX + 1) && newY == oldY + 1) {
+						// valid distance & direction
+						if (gamefield[newX][newY] > 6) {
+							success = true;
+						}
+					}
+				} else if (getActivePlayer() == 2) {
+					if ((newX == oldX - 1 || newX == oldX + 1) && newY + 1 == oldY) {
+						// valid distance & direction
+						if (gamefield[newX][newY] < 7 && gamefield[newX][newY] > 0) {
+							success = true;
+						}
+					}
+				}
+			}
+			break;
+		}
+		/////////////////////////////////////////////////////////////////////////////
+		case 2: {
+			// Turm
+			if (newX == oldX) {
+				// moves within y
+				int counter = 0;
+				if (newY > oldY) {
+					for (int y = oldY + 1; y < newY; y++) {
+						if (gamefield[newX][y] > 0) {
+							counter++;
+						}
+					}
+				} else if (newY < oldY) {
+					for (int y = oldY - 1; y > newY; y--) {
+						if (gamefield[newX][y] > 0) {
+							counter++;
+						}
+					}
+				}
+				if (counter > 0) {
+					break;
+				} else {
+					// way is free for the figure to move
 					success = true;
 				}
 			} else if (newY == oldY) {
@@ -288,7 +704,6 @@ public class MyController {
 					break;
 				} else {
 					// way is free for the figure to move
-					doSetMove(oldX, oldY, newX, newY);
 					success = true;
 				}
 			} else {
@@ -300,22 +715,18 @@ public class MyController {
 			// Pferd
 			if ((oldY + 1 == newY && oldX + 2 == newX) || (oldY + 2 == newY && oldX + 1 == newX)) {
 				// down, right, right && down, down, right
-				doSetMove(oldX, oldY, newX, newY);
 				success = true;
 				break;
 			} else if ((oldY + 1 == newY && oldX - 2 == newX) || (oldY + 2 == newY && oldX - 1 == newX)) {
 				// down, left, left && down, down, left
-				doSetMove(oldX, oldY, newX, newY);
 				success = true;
 				break;
 			} else if ((oldY - 1 == newY && oldX + 2 == newX) || (oldY - 2 == newY && oldX + 1 == newX)) {
 				// up, right, right && up, up, right
-				doSetMove(oldX, oldY, newX, newY);
 				success = true;
 				break;
 			} else if ((oldY - 1 == newY && oldX - 2 == newX) || (oldY - 2 == newY && oldX - 1 == newX)) {
 				// up, left, left && up, up, left
-				doSetMove(oldX, oldY, newX, newY);
 				success = true;
 				break;
 			} else {
@@ -367,7 +778,6 @@ public class MyController {
 					break;
 				} else {
 					// way is free for the figure to move
-					doSetMove(oldX, oldY, newX, newY);
 					success = true;
 				}
 			} else {
@@ -402,7 +812,6 @@ public class MyController {
 					break;
 				} else {
 					// way is free for the figure to move
-					doSetMove(oldX, oldY, newX, newY);
 					success = true;
 				}
 			} else if (newY == oldY) {
@@ -425,7 +834,6 @@ public class MyController {
 					break;
 				} else {
 					// way is free for the figure to move
-					doSetMove(oldX, oldY, newX, newY);
 					success = true;
 				}
 			} else {
@@ -472,7 +880,6 @@ public class MyController {
 						break;
 					} else {
 						// way is free for the figure to move
-						doSetMove(oldX, oldY, newX, newY);
 						success = true;
 					}
 				}
@@ -494,7 +901,6 @@ public class MyController {
 				break;
 			}
 
-			doSetMove(oldX, oldY, newX, newY);
 			success = true;
 
 			break;
@@ -506,72 +912,11 @@ public class MyController {
 		}
 		}
 
-		printField();
-		setPlayers();
-
 		if (success) {
 			return true;
 		} else {
 			return false;
 		}
-	}
-
-	/**
-	 * Called in makeMove-Function to actually make the move, depending on what
-	 * player is active
-	 * 
-	 * @param oldX
-	 * @param oldY
-	 * @param newX
-	 * @param newY
-	 */
-	private void doSetMove(int oldX, int oldY, int newX, int newY) {
-		if (getActivePlayer() == 1) {
-			if (gamefield[newX][newY] > 6 || gamefield[newX][newY] == 0) {
-				gamefield[newX][newY] = gamefield[oldX][oldY];
-				gamefield[oldX][oldY] = 0;
-			}
-		} else {
-			if (gamefield[newX][newY] < 7 && gamefield[newX][newY] > -1) {
-				gamefield[newX][newY] = gamefield[oldX][oldY];
-				gamefield[oldX][oldY] = 0;
-			}
-		}
-	}
-
-	/**
-	 * Switches the active player visually
-	 */
-	protected void updateActiveLabel() {
-		if (active1Label.getBackground().equals(red)) {
-			active1Label.setBackground(green);
-			active2Label.setBackground(red);
-		} else {
-			active1Label.setBackground(red);
-			active2Label.setBackground(green);
-		}
-	}
-
-	public void switchPlayer() {
-		if (player1_active) {
-			player1_active = false;
-			player2_active = true;
-		} else {
-			player1_active = true;
-			player2_active = false;
-		}
-		updateActiveLabel();
-	}
-
-	/**
-	 * Checks weather the enemies king is in a problematic game situation and has to
-	 * move or not
-	 * 
-	 * @return
-	 */
-	public boolean checkSchach() {
-		
-		return false;
 	}
 
 	/**
@@ -581,6 +926,7 @@ public class MyController {
 	 * @return
 	 */
 	public boolean checkMatt() {
+
 		return false;
 	}
 
@@ -646,6 +992,8 @@ public class MyController {
 			infoLabel.setText("PRESS START");
 			selectedButton[0] = 0;
 			selectedButton[1] = 0;
+			problemKing[0] = 0;
+			problemKing[1] = 0;
 			prepareGameField();
 			setPlayers();
 		} else {
