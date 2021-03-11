@@ -510,9 +510,34 @@ public class MyController {
 			if (temp > 1 || temp2 > 1) {
 				break;
 			}
+			// king can not set himself to "schach" or "schach-matt"
 
-			if (doSetMove(oldX, oldY, newX, newY))
-				success = true;
+			boolean freeToMove = true;
+
+			for (int y = 1; y < 9; y++) {
+				for (int x = 1; x < 9; x++) {
+					if (gamefield[x][y] > 0 && gamefield[x][y] < 7 && getActivePlayer() == 2) {
+						if (tryMove(x, y, newX, newY)) {
+							// potential king position is covered --> screw
+							freeToMove = false;
+						} else {
+							// potential king position is free for current enemy figure
+						}
+					} else if (gamefield[x][y] > 6 && getActivePlayer() == 1) {
+						if (tryMove(x, y, newX, newY)) {
+							// potential king position is covered
+							freeToMove = false;
+						} else {
+							// potential king position is free for current enemy figure
+						}
+					}
+				}
+			}
+			
+			if (freeToMove) {
+				if (doSetMove(oldX, oldY, newX, newY))
+					success = true;
+			}
 
 			break;
 		}
@@ -536,7 +561,6 @@ public class MyController {
 	/**
 	 * Called in makeMove-Function to actually make the move, depending on what
 	 * player is active
-	 * 
 	 * @param oldX
 	 * @param oldY
 	 * @param newX
@@ -926,8 +950,74 @@ public class MyController {
 	 * @return
 	 */
 	public boolean checkMatt() {
+		// this is called after a player was set to "schach"
+		// strategy:
+		// 1)list up all positions the king can move to
+		// 2)go threw all the positions and scratch them if they are free to move to
+		// 2.1)free to move to means: king is not attacked there by any enemy
+		// go threw all enemies and try to make a move to the currently pointing
+		// position
+		// 3)if there is positions left king is not "schach-matt", return false
+		// 4)if there is none left king is "schach-matt", return true
 
-		return false;
+		int kingX = problemKing[0];
+		int kingY = problemKing[1];
+		int[][] posList = new int[8][2]; // max 8 positions with 2 values (x,y)
+		int counter = 0; // counts the number of positions
+
+		// 1)
+		for (int y = kingY - 1; y <= kingY + 1; y++) { // loop around the king
+			for (int x = kingX - 1; x <= kingX + 1; x++) {
+				// look for inactive player, because if this is called the player hasn't changed
+				// yet
+				if (gamefield[x][y] > -1 && gamefield[x][y] < 7 && getInActivePlayer() == 2) {
+					posList[counter][0] = x;
+					posList[counter][1] = y;
+					counter++;
+				} else if ((gamefield[x][y] == 0 || gamefield[x][y] > 6) && getInActivePlayer() == 1) {
+					posList[counter][0] = x;
+					posList[counter][1] = y;
+					counter++;
+				}
+			}
+		}
+
+		// 2)
+		for (int k = 0; k <= counter - 1; k++) {
+			int posX = posList[k][0];
+			int posY = posList[k][1];
+			boolean freeToMove = true;
+
+			for (int y = 1; y < 9; y++) {
+				for (int x = 1; x < 9; x++) {
+					if (gamefield[x][y] > 0 && gamefield[x][y] < 7 && getActivePlayer() == 1) {
+						System.out.println("trying move from: " + x + "|" + y + " to " + posX + "|" + posY + "!");
+						if (tryMove(x, y, posX, posY)) {
+							// potential king position is covered --> screw
+							freeToMove = false;
+						} else {
+							// potential king position is free for current enemy figure
+						}
+					} else if (gamefield[x][y] > 6 && getActivePlayer() == 2) {
+						System.out.println("trying move from: " + x + "|" + y + " to " + posX + "|" + posY);
+						if (tryMove(x, y, posX, posY)) {
+							// potential king position is covered
+							freeToMove = false;
+						} else {
+							// potential king position is free for current enemy figure
+						}
+					}
+				}
+			}
+
+			if (freeToMove)
+				return false;
+
+		}
+
+		// System.out.println("" + Arrays.deepToString(posList));
+
+		return true;
 	}
 
 	/**
