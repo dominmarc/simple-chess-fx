@@ -2,16 +2,18 @@ package de.ifdgmbh.mad.SimpleChess.controller;
 
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
-import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
 public class MyController {
@@ -22,7 +24,7 @@ public class MyController {
 	@FXML
 	Button minButton, closeButton;
 	@FXML
-	Label active1Label, active2Label, infoLabel;
+	Label active1Label, active2Label, infoLabel, topBar;
 	@FXML
 	Button startButton;
 
@@ -67,7 +69,27 @@ public class MyController {
 		// activity label
 		active1Label.setBackground(green);
 		active2Label.setBackground(red);
-
+		
+		//mypane.setStyle("-fx-background-color: radial-gradient(center 50% 50%, radius 100%, #242424, #434343, #898989);");
+		closeButton.setStyle("");
+		minButton.setStyle("");
+		startButton.setText("START GAME");
+//		startButton.setStyle("-fx-background-color: #090a0c,\r\n"
+//				+ "		linear-gradient(#38424b 0%, #1f2429 20%, #191d22 100%),\r\n"
+//				+ "		linear-gradient(#20262b, #191d22),\r\n"
+//				+ "		radial-gradient(center 50% 0%, radius 100%, rgba(114, 131, 148, 0.9),\r\n"
+//				+ "		rgba(255, 255, 255, 0));\r\n"
+//				+ "	-fx-background-radius: 5, 4, 3, 5;\r\n"
+//				+ "	-fx-background-insets: 0, 1, 2, 0;\r\n"
+//				+ "	-fx-text-fill: white;\r\n"
+//				+ "	-fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.6), 5, 0.0, 0, 1);\r\n"
+//				+ "	-fx-font-family: \"Berlin Sans FB\";\r\n"
+//				+ "	-fx-text-fill: linear-gradient(white, #d0d0d0);\r\n"
+//				+ "	-fx-font-size: 12px;\r\n"
+//				+ "	-fx-padding: 10 20 10 20;\r\n"
+//				+ "	-fx-text-effect: dropshadow(one-pass-box, rgba(0, 0, 0, 0.9), 1, 0.0, 0,\r\n"
+//				+ "		1);");
+		
 		buttons = new Button[82];
 		int x = 0;
 		int y = 0;
@@ -80,9 +102,9 @@ public class MyController {
 				buttons[z].setLayoutY(y);
 				buttons[z].setPrefWidth(45);
 				buttons[z].setPrefHeight(45);
-				buttons[z].setFont(new Font("Arial", 18));
-				white = new Background(new BackgroundFill(Color.WHITE, null, null));
-				black = new Background(new BackgroundFill(Color.BLACK, null, null));
+				buttons[z].setPadding(new Insets(0));
+				white = new Background(new BackgroundFill(Color.rgb(224, 201, 160), null, null));
+				black = new Background(new BackgroundFill(Color.rgb(164, 120, 91), null, null));
 				if (i % 2 == 0) {
 					if (t % 2 == 0) {
 						buttons[z].setBackground(white);
@@ -109,12 +131,28 @@ public class MyController {
 
 						if (selectedButton[0] == 0) {
 							// player wants to select a figure to make a move
-							if (buttons[tempZ].getBackground().equals(player1) && getActivePlayer() == 1) {
+//							if (buttons[tempZ].getBackground().equals(player1) && getActivePlayer() == 1) {
+//								buttons[tempZ].setStyle(player1SelectedButton);
+//							} else if (buttons[tempZ].getBackground().equals(player2) && getActivePlayer() == 2) {
+//								buttons[tempZ].setStyle(player2SelectedButton);
+//							} else if (buttons[tempZ].getBackground().equals(white)
+//									|| buttons[tempZ].getBackground().equals(black)) {
+//								// nothing
+//								return;
+//							} else {
+//								myAlert = new Alert(Alert.AlertType.WARNING,
+//										"Player " + getActivePlayer() + " is active!");
+//								myAlert.show();
+//								return;
+//							}
+
+							int tempX = giveXY(tempZ)[0];
+							int tempY = giveXY(tempZ)[1];
+							if (gamefield[tempX][tempY] > 0 && gamefield[tempX][tempY] < 7 && getActivePlayer() == 1) {
 								buttons[tempZ].setStyle(player1SelectedButton);
-							} else if (buttons[tempZ].getBackground().equals(player2) && getActivePlayer() == 2) {
+							} else if (gamefield[tempX][tempY] > 6 && getActivePlayer() == 2) {
 								buttons[tempZ].setStyle(player2SelectedButton);
-							} else if (buttons[tempZ].getBackground().equals(white)
-									|| buttons[tempZ].getBackground().equals(black)) {
+							} else if (gamefield[tempX][tempY] == 0) {
 								// nothing
 								return;
 							} else {
@@ -123,6 +161,7 @@ public class MyController {
 								myAlert.show();
 								return;
 							}
+
 							selectedButton[0] = tempZ;
 							selectedButton[1] = getActivePlayer();
 						} else if (selectedButton[0] > 0 && selectedButton[0] < 65) {
@@ -177,9 +216,9 @@ public class MyController {
 			y += 45;
 		}
 		// (light)blue
-		player1 = new Background(new BackgroundFill(Color.web("#5FC7FF"), null, null));
+		player1 = new Background(new BackgroundFill(Color.TRANSPARENT, null, null));
 		// (light)red
-		player2 = new Background(new BackgroundFill(Color.web("#FF5F5F"), null, null));
+		player2 = new Background(new BackgroundFill(Color.TRANSPARENT, null, null));
 		// draw game field lines
 		for (int l = 0; l <= 360; l += 45) {
 			Line line = new Line(0, 0, 0, 360);
@@ -533,7 +572,7 @@ public class MyController {
 					}
 				}
 			}
-			
+
 			if (freeToMove) {
 				if (doSetMove(oldX, oldY, newX, newY))
 					success = true;
@@ -561,6 +600,7 @@ public class MyController {
 	/**
 	 * Called in makeMove-Function to actually make the move, depending on what
 	 * player is active
+	 * 
 	 * @param oldX
 	 * @param oldY
 	 * @param newX
@@ -1108,7 +1148,6 @@ public class MyController {
 		for (int i = 1; i < 9; i++) {
 			for (int k = 1; k < 9; k++) {
 				if (gamefield[k][i] == 0) {
-					buttons[z].setText("");
 					if (i % 2 == 0) {
 						if (k % 2 == 0) {
 							buttons[z].setBackground(white);
@@ -1123,35 +1162,48 @@ public class MyController {
 						}
 					}
 				}
+				buttons[z].setGraphic(null);
 				if (gamefield[k][i] <= 6 && gamefield[k][i] > 0) {
-					buttons[z].setBackground(player1);
+					// buttons[z].setBackground(player1);
 					if (gamefield[k][i] == 1) {
-						buttons[z].setText("B");
+						buttons[z].setGraphic(new ImageView(new Image(
+								getClass().getResource("/de/ifdgmbh/mad/SimpleChess/images/bauer1.png").toString())));
 					} else if (gamefield[k][i] == 2) {
-						buttons[z].setText("T");
+						buttons[z].setGraphic(new ImageView(new Image(
+								getClass().getResource("/de/ifdgmbh/mad/SimpleChess/images/turm1.png").toString())));
 					} else if (gamefield[k][i] == 3) {
-						buttons[z].setText("P");
+						buttons[z].setGraphic(new ImageView(new Image(
+								getClass().getResource("/de/ifdgmbh/mad/SimpleChess/images/pferd1.png").toString())));
 					} else if (gamefield[k][i] == 4) {
-						buttons[z].setText("S");
+						buttons[z].setGraphic(new ImageView(new Image(getClass()
+								.getResource("/de/ifdgmbh/mad/SimpleChess/images/springer1.png").toString())));
 					} else if (gamefield[k][i] == 5) {
-						buttons[z].setText("D");
+						buttons[z].setGraphic(new ImageView(new Image(
+								getClass().getResource("/de/ifdgmbh/mad/SimpleChess/images/dame1.png").toString())));
 					} else if (gamefield[k][i] == 6) {
-						buttons[z].setText("K");
+						buttons[z].setGraphic(new ImageView(new Image(
+								getClass().getResource("/de/ifdgmbh/mad/SimpleChess/images/king1.png").toString())));
 					}
 				} else if (gamefield[k][i] >= 7) {
-					buttons[z].setBackground(player2);
+					// buttons[z].setBackground(player2);
 					if (gamefield[k][i] == 7) {
-						buttons[z].setText("B");
+						buttons[z].setGraphic(new ImageView(new Image(
+								getClass().getResource("/de/ifdgmbh/mad/SimpleChess/images/bauer2.png").toString())));
 					} else if (gamefield[k][i] == 8) {
-						buttons[z].setText("T");
+						buttons[z].setGraphic(new ImageView(new Image(
+								getClass().getResource("/de/ifdgmbh/mad/SimpleChess/images/turm2.png").toString())));
 					} else if (gamefield[k][i] == 9) {
-						buttons[z].setText("P");
+						buttons[z].setGraphic(new ImageView(new Image(
+								getClass().getResource("/de/ifdgmbh/mad/SimpleChess/images/pferd2.png").toString())));
 					} else if (gamefield[k][i] == 10) {
-						buttons[z].setText("S");
+						buttons[z].setGraphic(new ImageView(new Image(getClass()
+								.getResource("/de/ifdgmbh/mad/SimpleChess/images/springer2.png").toString())));
 					} else if (gamefield[k][i] == 11) {
-						buttons[z].setText("D");
+						buttons[z].setGraphic(new ImageView(new Image(
+								getClass().getResource("/de/ifdgmbh/mad/SimpleChess/images/dame2.png").toString())));
 					} else if (gamefield[k][i] == 12) {
-						buttons[z].setText("K");
+						buttons[z].setGraphic(new ImageView(new Image(
+								getClass().getResource("/de/ifdgmbh/mad/SimpleChess/images/king2.png").toString())));
 					}
 				}
 				buttons[z].setStyle(playerNonSelectedButton);
