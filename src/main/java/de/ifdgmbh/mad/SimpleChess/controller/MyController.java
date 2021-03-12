@@ -70,25 +70,7 @@ public class MyController {
 		active1Label.setBackground(green);
 		active2Label.setBackground(red);
 		
-		//mypane.setStyle("-fx-background-color: radial-gradient(center 50% 50%, radius 100%, #242424, #434343, #898989);");
-		closeButton.setStyle("");
-		minButton.setStyle("");
 		startButton.setText("START GAME");
-//		startButton.setStyle("-fx-background-color: #090a0c,\r\n"
-//				+ "		linear-gradient(#38424b 0%, #1f2429 20%, #191d22 100%),\r\n"
-//				+ "		linear-gradient(#20262b, #191d22),\r\n"
-//				+ "		radial-gradient(center 50% 0%, radius 100%, rgba(114, 131, 148, 0.9),\r\n"
-//				+ "		rgba(255, 255, 255, 0));\r\n"
-//				+ "	-fx-background-radius: 5, 4, 3, 5;\r\n"
-//				+ "	-fx-background-insets: 0, 1, 2, 0;\r\n"
-//				+ "	-fx-text-fill: white;\r\n"
-//				+ "	-fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.6), 5, 0.0, 0, 1);\r\n"
-//				+ "	-fx-font-family: \"Berlin Sans FB\";\r\n"
-//				+ "	-fx-text-fill: linear-gradient(white, #d0d0d0);\r\n"
-//				+ "	-fx-font-size: 12px;\r\n"
-//				+ "	-fx-padding: 10 20 10 20;\r\n"
-//				+ "	-fx-text-effect: dropshadow(one-pass-box, rgba(0, 0, 0, 0.9), 1, 0.0, 0,\r\n"
-//				+ "		1);");
 		
 		buttons = new Button[82];
 		int x = 0;
