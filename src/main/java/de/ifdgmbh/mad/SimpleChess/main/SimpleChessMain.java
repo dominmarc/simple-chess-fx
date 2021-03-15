@@ -5,6 +5,7 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -38,6 +39,8 @@ public class SimpleChessMain extends Application {
 		});
 
 		primaryStage.setScene(myScene);
+		primaryStage.getIcons()
+		.add(new Image(getClass().getResource("/de/ifdgmbh/mad/SimpleChess/images/king1.png").toString()));
 		primaryStage.getScene().getStylesheets().add(getClass().getResource("StyleFile.css").toString());
 		primaryStage.setTitle("SimpleSudoku");
 		primaryStage.setResizable(false);

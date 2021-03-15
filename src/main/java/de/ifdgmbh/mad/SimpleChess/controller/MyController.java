@@ -3,17 +3,23 @@ package de.ifdgmbh.mad.SimpleChess.controller;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
-import javafx.scene.control.Alert;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
+import javafx.scene.text.Font;
+import javafx.scene.text.TextAlignment;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 public class MyController {
@@ -27,6 +33,8 @@ public class MyController {
 	Label active1Label, active2Label, infoLabel, topBar;
 	@FXML
 	Button startButton;
+	@FXML
+	Label player1Text, player2Text;
 
 	/**
 	 * Player1: 1 - Bauer 2 - Turm 3 - Pferd 4 - Laeufer 5 - Dame 6 - Koenig </br>
@@ -63,15 +71,14 @@ public class MyController {
 	boolean player2_active = false;
 	boolean game_active = false;
 
-	Alert myAlert;
-
 	public void initialize() {
+		popUp(false, true, "");
 		// activity label
 		active1Label.setBackground(green);
 		active2Label.setBackground(red);
-		
+
 		startButton.setText("START GAME");
-		
+
 		buttons = new Button[82];
 		int x = 0;
 		int y = 0;
@@ -106,28 +113,12 @@ public class MyController {
 					@Override
 					public void handle(MouseEvent event) {
 						if (!game_active) {
-							myAlert = new Alert(Alert.AlertType.WARNING, "Please start the game!");
-							myAlert.show();
+							popUp(false, false, "Please start the game!");
 							return;
 						}
 
 						if (selectedButton[0] == 0) {
 							// player wants to select a figure to make a move
-//							if (buttons[tempZ].getBackground().equals(player1) && getActivePlayer() == 1) {
-//								buttons[tempZ].setStyle(player1SelectedButton);
-//							} else if (buttons[tempZ].getBackground().equals(player2) && getActivePlayer() == 2) {
-//								buttons[tempZ].setStyle(player2SelectedButton);
-//							} else if (buttons[tempZ].getBackground().equals(white)
-//									|| buttons[tempZ].getBackground().equals(black)) {
-//								// nothing
-//								return;
-//							} else {
-//								myAlert = new Alert(Alert.AlertType.WARNING,
-//										"Player " + getActivePlayer() + " is active!");
-//								myAlert.show();
-//								return;
-//							}
-
 							int tempX = giveXY(tempZ)[0];
 							int tempY = giveXY(tempZ)[1];
 							if (gamefield[tempX][tempY] > 0 && gamefield[tempX][tempY] < 7 && getActivePlayer() == 1) {
@@ -138,9 +129,13 @@ public class MyController {
 								// nothing
 								return;
 							} else {
-								myAlert = new Alert(Alert.AlertType.WARNING,
-										"Player " + getActivePlayer() + " is active!");
-								myAlert.show();
+								if (getActivePlayer() == 1) {
+									popUp(false, false,
+											"Player " + player1Text.getText() + " is active!\nMake your move!");
+								} else {
+									popUp(false, false,
+											"Player " + player2Text.getText() + " is active!\nMake your move!");
+								}
 								return;
 							}
 
@@ -149,8 +144,7 @@ public class MyController {
 						} else if (selectedButton[0] > 0 && selectedButton[0] < 65) {
 							// player has already selected a figure and now wants to move it
 							if (!makeMove(tempZ)) { // move invalid
-								myAlert = new Alert(Alert.AlertType.WARNING, "Cannot move player!");
-								myAlert.show();
+								popUp(false, false, "Can not move player!\nInvalid move!");
 								// deselect button
 								buttons[selectedButton[0]].setStyle(playerNonSelectedButton);
 								selectedButton[0] = 0;
@@ -164,15 +158,15 @@ public class MyController {
 							selectedButton[1] = 0;
 
 							if (checkSchach(tempZ)) {
-								myAlert = new Alert(Alert.AlertType.INFORMATION, "SCHACH!");
-								myAlert.showAndWait();
+								popUp(false, false, "\"SCHACH!\"" + "\n\nCan you end the game?");
 								// check if the game has ended
 								if (checkMatt()) {
 									game_active = false;
-									myAlert = new Alert(Alert.AlertType.INFORMATION, "Congratulation!");
-									myAlert.setTitle("Game Over!");
-									myAlert.setHeaderText("Player " + getActivePlayer() + " won!");
-									myAlert.show();
+									if (getActivePlayer() == 1) {
+										popUp(true, false, "" + player1Text.getText());
+									} else {
+										popUp(true, false, "" + player2Text.getText());
+									}
 									return;
 								}
 								// force the player to move the king
@@ -221,7 +215,6 @@ public class MyController {
 	 */
 	public boolean makeMove(int var) {
 		boolean success = false;
-		myAlert = new Alert(Alert.AlertType.ERROR, "Something went wrong!");
 
 		int oldX = giveXY(selectedButton[0])[0];
 		int oldY = giveXY(selectedButton[0])[1];
@@ -446,13 +439,13 @@ public class MyController {
 			} else if (newY == oldY) {
 				// moves within x
 				int counter = 0;
-				if (getActivePlayer() == 1) {
+				if (newX > oldX) {
 					for (int x = oldX + 1; x < newX; x++) {
 						if (gamefield[x][newY] > 0) {
 							counter++;
 						}
 					}
-				} else if (getActivePlayer() == 2) {
+				} else if (oldX > newX) {
 					for (int x = oldX - 1; x > newX; x--) {
 						if (gamefield[x][newY] > 0) {
 							counter++;
@@ -564,7 +557,7 @@ public class MyController {
 		}
 		/////////////////////////////////////////////////////////////////////////////
 		default: {
-			myAlert.show();
+			popUp(false, false, "Figure-Selection-Error\nYou may restart the game!");
 			return false;
 		}
 		}
@@ -630,6 +623,66 @@ public class MyController {
 	}
 
 	/**
+	 * Pops up a new window with certain game information
+	 */
+	public void popUp(boolean win, boolean input, String info) {
+		Stage popUp = new Stage();
+		popUp.initModality(Modality.APPLICATION_MODAL);
+		popUp.setMinHeight(200);
+		popUp.setMinWidth(300);
+		popUp.getIcons()
+				.add(new Image(getClass().getResource("/de/ifdgmbh/mad/SimpleChess/images/king1.png").toString()));
+		Label label = new Label();
+		label.setFont(new Font("Berlin Sans FB", 20));
+		label.setTextAlignment(TextAlignment.CENTER);
+		label.setStyle("-fx-text-fill: linear-gradient(to top, #ffcc00, #fbff02);");
+		VBox vBox = new VBox();
+		if (win) {
+			popUp.setTitle("Game Over!");
+			label.setText("Player " + info + " won!\nThank you for playing, have a nice day!");
+			vBox.getChildren().add(label);
+		} else if (input) {
+			label.setText("Enter Name:");
+			TextField text1 = new TextField();
+			text1.setPromptText("Player 1");
+			text1.setFont(label.getFont());
+			Label label2 = new Label("Enter Name:");
+			label2.setStyle(label.getStyle());
+			label2.setFont(label.getFont());
+			TextField text2 = new TextField();
+			text2.setPromptText("Player 2");
+			text2.setFont(label.getFont());
+			Button button = new Button("Proceed");
+			button.setFont(label.getFont());
+			button.setStyle(startButton.getStyle());
+			button.setOnMouseClicked(new EventHandler<MouseEvent>() {
+				@Override
+				public void handle(MouseEvent event) {
+					player1Text.setText(text1.getText().trim());
+					if (text1.getText().isBlank())
+						player1Text.setText(text1.getPromptText().trim());
+					player2Text.setText(text2.getText().trim());
+					if (text2.getText().isBlank())
+						player2Text.setText(text2.getPromptText().trim());
+					popUp.close();
+				}
+			});
+			vBox.getChildren().addAll(label, text1, label2, text2, button);
+		} else {
+			vBox.getChildren().add(label);
+			popUp.setTitle("Attention");
+			label.setText("" + info);
+		}
+
+		vBox.setStyle(
+				"-fx-background-color: radial-gradient(center 50.0% 50.0%, radius 100.0%, #242424, #434343, #898989);");
+		vBox.setAlignment(Pos.CENTER);
+		Scene scene = new Scene(vBox);
+		popUp.setScene(scene);
+		popUp.showAndWait();
+	}
+
+	/**
 	 * Checks weather the enemies king is in a problematic game situation and has to
 	 * move or not
 	 * 
@@ -652,8 +705,7 @@ public class MyController {
 			}
 		}
 		if (kingX == 0 || kingY == 0) {
-			myAlert = new Alert(Alert.AlertType.ERROR, "Problem!");
-			myAlert.show();
+			popUp(false, false, "Location-Error\nYou may restart the game!");
 			return false;
 		}
 		if (tryMove(enemyX, enemyY, kingX, kingY)) {
@@ -672,7 +724,6 @@ public class MyController {
 	 */
 	public boolean tryMove(int oldX, int oldY, int newX, int newY) {
 		boolean success = false;
-		myAlert = new Alert(Alert.AlertType.ERROR, "Something went wrong!");
 		int type = gamefield[oldX][oldY];
 
 		if (type > 6)
@@ -863,13 +914,13 @@ public class MyController {
 			} else if (newY == oldY) {
 				// moves within x
 				int counter = 0;
-				if (getActivePlayer() == 1) {
+				if (newX > oldX) {
 					for (int x = oldX + 1; x < newX; x++) {
 						if (gamefield[x][newY] > 0) {
 							counter++;
 						}
 					}
-				} else if (getActivePlayer() == 2) {
+				} else if (oldX > newX) {
 					for (int x = oldX - 1; x > newX; x--) {
 						if (gamefield[x][newY] > 0) {
 							counter++;
@@ -953,7 +1004,7 @@ public class MyController {
 		}
 		/////////////////////////////////////////////////////////////////////////////
 		default: {
-			myAlert.show();
+			popUp(false, false, "Figure-Selection-Error\nYou may restart the game!");
 			return false;
 		}
 		}
@@ -1013,7 +1064,7 @@ public class MyController {
 			for (int y = 1; y < 9; y++) {
 				for (int x = 1; x < 9; x++) {
 					if (gamefield[x][y] > 0 && gamefield[x][y] < 7 && getActivePlayer() == 1) {
-						System.out.println("trying move from: " + x + "|" + y + " to " + posX + "|" + posY + "!");
+//						System.out.println("trying move from: " + x + "|" + y + " to " + posX + "|" + posY + "!");
 						if (tryMove(x, y, posX, posY)) {
 							// potential king position is covered --> screw
 							freeToMove = false;
@@ -1021,7 +1072,7 @@ public class MyController {
 							// potential king position is free for current enemy figure
 						}
 					} else if (gamefield[x][y] > 6 && getActivePlayer() == 2) {
-						System.out.println("trying move from: " + x + "|" + y + " to " + posX + "|" + posY);
+//						System.out.println("trying move from: " + x + "|" + y + " to " + posX + "|" + posY);
 						if (tryMove(x, y, posX, posY)) {
 							// potential king position is covered
 							freeToMove = false;

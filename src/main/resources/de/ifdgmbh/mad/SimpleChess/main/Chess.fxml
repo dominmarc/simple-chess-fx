@@ -20,11 +20,11 @@
       <Button fx:id="minButton" layoutX="450.0" mnemonicParsing="false" onMouseClicked="#minButtonClicked" prefHeight="25.0" prefWidth="30.0" text="_" textFill="WHITE" />
       <Label fx:id="active1Label" layoutX="41.0" layoutY="35.0" maxHeight="20.0" minHeight="20.0" prefHeight="20.0" prefWidth="30.0" />
       <Label fx:id="active2Label" layoutX="41.0" layoutY="60.0" maxHeight="20.0" minHeight="20.0" prefHeight="20.0" prefWidth="30.0" />
-      <Label layoutX="83.0" layoutY="32.0" maxHeight="25.0" minHeight="25.0" prefHeight="25.0" text="Player 1" textFill="WHITE">
+      <Label fx:id="player1Text" layoutX="83.0" layoutY="32.0" maxHeight="25.0" minHeight="25.0" prefHeight="25.0" text="Player 1" textFill="WHITE">
          <font>
             <Font name="Berlin Sans FB" size="20.0" />
          </font></Label>
-      <Label layoutX="82.0" layoutY="60.0" maxHeight="25.0" minHeight="25.0" prefHeight="25.0" text="Player 2" textFill="WHITE">
+      <Label fx:id="player2Text" layoutX="82.0" layoutY="60.0" maxHeight="25.0" minHeight="25.0" prefHeight="25.0" text="Player 2" textFill="WHITE">
          <font>
             <Font name="Berlin Sans FB" size="20.0" />
          </font></Label>
