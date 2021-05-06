@@ -43,6 +43,12 @@ public class MyController {
 	int[][] gamefield;
 
 	/**
+	 * 0 = oldX, 1 = oldY, 2 = newX, 3 = newY old = former position new = current
+	 * position
+	 */
+	int[] lastMove = { 0, 0, 0, 0 };
+
+	/**
 	 * [0]=ButtonIndex (1...64) </br>
 	 * [1]=PlayerInfo (1,2) </br>
 	 * zeroes mean no selected button
@@ -70,9 +76,11 @@ public class MyController {
 	boolean player1_active = true;
 	boolean player2_active = false;
 	boolean game_active = false;
+	// to save the answer of a previous popUp-Yes-No question
+	boolean decision = false;
 
 	public void initialize() {
-		popUp(false, true, "");
+		popUp(false, true, false, "");
 		// activity label
 		active1Label.setBackground(green);
 		active2Label.setBackground(red);
@@ -113,7 +121,7 @@ public class MyController {
 					@Override
 					public void handle(MouseEvent event) {
 						if (!game_active) {
-							popUp(false, false, "Please start the game!");
+							popUp(false, false, false, "Please start the game!");
 							return;
 						}
 
@@ -130,54 +138,66 @@ public class MyController {
 								return;
 							} else {
 								if (getActivePlayer() == 1) {
-									popUp(false, false,
+									popUp(false, false, false,
 											"Player " + player1Text.getText() + " is active!\nMake your move!");
 								} else {
-									popUp(false, false,
+									popUp(false, false, false,
 											"Player " + player2Text.getText() + " is active!\nMake your move!");
 								}
 								return;
 							}
-
 							selectedButton[0] = tempZ;
 							selectedButton[1] = getActivePlayer();
+
 						} else if (selectedButton[0] > 0 && selectedButton[0] < 65) {
 							// player has already selected a figure and now wants to move it
-							if (!makeMove(tempZ)) { // move invalid
-								popUp(false, false, "Can not move player!\nInvalid move!");
+							if (!tryMove(giveXY(selectedButton[0])[0], giveXY(selectedButton[0])[1], giveXY(tempZ)[0],
+									giveXY(tempZ)[1])) { // move invalid
+								popUp(false, false, false, "Can not move player!\nInvalid move!");
 								// deselect button
 								buttons[selectedButton[0]].setStyle(playerNonSelectedButton);
 								selectedButton[0] = 0;
 								selectedButton[1] = 0;
 								return;
 							}
+							makeMove(giveXY(selectedButton[0])[0], giveXY(selectedButton[0])[1], giveXY(tempZ)[0],
+									giveXY(tempZ)[1]);
 							// move valid
 							// deselect button
 							buttons[selectedButton[0]].setStyle(playerNonSelectedButton);
 							selectedButton[0] = 0;
 							selectedButton[1] = 0;
-
-							if (checkSchach(tempZ)) {
-								popUp(false, false, "\"SCHACH!\"" + "\n\nCan you end the game?");
+							// check if you made a move that does not block the enemy from setting you
+							// schach
+							// if you did so --> move the last move back and set the correct active player
+							if (checkOwnSchach()) {
+								popUp(false, false, false, "Wrong move! \nYou are set schach!");
+								stepBack();
+								return;
+							}
+							if (checkSchach(tempZ, getInActivePlayer())) {
+								popUp(false, false, false, "\"SCHACH!\"" + "\n\nCan you end the game?");
 								// check if the game has ended
 								if (checkMatt()) {
-									game_active = false;
-									if (getActivePlayer() == 1) {
-										popUp(true, false, "" + player1Text.getText());
+									// checkMatt will yet not cover moves from not_king_figures to block "matt"
+									// Workaround for now: ask the player if there is a way to block "matt"
+									popUp(false, false, true,
+											"Is there any way to block the enemy from setting you Matt?");
+									if (decision) {
+										switchPlayer();
 									} else {
-										popUp(true, false, "" + player2Text.getText());
+										game_active = false;
+										if (getActivePlayer() == 1) {
+											popUp(true, false, false, "" + player1Text.getText());
+										} else {
+											popUp(true, false, false, "" + player2Text.getText());
+										}
 									}
+
 									return;
 								}
-								// force the player to move the king
+				
 								switchPlayer();
-								selectedButton[0] = giveIndex(problemKing[0], problemKing[1]);
-								selectedButton[1] = getActivePlayer();
-								if (getActivePlayer() == 1) {
-									buttons[selectedButton[0]].setStyle(player1SelectedButton);
-								} else if (getActivePlayer() == 2) {
-									buttons[selectedButton[0]].setStyle(player2SelectedButton);
-								}
 								return;
 							}
 							// end the move --> switch player
@@ -206,6 +226,39 @@ public class MyController {
 		}
 	}
 
+	public boolean checkOwnSchach() {
+		// loop through all figures from the enemy and check if they set the
+		// activePlayers king schach
+		for (int y = 1; y < 9; y++) {
+			for (int x = 1; x < 9; x++) {
+				if (gamefield[x][y] > 0 && gamefield[x][y] <= 6 && getInActivePlayer() == 1) {
+					if (checkSchach(giveIndex(x, y), getActivePlayer())) {
+						return true;
+					}
+				} else if (gamefield[x][y] >= 7 && getInActivePlayer() == 2) {
+					if (checkSchach(giveIndex(x, y), getActivePlayer())) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	public void stepBack() {
+		int oldX = lastMove[0];
+		int oldY = lastMove[1];
+		int newX = lastMove[2];
+		int newY = lastMove[3];
+
+		gamefield[oldX][oldY] = gamefield[newY][newY];
+		gamefield[newX][newY] = 0;
+
+		printField();
+		setPlayers();
+
+	}
+
 	/**
 	 * Tries to move the selected figure (within the gamefield array)
 	 * 
@@ -213,389 +266,27 @@ public class MyController {
 	 * @return true or false depending on weather the player is allowed to make a
 	 *         move or not
 	 */
-	public boolean makeMove(int var) {
-		boolean success = false;
-
-		int oldX = giveXY(selectedButton[0])[0];
-		int oldY = giveXY(selectedButton[0])[1];
-		int newX = giveXY(var)[0];
-		int newY = giveXY(var)[1];
-		int type = gamefield[oldX][oldY];
-		if (type > 6)
-			type -= 6;
-
-		switch (type) {
-		/////////////////////////////////////////////////////////////////////////////
-		case 1: {
-			// Bauer:
-			// 1 oder 2 Felder nach vorn
-			if (oldX == newX) {
-				// zu weit?
-				int temp = oldY - newY;
-				if (temp < 0)
-					temp *= (-1);
-				if (temp > 2) {
-					break;
-				}
-				if (oldY < newY && getActivePlayer() == 2) {
-					// player 2 tries to move backwards (down)
-					break;
-				} else if (oldY > newY && getActivePlayer() == 1) {
-					// player 1 tries to move backwards (up)
-					break;
-				}
-				if (gamefield[newX][newY] == 0) {
-					gamefield[newX][newY] = gamefield[oldX][oldY];
-					gamefield[oldX][oldY] = 0;
-					success = true;
-				}
-			} else {
-				// Sprung schraeg nach vorn (rechts, links)
-				if (getActivePlayer() == 1) {
-					if ((newX == oldX - 1 || newX == oldX + 1) && newY == oldY + 1) {
-						// valid distance & direction
-						if (gamefield[newX][newY] > 6) {
-							gamefield[newX][newY] = gamefield[oldX][oldY];
-							gamefield[oldX][oldY] = 0;
-							success = true;
-						}
-					}
-				} else if (getActivePlayer() == 2) {
-					if ((newX == oldX - 1 || newX == oldX + 1) && newY + 1 == oldY) {
-						// valid distance & direction
-						if (gamefield[newX][newY] < 7 && gamefield[newX][newY] > 0) {
-							gamefield[newX][newY] = gamefield[oldX][oldY];
-							gamefield[oldX][oldY] = 0;
-							success = true;
-						}
-					}
-				}
-			}
-			break;
-		}
-		/////////////////////////////////////////////////////////////////////////////
-		case 2: {
-			// Turm
-			if (newX == oldX) {
-				// moves within y
-				int counter = 0;
-				if (newY > oldY) {
-					for (int y = oldY + 1; y < newY; y++) {
-						if (gamefield[newX][y] > 0) {
-							counter++;
-						}
-					}
-				} else if (newY < oldY) {
-					for (int y = oldY - 1; y > newY; y--) {
-						if (gamefield[newX][y] > 0) {
-							counter++;
-						}
-					}
-				}
-				if (counter > 0) {
-					break;
-				} else {
-					// way is free for the figure to move
-					if (doSetMove(oldX, oldY, newX, newY))
-						success = true;
-				}
-			} else if (newY == oldY) {
-				// moves within x
-				int counter = 0;
-				if (getActivePlayer() == 1) {
-					for (int x = oldX + 1; x < newX; x++) {
-						if (gamefield[x][newY] > 0) {
-							counter++;
-						}
-					}
-				} else if (getActivePlayer() == 2) {
-					for (int x = oldX - 1; x > newX; x--) {
-						if (gamefield[x][newY] > 0) {
-							counter++;
-						}
-					}
-				}
-				if (counter > 0) {
-					break;
-				} else {
-					// way is free for the figure to move
-					if (doSetMove(oldX, oldY, newX, newY))
-						success = true;
-				}
-			} else {
-				break;
-			}
-		}
-		/////////////////////////////////////////////////////////////////////////////
-		case 3: {
-			// Pferd
-			if ((oldY + 1 == newY && oldX + 2 == newX) || (oldY + 2 == newY && oldX + 1 == newX)) {
-				// down, right, right && down, down, right
-				if (doSetMove(oldX, oldY, newX, newY))
-					success = true;
-				break;
-			} else if ((oldY + 1 == newY && oldX - 2 == newX) || (oldY + 2 == newY && oldX - 1 == newX)) {
-				// down, left, left && down, down, left
-				if (doSetMove(oldX, oldY, newX, newY))
-					success = true;
-				break;
-			} else if ((oldY - 1 == newY && oldX + 2 == newX) || (oldY - 2 == newY && oldX + 1 == newX)) {
-				// up, right, right && up, up, right
-				if (doSetMove(oldX, oldY, newX, newY))
-					success = true;
-				break;
-			} else if ((oldY - 1 == newY && oldX - 2 == newX) || (oldY - 2 == newY && oldX - 1 == newX)) {
-				// up, left, left && up, up, left
-				if (doSetMove(oldX, oldY, newX, newY))
-					success = true;
-				break;
-			} else {
-				break;
-			}
-		}
-		/////////////////////////////////////////////////////////////////////////////
-		case 4: {
-			// Springer
-			int temp1 = oldX - newX;
-			int temp2 = oldY - newY;
-			if (temp1 < 0)
-				temp1 *= (-1);
-			if (temp2 < 0)
-				temp2 *= (-1);
-
-			if (temp1 == temp2) {
-				// move is diagonally
-				// up, left
-				int counter = 0;
-				if (newY < oldY && newX < oldX) {
-					for (int k = 1; k < temp1; k++) {
-						if (gamefield[oldX - k][oldY - k] > 0)
-							counter++;
-					}
-				}
-				// up, right
-				if (newY < oldY && newX > oldX) {
-					for (int k = 1; k < temp1; k++) {
-						if (gamefield[oldX + k][oldY - k] > 0)
-							counter++;
-					}
-				}
-				// down, left
-				if (newY > oldY && newX < oldX) {
-					for (int k = 1; k < temp1; k++) {
-						if (gamefield[oldX - k][oldY + k] > 0)
-							counter++;
-					}
-				}
-				// down, right
-				if (newY > oldY && newX > oldX) {
-					for (int k = 1; k < temp1; k++) {
-						if (gamefield[oldX + k][oldY + k] > 0)
-							counter++;
-					}
-				}
-				if (counter > 0) {
-					break;
-				} else {
-					// way is free for the figure to move
-					if (doSetMove(oldX, oldY, newX, newY))
-						success = true;
-				}
-			} else {
-				break;
-			}
-
-			break;
-		}
-		/////////////////////////////////////////////////////////////////////////////
-		case 5: {
-			// Dame = Turm oder Springer
-			// you could create func for Turm and Springer and just call it here, to safe
-			// some lines
-			// (TURM:)
-			if (newX == oldX) {
-				// moves within y
-				int counter = 0;
-				if (newY > oldY) {
-					for (int y = oldY + 1; y < newY; y++) {
-						if (gamefield[newX][y] > 0) {
-							counter++;
-						}
-					}
-				} else if (newY < oldY) {
-					for (int y = oldY - 1; y > newY; y--) {
-						if (gamefield[newX][y] > 0) {
-							counter++;
-						}
-					}
-				}
-				if (counter > 0) {
-					break;
-				} else {
-					// way is free for the figure to move
-					if (doSetMove(oldX, oldY, newX, newY))
-						success = true;
-				}
-			} else if (newY == oldY) {
-				// moves within x
-				int counter = 0;
-				if (newX > oldX) {
-					for (int x = oldX + 1; x < newX; x++) {
-						if (gamefield[x][newY] > 0) {
-							counter++;
-						}
-					}
-				} else if (oldX > newX) {
-					for (int x = oldX - 1; x > newX; x--) {
-						if (gamefield[x][newY] > 0) {
-							counter++;
-						}
-					}
-				}
-				if (counter > 0) {
-					break;
-				} else {
-					// way is free for the figure to move
-					if (doSetMove(oldX, oldY, newX, newY))
-						success = true;
-				}
-			} else {
-				// (SPRINGER:)
-				int temp1 = oldX - newX;
-				int temp2 = oldY - newY;
-				if (temp1 < 0)
-					temp1 *= (-1);
-				if (temp2 < 0)
-					temp2 *= (-1);
-
-				if (temp1 == temp2) {
-					// move is diagonally
-					// up, left
-					int counter = 0;
-					if (newY < oldY && newX < oldX) {
-						for (int k = 1; k < temp1; k++) {
-							if (gamefield[oldX - k][oldY - k] > 0)
-								counter++;
-						}
-					}
-					// up, right
-					if (newY < oldY && newX > oldX) {
-						for (int k = 1; k < temp1; k++) {
-							if (gamefield[oldX + k][oldY - k] > 0)
-								counter++;
-						}
-					}
-					// down, left
-					if (newY > oldY && newX < oldX) {
-						for (int k = 1; k < temp1; k++) {
-							if (gamefield[oldX - k][oldY + k] > 0)
-								counter++;
-						}
-					}
-					// down, right
-					if (newY > oldY && newX > oldX) {
-						for (int k = 1; k < temp1; k++) {
-							if (gamefield[oldX + k][oldY + k] > 0)
-								counter++;
-						}
-					}
-					if (counter > 0) {
-						break;
-					} else {
-						// way is free for the figure to move
-						if (doSetMove(oldX, oldY, newX, newY))
-							success = true;
-					}
-				}
-			}
-			break;
-		}
-		/////////////////////////////////////////////////////////////////////////////
-		case 6: {
-			// Koenig
-			// zu weit?
-			int temp = oldY - newY;
-			int temp2 = oldX - newX;
-			if (temp2 < 0)
-				temp2 *= (-1);
-			if (temp < 0)
-				temp *= (-1);
-
-			if (temp > 1 || temp2 > 1) {
-				break;
-			}
-			// king can not set himself to "schach" or "schach-matt"
-
-			boolean freeToMove = true;
-
-			for (int y = 1; y < 9; y++) {
-				for (int x = 1; x < 9; x++) {
-					if (gamefield[x][y] > 0 && gamefield[x][y] < 7 && getActivePlayer() == 2) {
-						if (tryMove(x, y, newX, newY)) {
-							// potential king position is covered --> screw
-							freeToMove = false;
-						} else {
-							// potential king position is free for current enemy figure
-						}
-					} else if (gamefield[x][y] > 6 && getActivePlayer() == 1) {
-						if (tryMove(x, y, newX, newY)) {
-							// potential king position is covered
-							freeToMove = false;
-						} else {
-							// potential king position is free for current enemy figure
-						}
-					}
-				}
-			}
-
-			if (freeToMove) {
-				if (doSetMove(oldX, oldY, newX, newY))
-					success = true;
-			}
-
-			break;
-		}
-		/////////////////////////////////////////////////////////////////////////////
-		default: {
-			popUp(false, false, "Figure-Selection-Error\nYou may restart the game!");
-			return false;
-		}
-		}
-
-		printField();
-		setPlayers();
-
-		if (success) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	/**
-	 * Called in makeMove-Function to actually make the move, depending on what
-	 * player is active
-	 * 
-	 * @param oldX
-	 * @param oldY
-	 * @param newX
-	 * @param newY
-	 */
-	private boolean doSetMove(int oldX, int oldY, int newX, int newY) {
+	public void makeMove(int oldX, int oldY, int newX, int newY) {
+		//boolean success = false;
+		lastMove[0] = oldX;
+		lastMove[1] = oldY;
+		lastMove[2] = newX;
+		lastMove[3] = newY;
+		
 		if (getActivePlayer() == 1) {
 			if (gamefield[newX][newY] > 6 || gamefield[newX][newY] == 0) {
 				gamefield[newX][newY] = gamefield[oldX][oldY];
 				gamefield[oldX][oldY] = 0;
-				return true;
 			}
 		} else {
 			if (gamefield[newX][newY] < 7 && gamefield[newX][newY] > -1) {
 				gamefield[newX][newY] = gamefield[oldX][oldY];
 				gamefield[oldX][oldY] = 0;
-				return true;
 			}
 		}
-		return false;
+		
+		printField();
+		setPlayers();
 	}
 
 	/**
@@ -625,7 +316,7 @@ public class MyController {
 	/**
 	 * Pops up a new window with certain game information
 	 */
-	public void popUp(boolean win, boolean input, String info) {
+	public void popUp(boolean win, boolean input, boolean yesno, String info) {
 		Stage popUp = new Stage();
 		popUp.initModality(Modality.APPLICATION_MODAL);
 		popUp.setMinHeight(200);
@@ -668,6 +359,29 @@ public class MyController {
 				}
 			});
 			vBox.getChildren().addAll(label, text1, label2, text2, button);
+		} else if (yesno) {
+			label.setText(info);
+			Button yes = new Button("YES");
+			yes.setFont(label.getFont());
+			yes.setStyle(startButton.getStyle());
+			yes.setOnMouseClicked(new EventHandler<MouseEvent>() {
+				@Override
+				public void handle(MouseEvent event) {
+					decision = true;
+					popUp.close();
+				}
+			});
+			Button no = new Button("NO");
+			no.setFont(label.getFont());
+			no.setStyle(startButton.getStyle());
+			no.setOnMouseClicked(new EventHandler<MouseEvent>() {
+				@Override
+				public void handle(MouseEvent event) {
+					decision = false;
+					popUp.close();
+				}
+			});
+			vBox.getChildren().addAll(label, yes, no);
 		} else {
 			vBox.getChildren().add(label);
 			popUp.setTitle("Attention");
@@ -677,6 +391,7 @@ public class MyController {
 		vBox.setStyle(
 				"-fx-background-color: radial-gradient(center 50.0% 50.0%, radius 100.0%, #242424, #434343, #898989);");
 		vBox.setAlignment(Pos.CENTER);
+		vBox.setSpacing(5);
 		Scene scene = new Scene(vBox);
 		popUp.setScene(scene);
 		popUp.showAndWait();
@@ -684,28 +399,30 @@ public class MyController {
 
 	/**
 	 * Checks weather the enemies king is in a problematic game situation and has to
-	 * move or not
+	 * move or not </br>
+	 * player should be 1 or 2 according to what players king should be checked
 	 * 
 	 * @return
 	 */
-	public boolean checkSchach(int var) {
+	public boolean checkSchach(int var, int player) {
 		int enemyX = giveXY(var)[0];
 		int enemyY = giveXY(var)[1];
 		int kingX = 0;
 		int kingY = 0;
+
 		for (int y = 1; y < 9; y++) {
 			for (int x = 1; x < 9; x++) {
-				if (gamefield[x][y] == 6 && getInActivePlayer() == 1) {
+				if (gamefield[x][y] == 6 && player == 1) {
 					kingX = x;
 					kingY = y;
-				} else if (gamefield[x][y] == 12 && getInActivePlayer() == 2) {
+				} else if (gamefield[x][y] == 12 && player == 2) {
 					kingX = x;
 					kingY = y;
 				}
 			}
 		}
 		if (kingX == 0 || kingY == 0) {
-			popUp(false, false, "Location-Error\nYou may restart the game!");
+			popUp(false, false, false, "Location-Error\nYou may restart the game!");
 			return false;
 		}
 		if (tryMove(enemyX, enemyY, kingX, kingY)) {
@@ -735,7 +452,23 @@ public class MyController {
 			// Bauer:
 			// 1 oder 2 Felder nach vorn
 			if (oldX == newX) {
-				break;
+				// zu weit?
+				int temp = oldY - newY;
+				if (temp < 0)
+					temp *= (-1);
+				if (temp > 2) {
+					break;
+				}
+				if (oldY < newY && getActivePlayer() == 2) {
+					// player 2 tries to move backwards (down)
+					break;
+				} else if (oldY > newY && getActivePlayer() == 1) {
+					// player 1 tries to move backwards (up)
+					break;
+				}
+				if (gamefield[newX][newY] == 0) {
+					success = true;
+				}
 			} else {
 				// Sprung schraeg nach vorn (rechts, links)
 				if (getActivePlayer() == 1) {
@@ -1004,7 +737,7 @@ public class MyController {
 		}
 		/////////////////////////////////////////////////////////////////////////////
 		default: {
-			popUp(false, false, "Figure-Selection-Error\nYou may restart the game!");
+			popUp(false, false, false, "Figure-Selection-Error\nYou may restart the game!");
 			return false;
 		}
 		}
@@ -1032,6 +765,8 @@ public class MyController {
 		// position
 		// 3)if there is positions left king is not "schach-matt", return false
 		// 4)if there is none left king is "schach-matt", return true
+		// TODO: Problem a player can block "matt" with a different figure instead of
+		// moving the king -->workaround 
 
 		int kingX = problemKing[0];
 		int kingY = problemKing[1];
@@ -1153,15 +888,12 @@ public class MyController {
 			active1Label.setBackground(red);
 			active2Label.setBackground(red);
 			infoLabel.setText("PRESS START");
-			selectedButton[0] = 0;
-			selectedButton[1] = 0;
-			problemKing[0] = 0;
-			problemKing[1] = 0;
 			prepareGameField();
 			setPlayers();
 		} else {
 			startButton.setText("RESTART GAME");
 			infoLabel.setText("LET'S PLAY");
+			globalVals();
 			game_active = true;
 			prepareGameField();
 			setPlayers();
@@ -1171,7 +903,21 @@ public class MyController {
 			active2Label.setBackground(red);
 		}
 	}
-
+	
+	/**
+	 * Resets all the global values in order to restart the game
+	 */
+	public void globalVals() {
+		selectedButton[0] = 0;
+		selectedButton[1] = 0;
+		problemKing[0] = 0;
+		problemKing[1] = 0;
+		lastMove[0] = 0;
+		lastMove[1] = 0;
+		lastMove[2] = 0;
+		lastMove[3] = 0;
+	}
+	
 	/**
 	 * Sets the players on the game field (arranges the rights colors to the right
 	 * buttons)
