@@ -1,5 +1,10 @@
-package de.ifdgmbh.mad.SimpleChess.controller;
+/* 
+ * Copyright (c) 2021 iFD  Chemnitz http://www.ifd-.com
+ */
 
+package de.ifd.mad.SimpleChess.controller;
+
+import de.ifd.mad.SimpleChess.main.PopUp;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -21,6 +26,13 @@ import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+
+/**
+ * Controller for new simplechess game
+ * 
+ * @author MAD
+ * @author iFD
+ */
 
 public class MyController {
 	@FXML
@@ -66,6 +78,7 @@ public class MyController {
 	String player2SelectedButton = "-fx-border-color: #FE2B2B; -fx-border-width: 4px; ";
 	String playerNonSelectedButton = "-fx-border-color: #000000; -fx-border-width: 0px;";
 
+	// gamefield button backgrounds representing the game fields
 	Background red = new Background(new BackgroundFill(Color.RED, null, null));
 	Background green = new Background(new BackgroundFill(Color.GREEN, null, null));
 	Background white;
@@ -73,139 +86,80 @@ public class MyController {
 	Background player1;
 	Background player2;
 
+	// boolean active player indicator
 	boolean player1_active = true;
 	boolean player2_active = false;
 	boolean game_active = false;
 	// to save the answer of a previous popUp-Yes-No question
-	boolean decision = false;
+	// boolean decision = false;
 
 	public void initialize() {
-		popUp(false, true, false, "");
+		// popUp(false, true, false, "");
+		PopUp playerSet = new PopUp();
+		playerSet.createInputPopUp();
+		String[] players = playerSet.showInputPopUp();
+		player1Text.setText(players[0]);
+		player2Text.setText(players[1]);
+
 		// activity label
 		active1Label.setBackground(green);
 		active2Label.setBackground(red);
 
+		// set start button text
 		startButton.setText("START GAME");
 
+		// initialize button storage
 		buttons = new Button[82];
+
+		// build all buttons (9x9 gamefield)
 		int x = 0;
 		int y = 0;
-		int z = 1;
+		int btnIndex = 1;
 		for (int i = 1; i < 9; i++) {
 			for (int t = 1; t < 9; t++) {
-				buttons[z] = new Button();
-				buttonPane.getChildren().add(buttons[z]);
-				buttons[z].setLayoutX(x);
-				buttons[z].setLayoutY(y);
-				buttons[z].setPrefWidth(45);
-				buttons[z].setPrefHeight(45);
-				buttons[z].setPadding(new Insets(0));
+				buttons[btnIndex] = new Button();
+				buttonPane.getChildren().add(buttons[btnIndex]);
+				// configure the buttons
+				buttons[btnIndex].setLayoutX(x);
+				buttons[btnIndex].setLayoutY(y);
+				buttons[btnIndex].setPrefWidth(45);
+				buttons[btnIndex].setPrefHeight(45);
+				buttons[btnIndex].setPadding(new Insets(0));
 				white = new Background(new BackgroundFill(Color.rgb(224, 201, 160), null, null));
 				black = new Background(new BackgroundFill(Color.rgb(164, 120, 91), null, null));
+				// chess-like color switching on game fields
 				if (i % 2 == 0) {
 					if (t % 2 == 0) {
-						buttons[z].setBackground(white);
+						buttons[btnIndex].setBackground(white);
 					} else {
-						buttons[z].setBackground(black);
+						buttons[btnIndex].setBackground(black);
 					}
 				} else {
 					if (t % 2 == 0) {
-						buttons[z].setBackground(black);
+						buttons[btnIndex].setBackground(black);
 					} else {
-						buttons[z].setBackground(white);
+						buttons[btnIndex].setBackground(white);
 					}
 				}
-//				buttons[z].setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
-				final int tempZ = z;
-				buttons[z].setOnMouseClicked(new EventHandler<MouseEvent>() {
-					@Override
-					public void handle(MouseEvent event) {
-						if (!game_active) {
-							popUp(false, false, false, "Please start the game!");
-							return;
-						}
 
-						if (selectedButton[0] == 0) {
-							// player wants to select a figure to make a move
-							int tempX = giveXY(tempZ)[0];
-							int tempY = giveXY(tempZ)[1];
-							if (gamefield[tempX][tempY] > 0 && gamefield[tempX][tempY] < 7 && getActivePlayer() == 1) {
-								buttons[tempZ].setStyle(player1SelectedButton);
-							} else if (gamefield[tempX][tempY] > 6 && getActivePlayer() == 2) {
-								buttons[tempZ].setStyle(player2SelectedButton);
-							} else if (gamefield[tempX][tempY] == 0) {
-								// nothing
-								return;
-							} else {
-								if (getActivePlayer() == 1) {
-									popUp(false, false, false,
-											"Player " + player1Text.getText() + " is active!\nMake your move!");
-								} else {
-									popUp(false, false, false,
-											"Player " + player2Text.getText() + " is active!\nMake your move!");
-								}
-								return;
-							}
-							selectedButton[0] = tempZ;
-							selectedButton[1] = getActivePlayer();
+				// finalize variable in order to use in enclosing scope (mouse event)
+				final int btnIdx = btnIndex;
 
-						} else if (selectedButton[0] > 0 && selectedButton[0] < 65) {
-							// player has already selected a figure and now wants to move it
-							if (!tryMove(giveXY(selectedButton[0])[0], giveXY(selectedButton[0])[1], giveXY(tempZ)[0],
-									giveXY(tempZ)[1])) { // move invalid
-								popUp(false, false, false, "Can not move player!\nInvalid move!");
-								// deselect button
-								buttons[selectedButton[0]].setStyle(playerNonSelectedButton);
-								selectedButton[0] = 0;
-								selectedButton[1] = 0;
-								return;
-							}
-							makeMove(giveXY(selectedButton[0])[0], giveXY(selectedButton[0])[1], giveXY(tempZ)[0],
-									giveXY(tempZ)[1]);
-							// move valid
-							// deselect button
-							buttons[selectedButton[0]].setStyle(playerNonSelectedButton);
-							selectedButton[0] = 0;
-							selectedButton[1] = 0;
-							// check if you made a move that does not block the enemy from setting you
-							// schach
-							// if you did so --> move the last move back and set the correct active player
-							if (checkOwnSchach()) {
-								popUp(false, false, false, "Wrong move! \nYou are set schach!");
-								stepBack();
-								return;
-							}
-							if (checkSchach(tempZ, getInActivePlayer())) {
-								popUp(false, false, false, "\"SCHACH!\"" + "\n\nCan you end the game?");
-								// check if the game has ended
-								if (checkMatt()) {
-									// checkMatt will yet not cover moves from not_king_figures to block "matt"
-									// Workaround for now: ask the player if there is a way to block "matt"
-									popUp(false, false, true,
-											"Is there any way to block the enemy from setting you Matt?");
-									if (decision) {
-										switchPlayer();
-									} else {
-										game_active = false;
-										if (getActivePlayer() == 1) {
-											popUp(true, false, false, "" + player1Text.getText());
-										} else {
-											popUp(true, false, false, "" + player2Text.getText());
-										}
-									}
-
-									return;
-								}
-				
-								switchPlayer();
-								return;
-							}
-							// end the move --> switch player
-							switchPlayer();
-						}
+				// set event if user clicks on game field
+				buttons[btnIndex].setOnMouseClicked(e -> {
+					// check if game is running
+					if (!game_active) {
+						// popUp(false, false, false, "Please start the game!");
+						PopUp info = new PopUp();
+						info.createInfoPopUp("Please start the game!");
+						info.showPopUp();
+						return;
 					}
+
+					// click on field function
+					clickOnField(btnIdx);
 				});
-				z++;
+				btnIndex++;
 				x += 45;
 			}
 			x = 0;
@@ -215,6 +169,7 @@ public class MyController {
 		player1 = new Background(new BackgroundFill(Color.TRANSPARENT, null, null));
 		// (light)red
 		player2 = new Background(new BackgroundFill(Color.TRANSPARENT, null, null));
+
 		// draw game field lines
 		for (int l = 0; l <= 360; l += 45) {
 			Line line = new Line(0, 0, 0, 360);
@@ -245,6 +200,114 @@ public class MyController {
 		return false;
 	}
 
+	/**
+	 * Function to
+	 * 
+	 * @param btnIndex
+	 */
+	private void clickOnField(int btnIndex) {
+		// check if player already selected a figure to make a move or if he wants to
+		// select a figure
+		if (selectedButton[0] == 0) {
+			// player wants to select a figure to make a move
+			int tempX = giveXY(btnIndex)[0];
+			int tempY = giveXY(btnIndex)[1];
+			if (gamefield[tempX][tempY] > 0 && gamefield[tempX][tempY] < 7 && getActivePlayer() == 1) {
+				buttons[btnIndex].setStyle(player1SelectedButton);
+			} else if (gamefield[tempX][tempY] > 6 && getActivePlayer() == 2) {
+				buttons[btnIndex].setStyle(player2SelectedButton);
+			} else if (gamefield[tempX][tempY] == 0) {
+				// nothing
+				return;
+			} else {
+				PopUp info = new PopUp();
+				if (getActivePlayer() == 1) {
+					// popUp(false, false, false, "Player " + player1Text.getText() + " is
+					// active!\nMake your move!");
+					info.createInfoPopUp("Player " + player1Text.getText() + " is active!\nMake your move!");
+					info.showPopUp();
+				} else {
+					// popUp(false, false, false, "Player " + player2Text.getText() + " is
+					// active!\nMake your move!");
+					info.createInfoPopUp("Player " + player2Text.getText() + " is active!\nMake your move!");
+					info.showPopUp();
+				}
+				return;
+			}
+			selectedButton[0] = btnIndex;
+			selectedButton[1] = getActivePlayer();
+
+		} else if (selectedButton[0] > 0 && selectedButton[0] < 65) {
+			// player has already selected a figure and now wants to move it
+			if (!tryMove(giveXY(selectedButton[0])[0], giveXY(selectedButton[0])[1], giveXY(btnIndex)[0],
+					giveXY(btnIndex)[1])) { // move invalid
+				// popUp(false, false, false, "Can not move player!\nInvalid move!");
+				PopUp info = new PopUp();
+				info.createInfoPopUp("Can not move player!\nInvalid move!");
+				info.showPopUp();
+				// deselect button
+				buttons[selectedButton[0]].setStyle(playerNonSelectedButton);
+				selectedButton[0] = 0;
+				selectedButton[1] = 0;
+				return;
+			}
+			makeMove(giveXY(selectedButton[0])[0], giveXY(selectedButton[0])[1], giveXY(btnIndex)[0],
+					giveXY(btnIndex)[1]);
+			// move valid
+			// deselect button
+			buttons[selectedButton[0]].setStyle(playerNonSelectedButton);
+			selectedButton[0] = 0;
+			selectedButton[1] = 0;
+			// check if you made a move that does not block the enemy from setting you
+			// schach
+			// if you did so --> move the last move back and set the correct active player
+			if (checkOwnSchach()) {
+				// popUp(false, false, false, "Wrong move! \nYou are set schach!");
+				PopUp info = new PopUp();
+				info.createInfoPopUp("Wrong move! \nYou are set schach!");
+				info.showPopUp();
+				stepBack();
+				return;
+			}
+			if (checkSchach(btnIndex, getInActivePlayer())) {
+				// popUp(false, false, false, "\"SCHACH!\"" + "\n\nCan you end the game?");
+				PopUp info = new PopUp();
+				info.createInfoPopUp("\"SCHACH!\"" + "\n\nCan you end the game?");
+				info.showPopUp();
+				// check if the game has ended
+				if (checkMatt()) {
+					// checkMatt will yet not cover moves from not_king_figures to block "matt"
+					// Workaround for now: ask the player if there is a way to block "matt"
+					// popUp(false, false, true, "Is there any way to block the enemy from setting
+					// you Matt?");
+					PopUp decision = new PopUp();
+					decision.createDecisionPopUp("Is there any way to block the enemy from setting you Matt?");
+					if (decision.showPopUp()) {
+						switchPlayer();
+					} else {
+						game_active = false;
+						PopUp ending = new PopUp();
+						if (getActivePlayer() == 1) {
+							// popUp(true, false, false, "" + player1Text.getText());
+							ending.createWinningPopUp(player1Text.getText());
+						} else {
+							// popUp(true, false, false, "" + player2Text.getText());
+							ending.createWinningPopUp(player2Text.getText());
+						}
+						ending.showPopUp();
+					}
+
+					return;
+				}
+
+				switchPlayer();
+				return;
+			}
+			// end the move --> switch player
+			switchPlayer();
+		}
+	}
+
 	public void stepBack() {
 		int oldX = lastMove[0];
 		int oldY = lastMove[1];
@@ -267,12 +330,12 @@ public class MyController {
 	 *         move or not
 	 */
 	public void makeMove(int oldX, int oldY, int newX, int newY) {
-		//boolean success = false;
+		// boolean success = false;
 		lastMove[0] = oldX;
 		lastMove[1] = oldY;
 		lastMove[2] = newX;
 		lastMove[3] = newY;
-		
+
 		if (getActivePlayer() == 1) {
 			if (gamefield[newX][newY] > 6 || gamefield[newX][newY] == 0) {
 				gamefield[newX][newY] = gamefield[oldX][oldY];
@@ -284,7 +347,7 @@ public class MyController {
 				gamefield[oldX][oldY] = 0;
 			}
 		}
-		
+
 		printField();
 		setPlayers();
 	}
@@ -322,7 +385,7 @@ public class MyController {
 		popUp.setMinHeight(200);
 		popUp.setMinWidth(300);
 		popUp.getIcons()
-				.add(new Image(getClass().getResource("/de/ifdgmbh/mad/SimpleChess/images/king1.png").toString()));
+				.add(new Image(getClass().getResource("/de/ifd/mad/SimpleChess/images/king1.png").toString()));
 		Label label = new Label();
 		label.setFont(new Font("Berlin Sans FB", 20));
 		label.setTextAlignment(TextAlignment.CENTER);
@@ -367,7 +430,7 @@ public class MyController {
 			yes.setOnMouseClicked(new EventHandler<MouseEvent>() {
 				@Override
 				public void handle(MouseEvent event) {
-					decision = true;
+					// decision = true;
 					popUp.close();
 				}
 			});
@@ -377,7 +440,7 @@ public class MyController {
 			no.setOnMouseClicked(new EventHandler<MouseEvent>() {
 				@Override
 				public void handle(MouseEvent event) {
-					decision = false;
+					// decision = false;
 					popUp.close();
 				}
 			});
@@ -422,7 +485,10 @@ public class MyController {
 			}
 		}
 		if (kingX == 0 || kingY == 0) {
-			popUp(false, false, false, "Location-Error\nYou may restart the game!");
+			// popUp(false, false, false, "Location-Error\nYou may restart the game!");
+			PopUp info = new PopUp();
+			info.createInfoPopUp("Location-Error\nYou may restart the game!");
+			info.showPopUp();
 			return false;
 		}
 		if (tryMove(enemyX, enemyY, kingX, kingY)) {
@@ -737,7 +803,11 @@ public class MyController {
 		}
 		/////////////////////////////////////////////////////////////////////////////
 		default: {
-			popUp(false, false, false, "Figure-Selection-Error\nYou may restart the game!");
+			// popUp(false, false, false, "Figure-Selection-Error\nYou may restart the
+			// game!");
+			PopUp info = new PopUp();
+			info.createInfoPopUp("Figure-Selection-Error\nYou may restart the game!");
+			info.showPopUp();
 			return false;
 		}
 		}
@@ -766,7 +836,7 @@ public class MyController {
 		// 3)if there is positions left king is not "schach-matt", return false
 		// 4)if there is none left king is "schach-matt", return true
 		// TODO: Problem a player can block "matt" with a different figure instead of
-		// moving the king -->workaround 
+		// moving the king -->workaround
 
 		int kingX = problemKing[0];
 		int kingY = problemKing[1];
@@ -903,7 +973,7 @@ public class MyController {
 			active2Label.setBackground(red);
 		}
 	}
-	
+
 	/**
 	 * Resets all the global values in order to restart the game
 	 */
@@ -917,7 +987,7 @@ public class MyController {
 		lastMove[2] = 0;
 		lastMove[3] = 0;
 	}
-	
+
 	/**
 	 * Sets the players on the game field (arranges the rights colors to the right
 	 * buttons)
@@ -946,43 +1016,43 @@ public class MyController {
 					// buttons[z].setBackground(player1);
 					if (gamefield[k][i] == 1) {
 						buttons[z].setGraphic(new ImageView(new Image(
-								getClass().getResource("/de/ifdgmbh/mad/SimpleChess/images/bauer1.png").toString())));
+								getClass().getResource("/de/ifd/mad/SimpleChess/images/bauer1.png").toString())));
 					} else if (gamefield[k][i] == 2) {
 						buttons[z].setGraphic(new ImageView(new Image(
-								getClass().getResource("/de/ifdgmbh/mad/SimpleChess/images/turm1.png").toString())));
+								getClass().getResource("/de/ifd/mad/SimpleChess/images/turm1.png").toString())));
 					} else if (gamefield[k][i] == 3) {
 						buttons[z].setGraphic(new ImageView(new Image(
-								getClass().getResource("/de/ifdgmbh/mad/SimpleChess/images/pferd1.png").toString())));
+								getClass().getResource("/de/ifd/mad/SimpleChess/images/pferd1.png").toString())));
 					} else if (gamefield[k][i] == 4) {
 						buttons[z].setGraphic(new ImageView(new Image(getClass()
-								.getResource("/de/ifdgmbh/mad/SimpleChess/images/springer1.png").toString())));
+								.getResource("/de/ifd/mad/SimpleChess/images/springer1.png").toString())));
 					} else if (gamefield[k][i] == 5) {
 						buttons[z].setGraphic(new ImageView(new Image(
-								getClass().getResource("/de/ifdgmbh/mad/SimpleChess/images/dame1.png").toString())));
+								getClass().getResource("/de/ifd/mad/SimpleChess/images/dame1.png").toString())));
 					} else if (gamefield[k][i] == 6) {
 						buttons[z].setGraphic(new ImageView(new Image(
-								getClass().getResource("/de/ifdgmbh/mad/SimpleChess/images/king1.png").toString())));
+								getClass().getResource("/de/ifd/mad/SimpleChess/images/king1.png").toString())));
 					}
 				} else if (gamefield[k][i] >= 7) {
 					// buttons[z].setBackground(player2);
 					if (gamefield[k][i] == 7) {
 						buttons[z].setGraphic(new ImageView(new Image(
-								getClass().getResource("/de/ifdgmbh/mad/SimpleChess/images/bauer2.png").toString())));
+								getClass().getResource("/de/ifd/mad/SimpleChess/images/bauer2.png").toString())));
 					} else if (gamefield[k][i] == 8) {
 						buttons[z].setGraphic(new ImageView(new Image(
-								getClass().getResource("/de/ifdgmbh/mad/SimpleChess/images/turm2.png").toString())));
+								getClass().getResource("/de/ifd/mad/SimpleChess/images/turm2.png").toString())));
 					} else if (gamefield[k][i] == 9) {
 						buttons[z].setGraphic(new ImageView(new Image(
-								getClass().getResource("/de/ifdgmbh/mad/SimpleChess/images/pferd2.png").toString())));
+								getClass().getResource("/de/ifd/mad/SimpleChess/images/pferd2.png").toString())));
 					} else if (gamefield[k][i] == 10) {
 						buttons[z].setGraphic(new ImageView(new Image(getClass()
-								.getResource("/de/ifdgmbh/mad/SimpleChess/images/springer2.png").toString())));
+								.getResource("/de/ifd/mad/SimpleChess/images/springer2.png").toString())));
 					} else if (gamefield[k][i] == 11) {
 						buttons[z].setGraphic(new ImageView(new Image(
-								getClass().getResource("/de/ifdgmbh/mad/SimpleChess/images/dame2.png").toString())));
+								getClass().getResource("/de/ifd/mad/SimpleChess/images/dame2.png").toString())));
 					} else if (gamefield[k][i] == 12) {
 						buttons[z].setGraphic(new ImageView(new Image(
-								getClass().getResource("/de/ifdgmbh/mad/SimpleChess/images/king2.png").toString())));
+								getClass().getResource("/de/ifd/mad/SimpleChess/images/king2.png").toString())));
 					}
 				}
 				buttons[z].setStyle(playerNonSelectedButton);

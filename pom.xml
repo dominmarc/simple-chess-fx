@@ -40,7 +40,7 @@
 					<noManPages>true</noManPages>
 					<jlinkImageName>tst</jlinkImageName>
 					<jlinkZipName>testzip</jlinkZipName>
-					<mainClass>SimpleChess/de.ifdgmbh.mad.SimpleChess.main.SimpleChessMain</mainClass>
+					<mainClass>SimpleChess/de.ifd.mad.SimpleChess.main.SimpleChessMain</mainClass>
 				</configuration>
 			</plugin>
 		</plugins>

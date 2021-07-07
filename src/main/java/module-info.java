@@ -1,6 +1,6 @@
 module SimpleChess {
-	exports de.ifdgmbh.mad.SimpleChess.main;
-	exports de.ifdgmbh.mad.SimpleChess.controller;
+	exports de.ifd.mad.SimpleChess.main;
+	exports de.ifd.mad.SimpleChess.controller;
 	
 	requires transitive javafx.graphics;
 	requires javafx.base;
@@ -8,5 +8,6 @@ module SimpleChess {
 	requires javafx.fxml;
 	requires java.desktop;
 	
-	opens de.ifdgmbh.mad.SimpleChess.controller;
+	opens de.ifd.mad.SimpleChess.controller;
+	opens de.ifd.mad.SimpleChess.main;
 }

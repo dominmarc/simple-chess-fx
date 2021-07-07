@@ -8,7 +8,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane fx:id="mypane" maxHeight="500.0" maxWidth="510.0" minHeight="500.0" minWidth="510.0" prefHeight="500.0" prefWidth="510.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.ifdgmbh.mad.SimpleChess.controller.MyController">
+<AnchorPane fx:id="mypane" maxHeight="500.0" maxWidth="510.0" minHeight="500.0" minWidth="510.0" prefHeight="500.0" prefWidth="510.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.ifd.mad.SimpleChess.controller.MyController">
 	<children>
 		<AnchorPane fx:id="buttonPane" layoutX="75.0" layoutY="92.0" maxHeight="360.0" maxWidth="360.0" minHeight="360.0" minWidth="360.0" prefHeight="360.0" prefWidth="360.0" />
       <Label fx:id="topBar" maxHeight="25.0" maxWidth="510.0" minHeight="25.0" minWidth="510.0" prefHeight="25.0" prefWidth="510.0" text="SimpleChess" textFill="WHITE">
