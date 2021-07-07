@@ -5,26 +5,17 @@
 package de.ifd.mad.SimpleChess.controller;
 
 import de.ifd.mad.SimpleChess.main.PopUp;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
-import javafx.scene.text.Font;
-import javafx.scene.text.TextAlignment;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 /**
@@ -94,7 +85,6 @@ public class MyController {
 	// boolean decision = false;
 
 	public void initialize() {
-		// popUp(false, true, false, "");
 		PopUp playerSet = new PopUp();
 		playerSet.createInputPopUp();
 		String[] players = playerSet.showInputPopUp();
@@ -149,7 +139,6 @@ public class MyController {
 				buttons[btnIndex].setOnMouseClicked(e -> {
 					// check if game is running
 					if (!game_active) {
-						// popUp(false, false, false, "Please start the game!");
 						PopUp info = new PopUp();
 						info.createInfoPopUp("Please start the game!");
 						info.showPopUp();
@@ -222,13 +211,9 @@ public class MyController {
 			} else {
 				PopUp info = new PopUp();
 				if (getActivePlayer() == 1) {
-					// popUp(false, false, false, "Player " + player1Text.getText() + " is
-					// active!\nMake your move!");
 					info.createInfoPopUp("Player " + player1Text.getText() + " is active!\nMake your move!");
 					info.showPopUp();
 				} else {
-					// popUp(false, false, false, "Player " + player2Text.getText() + " is
-					// active!\nMake your move!");
 					info.createInfoPopUp("Player " + player2Text.getText() + " is active!\nMake your move!");
 					info.showPopUp();
 				}
@@ -241,7 +226,6 @@ public class MyController {
 			// player has already selected a figure and now wants to move it
 			if (!tryMove(giveXY(selectedButton[0])[0], giveXY(selectedButton[0])[1], giveXY(btnIndex)[0],
 					giveXY(btnIndex)[1])) { // move invalid
-				// popUp(false, false, false, "Can not move player!\nInvalid move!");
 				PopUp info = new PopUp();
 				info.createInfoPopUp("Can not move player!\nInvalid move!");
 				info.showPopUp();
@@ -262,7 +246,6 @@ public class MyController {
 			// schach
 			// if you did so --> move the last move back and set the correct active player
 			if (checkOwnSchach()) {
-				// popUp(false, false, false, "Wrong move! \nYou are set schach!");
 				PopUp info = new PopUp();
 				info.createInfoPopUp("Wrong move! \nYou are set schach!");
 				info.showPopUp();
@@ -270,7 +253,6 @@ public class MyController {
 				return;
 			}
 			if (checkSchach(btnIndex, getInActivePlayer())) {
-				// popUp(false, false, false, "\"SCHACH!\"" + "\n\nCan you end the game?");
 				PopUp info = new PopUp();
 				info.createInfoPopUp("\"SCHACH!\"" + "\n\nCan you end the game?");
 				info.showPopUp();
@@ -278,8 +260,6 @@ public class MyController {
 				if (checkMatt()) {
 					// checkMatt will yet not cover moves from not_king_figures to block "matt"
 					// Workaround for now: ask the player if there is a way to block "matt"
-					// popUp(false, false, true, "Is there any way to block the enemy from setting
-					// you Matt?");
 					PopUp decision = new PopUp();
 					decision.createDecisionPopUp("Is there any way to block the enemy from setting you Matt?");
 					if (decision.showPopUp()) {
@@ -287,11 +267,9 @@ public class MyController {
 					} else {
 						game_active = false;
 						PopUp ending = new PopUp();
-						if (getActivePlayer() == 1) {
-							// popUp(true, false, false, "" + player1Text.getText());
+						if (getActivePlayer() == 1) {				
 							ending.createWinningPopUp(player1Text.getText());
 						} else {
-							// popUp(true, false, false, "" + player2Text.getText());
 							ending.createWinningPopUp(player2Text.getText());
 						}
 						ending.showPopUp();
@@ -377,90 +355,6 @@ public class MyController {
 	}
 
 	/**
-	 * Pops up a new window with certain game information
-	 */
-	public void popUp(boolean win, boolean input, boolean yesno, String info) {
-		Stage popUp = new Stage();
-		popUp.initModality(Modality.APPLICATION_MODAL);
-		popUp.setMinHeight(200);
-		popUp.setMinWidth(300);
-		popUp.getIcons()
-				.add(new Image(getClass().getResource("/de/ifd/mad/SimpleChess/images/king1.png").toString()));
-		Label label = new Label();
-		label.setFont(new Font("Berlin Sans FB", 20));
-		label.setTextAlignment(TextAlignment.CENTER);
-		label.setStyle("-fx-text-fill: linear-gradient(to top, #ffcc00, #fbff02);");
-		VBox vBox = new VBox();
-		if (win) {
-			popUp.setTitle("Game Over!");
-			label.setText("Player " + info + " won!\nThank you for playing, have a nice day!");
-			vBox.getChildren().add(label);
-		} else if (input) {
-			label.setText("Enter Name:");
-			TextField text1 = new TextField();
-			text1.setPromptText("Player 1");
-			text1.setFont(label.getFont());
-			Label label2 = new Label("Enter Name:");
-			label2.setStyle(label.getStyle());
-			label2.setFont(label.getFont());
-			TextField text2 = new TextField();
-			text2.setPromptText("Player 2");
-			text2.setFont(label.getFont());
-			Button button = new Button("Proceed");
-			button.setFont(label.getFont());
-			button.setStyle(startButton.getStyle());
-			button.setOnMouseClicked(new EventHandler<MouseEvent>() {
-				@Override
-				public void handle(MouseEvent event) {
-					player1Text.setText(text1.getText().trim());
-					if (text1.getText().isBlank())
-						player1Text.setText(text1.getPromptText().trim());
-					player2Text.setText(text2.getText().trim());
-					if (text2.getText().isBlank())
-						player2Text.setText(text2.getPromptText().trim());
-					popUp.close();
-				}
-			});
-			vBox.getChildren().addAll(label, text1, label2, text2, button);
-		} else if (yesno) {
-			label.setText(info);
-			Button yes = new Button("YES");
-			yes.setFont(label.getFont());
-			yes.setStyle(startButton.getStyle());
-			yes.setOnMouseClicked(new EventHandler<MouseEvent>() {
-				@Override
-				public void handle(MouseEvent event) {
-					// decision = true;
-					popUp.close();
-				}
-			});
-			Button no = new Button("NO");
-			no.setFont(label.getFont());
-			no.setStyle(startButton.getStyle());
-			no.setOnMouseClicked(new EventHandler<MouseEvent>() {
-				@Override
-				public void handle(MouseEvent event) {
-					// decision = false;
-					popUp.close();
-				}
-			});
-			vBox.getChildren().addAll(label, yes, no);
-		} else {
-			vBox.getChildren().add(label);
-			popUp.setTitle("Attention");
-			label.setText("" + info);
-		}
-
-		vBox.setStyle(
-				"-fx-background-color: radial-gradient(center 50.0% 50.0%, radius 100.0%, #242424, #434343, #898989);");
-		vBox.setAlignment(Pos.CENTER);
-		vBox.setSpacing(5);
-		Scene scene = new Scene(vBox);
-		popUp.setScene(scene);
-		popUp.showAndWait();
-	}
-
-	/**
 	 * Checks weather the enemies king is in a problematic game situation and has to
 	 * move or not </br>
 	 * player should be 1 or 2 according to what players king should be checked
@@ -485,7 +379,6 @@ public class MyController {
 			}
 		}
 		if (kingX == 0 || kingY == 0) {
-			// popUp(false, false, false, "Location-Error\nYou may restart the game!");
 			PopUp info = new PopUp();
 			info.createInfoPopUp("Location-Error\nYou may restart the game!");
 			info.showPopUp();
@@ -803,8 +696,6 @@ public class MyController {
 		}
 		/////////////////////////////////////////////////////////////////////////////
 		default: {
-			// popUp(false, false, false, "Figure-Selection-Error\nYou may restart the
-			// game!");
 			PopUp info = new PopUp();
 			info.createInfoPopUp("Figure-Selection-Error\nYou may restart the game!");
 			info.showPopUp();
