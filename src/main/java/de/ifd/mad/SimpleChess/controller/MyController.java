@@ -4,12 +4,18 @@
 
 package de.ifd.mad.SimpleChess.controller;
 
+import de.ifd.mad.SimpleChess.figures.Bishop;
+import de.ifd.mad.SimpleChess.figures.King;
+import de.ifd.mad.SimpleChess.figures.Knight;
+import de.ifd.mad.SimpleChess.figures.Pawn;
+import de.ifd.mad.SimpleChess.figures.Queen;
+import de.ifd.mad.SimpleChess.figures.Rook;
 import de.ifd.mad.SimpleChess.main.PopUp;
+import de.ifd.mad.SimpleChess.players.Player;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Background;
@@ -70,30 +76,38 @@ public class MyController {
 	String playerNonSelectedButton = "-fx-border-color: #000000; -fx-border-width: 0px;";
 
 	// gamefield button backgrounds representing the game fields
-	Background red = new Background(new BackgroundFill(Color.RED, null, null));
-	Background green = new Background(new BackgroundFill(Color.GREEN, null, null));
 	Background white;
 	Background black;
-	Background player1;
-	Background player2;
 
-	// boolean active player indicator
-	boolean player1_active = true;
-	boolean player2_active = false;
+	// check if the game is active
 	boolean game_active = false;
-	// to save the answer of a previous popUp-Yes-No question
-	// boolean decision = false;
+
+	// initialize figure objects
+	Pawn pawn = new Pawn();
+	Rook rook = new Rook();
+	Knight knight = new Knight();
+	Bishop bishop = new Bishop();
+	Queen queen = new Queen();
+	King king = new King();
+
+	// initialize player objects
+	Player player1;
+	Player player2;
+
+	// TODO: 	-stepBack() does not work appropriately
+	// 			-player can jump to (on top on) his own figures and the player switches (but
+	// 			the move is (correctly) not made)
 
 	public void initialize() {
 		PopUp playerSet = new PopUp();
 		playerSet.createInputPopUp();
 		String[] players = playerSet.showInputPopUp();
-		player1Text.setText(players[0]);
-		player2Text.setText(players[1]);
+		player1 = new Player(1, players[0]);
+		player2 = new Player(2, players[1]);
 
-		// activity label
-		active1Label.setBackground(green);
-		active2Label.setBackground(red);
+		setPlayerNames();
+
+		setStatusLabelBackgrounds();
 
 		// set start button text
 		startButton.setText("START GAME");
@@ -154,10 +168,6 @@ public class MyController {
 			x = 0;
 			y += 45;
 		}
-		// (light)blue
-		player1 = new Background(new BackgroundFill(Color.TRANSPARENT, null, null));
-		// (light)red
-		player2 = new Background(new BackgroundFill(Color.TRANSPARENT, null, null));
 
 		// draw game field lines
 		for (int l = 0; l <= 360; l += 45) {
@@ -175,12 +185,12 @@ public class MyController {
 		// activePlayers king schach
 		for (int y = 1; y < 9; y++) {
 			for (int x = 1; x < 9; x++) {
-				if (gamefield[x][y] > 0 && gamefield[x][y] <= 6 && getInActivePlayer() == 1) {
-					if (checkSchach(giveIndex(x, y), getActivePlayer())) {
+				if (gamefield[x][y] > 0 && gamefield[x][y] <= 6 && getInActivePlayer() == player1) {
+					if (checkSchach(giveIndex(x, y), getActivePlayer().getId())) {
 						return true;
 					}
-				} else if (gamefield[x][y] >= 7 && getInActivePlayer() == 2) {
-					if (checkSchach(giveIndex(x, y), getActivePlayer())) {
+				} else if (gamefield[x][y] >= 7 && getInActivePlayer() == player2) {
+					if (checkSchach(giveIndex(x, y), getActivePlayer().getId())) {
 						return true;
 					}
 				}
@@ -201,26 +211,22 @@ public class MyController {
 			// player wants to select a figure to make a move
 			int tempX = giveXY(btnIndex)[0];
 			int tempY = giveXY(btnIndex)[1];
-			if (gamefield[tempX][tempY] > 0 && gamefield[tempX][tempY] < 7 && getActivePlayer() == 1) {
+			if (gamefield[tempX][tempY] > 0 && gamefield[tempX][tempY] < 7 && getActivePlayer() == player1) {
 				buttons[btnIndex].setStyle(player1SelectedButton);
-			} else if (gamefield[tempX][tempY] > 6 && getActivePlayer() == 2) {
+			} else if (gamefield[tempX][tempY] > 6 && getActivePlayer() == player2) {
 				buttons[btnIndex].setStyle(player2SelectedButton);
 			} else if (gamefield[tempX][tempY] == 0) {
 				// nothing
 				return;
 			} else {
 				PopUp info = new PopUp();
-				if (getActivePlayer() == 1) {
-					info.createInfoPopUp("Player " + player1Text.getText() + " is active!\nMake your move!");
-					info.showPopUp();
-				} else {
-					info.createInfoPopUp("Player " + player2Text.getText() + " is active!\nMake your move!");
-					info.showPopUp();
-				}
+				info.createInfoPopUp("Player " + getActivePlayer().getName() + " is active!\nMake your move!");
+				info.showPopUp();
+
 				return;
 			}
 			selectedButton[0] = btnIndex;
-			selectedButton[1] = getActivePlayer();
+			selectedButton[1] = getActivePlayer().getId();
 
 		} else if (selectedButton[0] > 0 && selectedButton[0] < 65) {
 			// player has already selected a figure and now wants to move it
@@ -252,7 +258,7 @@ public class MyController {
 				stepBack();
 				return;
 			}
-			if (checkSchach(btnIndex, getInActivePlayer())) {
+			if (checkSchach(btnIndex, getInActivePlayer().getId())) {
 				PopUp info = new PopUp();
 				info.createInfoPopUp("\"SCHACH!\"" + "\n\nCan you end the game?");
 				info.showPopUp();
@@ -267,11 +273,7 @@ public class MyController {
 					} else {
 						game_active = false;
 						PopUp ending = new PopUp();
-						if (getActivePlayer() == 1) {				
-							ending.createWinningPopUp(player1Text.getText());
-						} else {
-							ending.createWinningPopUp(player2Text.getText());
-						}
+						ending.createWinningPopUp(getActivePlayer().getName());
 						ending.showPopUp();
 					}
 
@@ -284,6 +286,23 @@ public class MyController {
 			// end the move --> switch player
 			switchPlayer();
 		}
+	}
+
+	/**
+	 * Sets the red or green background to show what player is active
+	 */
+	private void setStatusLabelBackgrounds() {
+		// activity label
+		active1Label.setBackground(player1.getStatusBackground());
+		active2Label.setBackground(player2.getStatusBackground());
+	}
+
+	/**
+	 * Sets the active player names to the label
+	 */
+	private void setPlayerNames() {
+		player1Text.setText(player1.getName());
+		player2Text.setText(player2.getName());
 	}
 
 	public void stepBack() {
@@ -314,7 +333,7 @@ public class MyController {
 		lastMove[2] = newX;
 		lastMove[3] = newY;
 
-		if (getActivePlayer() == 1) {
+		if (getActivePlayer() == player1) {
 			if (gamefield[newX][newY] > 6 || gamefield[newX][newY] == 0) {
 				gamefield[newX][newY] = gamefield[oldX][oldY];
 				gamefield[oldX][oldY] = 0;
@@ -331,27 +350,12 @@ public class MyController {
 	}
 
 	/**
-	 * Switches the active player visually
+	 * Switches the active player
 	 */
-	protected void updateActiveLabel() {
-		if (active1Label.getBackground().equals(red)) {
-			active1Label.setBackground(green);
-			active2Label.setBackground(red);
-		} else {
-			active1Label.setBackground(red);
-			active2Label.setBackground(green);
-		}
-	}
-
 	public void switchPlayer() {
-		if (player1_active) {
-			player1_active = false;
-			player2_active = true;
-		} else {
-			player1_active = true;
-			player2_active = false;
-		}
-		updateActiveLabel();
+		player1.switchStatus();
+		player2.switchStatus();
+		setStatusLabelBackgrounds();
 	}
 
 	/**
@@ -396,10 +400,14 @@ public class MyController {
 	/**
 	 * Tries to move the given figure to the given position (actually moves nothing)
 	 * 
-	 * @return true or false, depending on if the move is valid or not
+	 * @param oldX figures old x position
+	 * @param oldY figures old y position
+	 * @param newX figures new x position
+	 * @param newY figures new y position
+	 * @return true or false, depending on if the move is valid or not (depends not
+	 *         on if the position is blocked)
 	 */
 	public boolean tryMove(int oldX, int oldY, int newX, int newY) {
-		boolean success = false;
 		int type = gamefield[oldX][oldY];
 
 		if (type > 6)
@@ -409,288 +417,48 @@ public class MyController {
 		/////////////////////////////////////////////////////////////////////////////
 		case 1: {
 			// Bauer:
-			// 1 oder 2 Felder nach vorn
-			if (oldX == newX) {
-				// zu weit?
-				int temp = oldY - newY;
-				if (temp < 0)
-					temp *= (-1);
-				if (temp > 2) {
-					break;
-				}
-				if (oldY < newY && getActivePlayer() == 2) {
-					// player 2 tries to move backwards (down)
-					break;
-				} else if (oldY > newY && getActivePlayer() == 1) {
-					// player 1 tries to move backwards (up)
-					break;
-				}
-				if (gamefield[newX][newY] == 0) {
-					success = true;
-				}
-			} else {
-				// Sprung schraeg nach vorn (rechts, links)
-				if (getActivePlayer() == 1) {
-					if ((newX == oldX - 1 || newX == oldX + 1) && newY == oldY + 1) {
-						// valid distance & direction
-						if (gamefield[newX][newY] > 6) {
-							success = true;
-						}
-					}
-				} else if (getActivePlayer() == 2) {
-					if ((newX == oldX - 1 || newX == oldX + 1) && newY + 1 == oldY) {
-						// valid distance & direction
-						if (gamefield[newX][newY] < 7 && gamefield[newX][newY] > 0) {
-							success = true;
-						}
-					}
-				}
-			}
+			if (pawn.tryMove(oldX, oldY, newX, newY, getActivePlayer(), gamefield))
+				return true;
+
 			break;
 		}
 		/////////////////////////////////////////////////////////////////////////////
 		case 2: {
 			// Turm
-			if (newX == oldX) {
-				// moves within y
-				int counter = 0;
-				if (newY > oldY) {
-					for (int y = oldY + 1; y < newY; y++) {
-						if (gamefield[newX][y] > 0) {
-							counter++;
-						}
-					}
-				} else if (newY < oldY) {
-					for (int y = oldY - 1; y > newY; y--) {
-						if (gamefield[newX][y] > 0) {
-							counter++;
-						}
-					}
-				}
-				if (counter > 0) {
-					break;
-				} else {
-					// way is free for the figure to move
-					success = true;
-				}
-			} else if (newY == oldY) {
-				// moves within x
-				int counter = 0;
-				if (getActivePlayer() == 1) {
-					for (int x = oldX + 1; x < newX; x++) {
-						if (gamefield[x][newY] > 0) {
-							counter++;
-						}
-					}
-				} else if (getActivePlayer() == 2) {
-					for (int x = oldX - 1; x > newX; x--) {
-						if (gamefield[x][newY] > 0) {
-							counter++;
-						}
-					}
-				}
-				if (counter > 0) {
-					break;
-				} else {
-					// way is free for the figure to move
-					success = true;
-				}
-			} else {
-				break;
-			}
+			if (rook.tryMove(oldX, oldY, newX, newY, getActivePlayer(), gamefield))
+				return true;
+
+			break;
 		}
 		/////////////////////////////////////////////////////////////////////////////
 		case 3: {
 			// Pferd
-			if ((oldY + 1 == newY && oldX + 2 == newX) || (oldY + 2 == newY && oldX + 1 == newX)) {
-				// down, right, right && down, down, right
-				success = true;
-				break;
-			} else if ((oldY + 1 == newY && oldX - 2 == newX) || (oldY + 2 == newY && oldX - 1 == newX)) {
-				// down, left, left && down, down, left
-				success = true;
-				break;
-			} else if ((oldY - 1 == newY && oldX + 2 == newX) || (oldY - 2 == newY && oldX + 1 == newX)) {
-				// up, right, right && up, up, right
-				success = true;
-				break;
-			} else if ((oldY - 1 == newY && oldX - 2 == newX) || (oldY - 2 == newY && oldX - 1 == newX)) {
-				// up, left, left && up, up, left
-				success = true;
-				break;
-			} else {
-				break;
-			}
+			if (knight.tryMove(oldX, oldY, newX, newY, getActivePlayer(), gamefield))
+				return true;
+
+			break;
 		}
 		/////////////////////////////////////////////////////////////////////////////
 		case 4: {
 			// Springer
-			int temp1 = oldX - newX;
-			int temp2 = oldY - newY;
-			if (temp1 < 0)
-				temp1 *= (-1);
-			if (temp2 < 0)
-				temp2 *= (-1);
-
-			if (temp1 == temp2) {
-				// move is diagonally
-				// up, left
-				int counter = 0;
-				if (newY < oldY && newX < oldX) {
-					for (int k = 1; k < temp1; k++) {
-						if (gamefield[oldX - k][oldY - k] > 0)
-							counter++;
-					}
-				}
-				// up, right
-				if (newY < oldY && newX > oldX) {
-					for (int k = 1; k < temp1; k++) {
-						if (gamefield[oldX + k][oldY - k] > 0)
-							counter++;
-					}
-				}
-				// down, left
-				if (newY > oldY && newX < oldX) {
-					for (int k = 1; k < temp1; k++) {
-						if (gamefield[oldX - k][oldY + k] > 0)
-							counter++;
-					}
-				}
-				// down, right
-				if (newY > oldY && newX > oldX) {
-					for (int k = 1; k < temp1; k++) {
-						if (gamefield[oldX + k][oldY + k] > 0)
-							counter++;
-					}
-				}
-				if (counter > 0) {
-					break;
-				} else {
-					// way is free for the figure to move
-					success = true;
-				}
-			} else {
-				break;
-			}
+			if (bishop.tryMove(oldX, oldY, newX, newY, getActivePlayer(), gamefield))
+				return true;
 
 			break;
 		}
 		/////////////////////////////////////////////////////////////////////////////
 		case 5: {
-			// Dame = Turm oder Springer
-			// you could create func for Turm and Springer and just call it here, to safe
-			// some lines
-			// (TURM:)
-			if (newX == oldX) {
-				// moves within y
-				int counter = 0;
-				if (newY > oldY) {
-					for (int y = oldY + 1; y < newY; y++) {
-						if (gamefield[newX][y] > 0) {
-							counter++;
-						}
-					}
-				} else if (newY < oldY) {
-					for (int y = oldY - 1; y > newY; y--) {
-						if (gamefield[newX][y] > 0) {
-							counter++;
-						}
-					}
-				}
-				if (counter > 0) {
-					break;
-				} else {
-					// way is free for the figure to move
-					success = true;
-				}
-			} else if (newY == oldY) {
-				// moves within x
-				int counter = 0;
-				if (newX > oldX) {
-					for (int x = oldX + 1; x < newX; x++) {
-						if (gamefield[x][newY] > 0) {
-							counter++;
-						}
-					}
-				} else if (oldX > newX) {
-					for (int x = oldX - 1; x > newX; x--) {
-						if (gamefield[x][newY] > 0) {
-							counter++;
-						}
-					}
-				}
-				if (counter > 0) {
-					break;
-				} else {
-					// way is free for the figure to move
-					success = true;
-				}
-			} else {
-				// (SPRINGER:)
-				int temp1 = oldX - newX;
-				int temp2 = oldY - newY;
-				if (temp1 < 0)
-					temp1 *= (-1);
-				if (temp2 < 0)
-					temp2 *= (-1);
+			// queen = rook oder bishop
+			if (queen.tryMove(oldX, oldY, newX, newY, getActivePlayer(), gamefield, rook, bishop))
+				return true;
 
-				if (temp1 == temp2) {
-					// move is diagonally
-					// up, left
-					int counter = 0;
-					if (newY < oldY && newX < oldX) {
-						for (int k = 1; k < temp1; k++) {
-							if (gamefield[oldX - k][oldY - k] > 0)
-								counter++;
-						}
-					}
-					// up, right
-					if (newY < oldY && newX > oldX) {
-						for (int k = 1; k < temp1; k++) {
-							if (gamefield[oldX + k][oldY - k] > 0)
-								counter++;
-						}
-					}
-					// down, left
-					if (newY > oldY && newX < oldX) {
-						for (int k = 1; k < temp1; k++) {
-							if (gamefield[oldX - k][oldY + k] > 0)
-								counter++;
-						}
-					}
-					// down, right
-					if (newY > oldY && newX > oldX) {
-						for (int k = 1; k < temp1; k++) {
-							if (gamefield[oldX + k][oldY + k] > 0)
-								counter++;
-						}
-					}
-					if (counter > 0) {
-						break;
-					} else {
-						// way is free for the figure to move
-						success = true;
-					}
-				}
-			}
 			break;
 		}
 		/////////////////////////////////////////////////////////////////////////////
 		case 6: {
 			// Koenig
-			// zu weit?
-			int temp = oldY - newY;
-			int temp2 = oldX - newX;
-			if (temp2 < 0)
-				temp2 *= (-1);
-			if (temp < 0)
-				temp *= (-1);
-
-			if (temp > 1 || temp2 > 1) {
-				break;
-			}
-
-			success = true;
+			if (king.tryMove(oldX, oldY, newX, newY, getActivePlayer(), gamefield))
+				return true;
 
 			break;
 		}
@@ -702,12 +470,7 @@ public class MyController {
 			return false;
 		}
 		}
-
-		if (success) {
-			return true;
-		} else {
-			return false;
-		}
+		return false;
 	}
 
 	/**
@@ -739,11 +502,11 @@ public class MyController {
 			for (int x = kingX - 1; x <= kingX + 1; x++) {
 				// look for inactive player, because if this is called the player hasn't changed
 				// yet
-				if (gamefield[x][y] > -1 && gamefield[x][y] < 7 && getInActivePlayer() == 2) {
+				if (gamefield[x][y] > -1 && gamefield[x][y] < 7 && getInActivePlayer() == player2) {
 					posList[counter][0] = x;
 					posList[counter][1] = y;
 					counter++;
-				} else if ((gamefield[x][y] == 0 || gamefield[x][y] > 6) && getInActivePlayer() == 1) {
+				} else if ((gamefield[x][y] == 0 || gamefield[x][y] > 6) && getInActivePlayer() == player1) {
 					posList[counter][0] = x;
 					posList[counter][1] = y;
 					counter++;
@@ -759,16 +522,14 @@ public class MyController {
 
 			for (int y = 1; y < 9; y++) {
 				for (int x = 1; x < 9; x++) {
-					if (gamefield[x][y] > 0 && gamefield[x][y] < 7 && getActivePlayer() == 1) {
-//						System.out.println("trying move from: " + x + "|" + y + " to " + posX + "|" + posY + "!");
+					if (gamefield[x][y] > 0 && gamefield[x][y] < 7 && getActivePlayer() == player1) {
 						if (tryMove(x, y, posX, posY)) {
 							// potential king position is covered --> screw
 							freeToMove = false;
 						} else {
 							// potential king position is free for current enemy figure
 						}
-					} else if (gamefield[x][y] > 6 && getActivePlayer() == 2) {
-//						System.out.println("trying move from: " + x + "|" + y + " to " + posX + "|" + posY);
+					} else if (gamefield[x][y] > 6 && getActivePlayer() == player2) {
 						if (tryMove(x, y, posX, posY)) {
 							// potential king position is covered
 							freeToMove = false;
@@ -783,8 +544,6 @@ public class MyController {
 				return false;
 
 		}
-
-		// System.out.println("" + Arrays.deepToString(posList));
 
 		return true;
 	}
@@ -846,29 +605,29 @@ public class MyController {
 		if (game_active) {
 			startButton.setText("START GAME");
 			game_active = false;
-			active1Label.setBackground(red);
-			active2Label.setBackground(red);
+			player1.setActive(false);
+			player2.setActive(false);
+			setStatusLabelBackgrounds();
 			infoLabel.setText("PRESS START");
 			prepareGameField();
 			setPlayers();
 		} else {
 			startButton.setText("RESTART GAME");
 			infoLabel.setText("LET'S PLAY");
-			globalVals();
+			resetGlobalVars();
 			game_active = true;
 			prepareGameField();
 			setPlayers();
-			player1_active = true;
+			player1.setActive(true);
 			// activity label
-			active1Label.setBackground(green);
-			active2Label.setBackground(red);
+			setStatusLabelBackgrounds();
 		}
 	}
 
 	/**
 	 * Resets all the global values in order to restart the game
 	 */
-	public void globalVals() {
+	public void resetGlobalVars() {
 		selectedButton[0] = 0;
 		selectedButton[1] = 0;
 		problemKing[0] = 0;
@@ -903,48 +662,58 @@ public class MyController {
 					}
 				}
 				buttons[z].setGraphic(null);
-				if (gamefield[k][i] <= 6 && gamefield[k][i] > 0) {
-					// buttons[z].setBackground(player1);
-					if (gamefield[k][i] == 1) {
-						buttons[z].setGraphic(new ImageView(new Image(
-								getClass().getResource("/de/ifd/mad/SimpleChess/images/bauer1.png").toString())));
-					} else if (gamefield[k][i] == 2) {
-						buttons[z].setGraphic(new ImageView(new Image(
-								getClass().getResource("/de/ifd/mad/SimpleChess/images/turm1.png").toString())));
-					} else if (gamefield[k][i] == 3) {
-						buttons[z].setGraphic(new ImageView(new Image(
-								getClass().getResource("/de/ifd/mad/SimpleChess/images/pferd1.png").toString())));
-					} else if (gamefield[k][i] == 4) {
-						buttons[z].setGraphic(new ImageView(new Image(getClass()
-								.getResource("/de/ifd/mad/SimpleChess/images/springer1.png").toString())));
-					} else if (gamefield[k][i] == 5) {
-						buttons[z].setGraphic(new ImageView(new Image(
-								getClass().getResource("/de/ifd/mad/SimpleChess/images/dame1.png").toString())));
-					} else if (gamefield[k][i] == 6) {
-						buttons[z].setGraphic(new ImageView(new Image(
-								getClass().getResource("/de/ifd/mad/SimpleChess/images/king1.png").toString())));
-					}
-				} else if (gamefield[k][i] >= 7) {
-					// buttons[z].setBackground(player2);
-					if (gamefield[k][i] == 7) {
-						buttons[z].setGraphic(new ImageView(new Image(
-								getClass().getResource("/de/ifd/mad/SimpleChess/images/bauer2.png").toString())));
-					} else if (gamefield[k][i] == 8) {
-						buttons[z].setGraphic(new ImageView(new Image(
-								getClass().getResource("/de/ifd/mad/SimpleChess/images/turm2.png").toString())));
-					} else if (gamefield[k][i] == 9) {
-						buttons[z].setGraphic(new ImageView(new Image(
-								getClass().getResource("/de/ifd/mad/SimpleChess/images/pferd2.png").toString())));
-					} else if (gamefield[k][i] == 10) {
-						buttons[z].setGraphic(new ImageView(new Image(getClass()
-								.getResource("/de/ifd/mad/SimpleChess/images/springer2.png").toString())));
-					} else if (gamefield[k][i] == 11) {
-						buttons[z].setGraphic(new ImageView(new Image(
-								getClass().getResource("/de/ifd/mad/SimpleChess/images/dame2.png").toString())));
-					} else if (gamefield[k][i] == 12) {
-						buttons[z].setGraphic(new ImageView(new Image(
-								getClass().getResource("/de/ifd/mad/SimpleChess/images/king2.png").toString())));
-					}
+				switch (gamefield[k][i]) {
+				case 1: {
+					buttons[z].setGraphic(new ImageView(pawn.getBlack()));
+					break;
+				}
+				case 2: {
+					buttons[z].setGraphic(new ImageView(rook.getBlack()));
+					break;
+				}
+				case 3: {
+					buttons[z].setGraphic(new ImageView(knight.getBlack()));
+					break;
+				}
+				case 4: {
+					buttons[z].setGraphic(new ImageView(bishop.getBlack()));
+					break;
+				}
+				case 5: {
+					buttons[z].setGraphic(new ImageView(queen.getBlack()));
+					break;
+				}
+				case 6: {
+					buttons[z].setGraphic(new ImageView(king.getBlack()));
+					break;
+				}
+				case 7: {
+					buttons[z].setGraphic(new ImageView(pawn.getWhite()));
+					break;
+				}
+				case 8: {
+					buttons[z].setGraphic(new ImageView(rook.getWhite()));
+					break;
+				}
+				case 9: {
+					buttons[z].setGraphic(new ImageView(knight.getWhite()));
+					break;
+				}
+				case 10: {
+					buttons[z].setGraphic(new ImageView(bishop.getWhite()));
+					break;
+				}
+				case 11: {
+					buttons[z].setGraphic(new ImageView(queen.getWhite()));
+					break;
+				}
+				case 12: {
+					buttons[z].setGraphic(new ImageView(king.getWhite()));
+					break;
+				}
+				default: {
+					break;
+				}
 				}
 				buttons[z].setStyle(playerNonSelectedButton);
 				z++;
@@ -955,27 +724,27 @@ public class MyController {
 	/**
 	 * Returns the currently inactive player
 	 * 
-	 * @return
+	 * @return currently inactive player object instance
 	 */
-	public int getInActivePlayer() {
-		if (player1_active)
-			return 2;
-		if (player2_active)
-			return 1;
-		return -1;
+	public Player getInActivePlayer() {
+		if (player1.isActive())
+			return player2;
+		if (player2.isActive())
+			return player1;
+		return null;
 	}
 
 	/**
 	 * Returns the currently active player
 	 * 
-	 * @return
+	 * @return currently inactive player object instance
 	 */
-	public int getActivePlayer() {
-		if (player1_active)
-			return 1;
-		if (player2_active)
-			return 2;
-		return -1;
+	public Player getActivePlayer() {
+		if (player1.isActive())
+			return player1;
+		if (player2.isActive())
+			return player2;
+		return null;
 	}
 
 	public void printField() {
