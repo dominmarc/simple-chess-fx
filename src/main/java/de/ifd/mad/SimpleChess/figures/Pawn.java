@@ -74,7 +74,7 @@ public class Pawn {
 		return false;
 	}
 
-	// Getters und Setters
+	// Getters and Setters
 	public Image getWhite() {
 		return white;
 	}
