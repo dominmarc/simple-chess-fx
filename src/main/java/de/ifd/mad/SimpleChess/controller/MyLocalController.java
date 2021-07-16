@@ -25,13 +25,12 @@ import javafx.scene.shape.Line;
 import javafx.stage.Stage;
 
 /**
- * Controller for new simplechess game
+ * Local multi-player controller for new simplechess game
  * 
  * @author MAD
  * @author iFD
  */
-
-public class MyController {
+public class MyLocalController {
 	@FXML
 	AnchorPane mypane, buttonPane;
 	@FXML

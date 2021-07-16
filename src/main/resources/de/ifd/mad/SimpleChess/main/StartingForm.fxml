@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+
+
+<AnchorPane fx:id="backPane" prefHeight="525.0" prefWidth="510.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="de.ifd.mad.SimpleChess.controller.StartingController">
+   <children>
+      <Label fx:id="topBar" prefHeight="30.0" prefWidth="510.0" text="SimpleChess" />
+      <Button fx:id="loMuButton" layoutX="97.0" layoutY="195.0" mnemonicParsing="false" onMouseClicked="#loMuButtonClicked" text="Local Multiplayer" />
+      <Button fx:id="LoNeButton" layoutX="297.0" layoutY="195.0" mnemonicParsing="false" onMouseClicked="#LoNeButtonClicked" text="Local Network" />
+      <Button fx:id="closeButton" layoutX="480.0" mnemonicParsing="false" onMouseClicked="#closeButtonClicked" prefHeight="30.0" prefWidth="30.0" text="X" />
+      <Button fx:id="minButton" layoutX="450.0" mnemonicParsing="false" onMouseClicked="#minButtonClicked" prefHeight="30.0" prefWidth="30.0" text="_" />
+   </children>
+</AnchorPane>

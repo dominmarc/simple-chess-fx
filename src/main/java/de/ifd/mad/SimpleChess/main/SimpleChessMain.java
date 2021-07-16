@@ -42,7 +42,7 @@ public class SimpleChessMain extends Application {
 	@Override
 	public void start(Stage primaryStage) throws Exception {
 		// setting the scene based on a fxml file
-		Parent root = FXMLLoader.load(getClass().getResource("Chess.fxml"));
+		Parent root = FXMLLoader.load(getClass().getResource("StartingForm.fxml"));
 		Scene myScene = new Scene(root);
 		// set transparent background
 		myScene.setFill(Color.TRANSPARENT);
@@ -66,8 +66,7 @@ public class SimpleChessMain extends Application {
 		primaryStage.setScene(myScene);
 		primaryStage.getIcons()
 				.add(new Image(getClass().getResource("/de/ifd/mad/SimpleChess/images/king1.png").toString()));
-		primaryStage.getScene().getStylesheets().add(getClass().getResource("StyleFile.css").toString());
-		primaryStage.setTitle("SimpleSudoku");
+		primaryStage.getScene().getStylesheets().add(getClass().getResource("StartingFileStyle.css").toString());
 		primaryStage.setResizable(false);
 		primaryStage.show();
 	}
