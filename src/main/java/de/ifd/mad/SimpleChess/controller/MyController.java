@@ -41,7 +41,7 @@ public class MyController {
 	@FXML
 	Label active1Label, active2Label, infoLabel, topBar;
 	@FXML
-	Button startButton;
+	Button startButton, surrenderButton;
 	@FXML
 	Label player1Text, player2Text;
 
@@ -83,7 +83,7 @@ public class MyController {
 	Background black;
 
 	// check if the game is active
-	boolean game_active = false;
+	boolean gameActive = false;
 
 	// initialize figure objects
 	Pawn pawn = new Pawn();
@@ -149,7 +149,7 @@ public class MyController {
 				// set event if user clicks on game field (button)
 				buttons[btnIndex].setOnMouseClicked(e -> {
 					// check if game is running
-					if (!game_active) {
+					if (!gameActive) {
 						PopUp info = new PopUp();
 						info.createInfoPopUp("Please start the game!");
 						info.showPopUp();
@@ -288,7 +288,7 @@ public class MyController {
 					if (decision.showPopUp()) {
 						switchPlayer();
 					} else {
-						game_active = false;
+						gameActive = false;
 						PopUp ending = new PopUp();
 						ending.createWinningPopUp(getActivePlayer().getName());
 						ending.showPopUp();
@@ -653,9 +653,9 @@ public class MyController {
 	 * Starts the game
 	 */
 	public void startButtonClicked() {
-		if (game_active) {
+		if (gameActive) {
 			startButton.setText("START GAME");
-			game_active = false;
+			gameActive = false;
 			player1.setActive(false);
 			player2.setActive(false);
 			setStatusLabelBackgrounds();
@@ -666,20 +666,33 @@ public class MyController {
 			startButton.setText("RESTART GAME");
 			infoLabel.setText("LET'S PLAY");
 			resetGlobalVars();
-			game_active = true;
+			gameActive = true;
 			prepareGameField();
 			setPlayers();
 			player1.setActive(true);
+			player2.setActive(false);
 			// activity label
 			setStatusLabelBackgrounds();
 		}
 	}
 
 	/**
+	 * Ends the game, shows the winner
+	 */
+	public void surrenderButtonClicked() {
+		gameActive = false;
+		PopUp ending = new PopUp();
+		ending.createWinningPopUp(getInActivePlayer().getName());
+		ending.showPopUp();
+		startButton.setText("START GAME");
+		infoLabel.setText("PRESS START");
+	}
+
+	/**
 	 * Pops up a window that asks for player name input
 	 */
 	private void askForPlayers() {
-		if (game_active) {
+		if (gameActive) {
 			PopUp info = new PopUp();
 			info.createInfoPopUp("Game is already active!\nEnd the game!");
 			info.showPopUp();
