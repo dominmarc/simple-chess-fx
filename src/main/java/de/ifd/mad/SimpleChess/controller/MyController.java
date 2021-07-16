@@ -186,11 +186,8 @@ public class MyController {
 	private boolean checkOwnSchach() {
 		for (int y = 1; y < 9; y++) {
 			for (int x = 1; x < 9; x++) {
-				if (gamefield[x][y] > 0 && gamefield[x][y] <= 6 && getInActivePlayer() == player1) {
-					if (checkSchach(giveIndex(x, y), getActivePlayer())) {
-						return true;
-					}
-				} else if (gamefield[x][y] >= 7 && getInActivePlayer() == player2) {
+				if (gamefield[x][y] > 0 && gamefield[x][y] <= 6 && getInActivePlayer() == player1
+						|| (gamefield[x][y] >= 7 && getInActivePlayer() == player2)) {
 					if (checkSchach(giveIndex(x, y), getActivePlayer())) {
 						return true;
 					}
@@ -202,9 +199,9 @@ public class MyController {
 
 	/**
 	 * Function that starts if a player clicks on a certain (btnIndex related)
-	 * button
+	 * button (game field)
 	 * 
-	 * @param btnIndex identifies the button the player clicked on
+	 * @param btnIndex identifies the button (game field) the player clicked on
 	 */
 	private void clickOnField(int btnIndex) {
 
@@ -296,10 +293,10 @@ public class MyController {
 						ending.createWinningPopUp(getActivePlayer().getName());
 						ending.showPopUp();
 					}
-
 					return;
 				}
 
+				// enemy is not set to "matt"
 				switchPlayer();
 				return;
 			}
@@ -343,13 +340,16 @@ public class MyController {
 	 * @param player object to identify the related player
 	 * @return true if the field is blocked, false if it is not blocked
 	 */
-	private boolean checkIfFieldBlocked(int newX, int newY, Player player) {
-		int fieldVal = gamefield[newX][newY];
+	private boolean checkIfFieldBlocked(int x, int y, Player player) {
+		if (x > 9 || y > 9 || x < 0 || y < 0)
+			return true;
 
-		if (player == player1 && (fieldVal == 0 || fieldVal > 6))
+		int fieldValue = gamefield[x][y];
+
+		if (fieldValue > -1 && fieldValue < 7 && player == player2)
 			return false;
 
-		if (player == player2 && (fieldVal == 0 || fieldVal < 7))
+		if ((fieldValue == 0 || (fieldValue < 13 && fieldValue > 6)) && player == player1)
 			return false;
 
 		return true;
@@ -545,19 +545,22 @@ public class MyController {
 
 		int kingX = problemKing[0];
 		int kingY = problemKing[1];
+		Player insultedPlayer;
+
+		if (gamefield[kingX][kingY] == 6)
+			insultedPlayer = player1;
+		else
+			insultedPlayer = player2;
+
 		int[][] posList = new int[8][2]; // max 8 positions with 2 values (x,y)
 		int counter = 0; // counts the number of positions
 
 		// 1)list up all positions the king can move to
 		for (int y = kingY - 1; y <= kingY + 1; y++) { // loop around the king
 			for (int x = kingX - 1; x <= kingX + 1; x++) {
-				// look for inactive player, because if this is called the player hasn't changed
-				// yet
-				if (gamefield[x][y] > -1 && gamefield[x][y] < 7 && getInActivePlayer() == player2) {
-					posList[counter][0] = x;
-					posList[counter][1] = y;
-					counter++;
-				} else if ((gamefield[x][y] == 0 || gamefield[x][y] > 6) && getInActivePlayer() == player1) {
+				// king can just move one field to each side, so just check if that field is
+				// blocked
+				if (!checkIfFieldBlocked(x, y, insultedPlayer)) {
 					posList[counter][0] = x;
 					posList[counter][1] = y;
 					counter++;
@@ -565,24 +568,22 @@ public class MyController {
 			}
 		}
 
-		// 2)go threw all the positions and scratch them if they are free to move to
+		// 2)go threw all the positions the king can move to and scratch them if they
+		// are free to move to
 		for (int k = 0; k <= counter - 1; k++) {
 			int posX = posList[k][0];
 			int posY = posList[k][1];
+
+			// Indicates whether the king is able to make a move (escape "schach") or not
 			boolean freeToMove = true;
 
 			for (int y = 1; y < 9; y++) {
 				for (int x = 1; x < 9; x++) {
-					if (gamefield[x][y] > 0 && gamefield[x][y] < 7 && getActivePlayer() == player1) {
+					// just go through player1 or player2 positions
+					if (gamefield[x][y] > 0 && gamefield[x][y] < 7 && getActivePlayer() == player1
+							|| (gamefield[x][y] > 6 && getActivePlayer() == player2)) {
 						if (tryMove(x, y, posX, posY)) {
 							// potential king position is covered --> screw
-							freeToMove = false;
-						} else {
-							// potential king position is free for current enemy figure
-						}
-					} else if (gamefield[x][y] > 6 && getActivePlayer() == player2) {
-						if (tryMove(x, y, posX, posY)) {
-							// potential king position is covered
 							freeToMove = false;
 						} else {
 							// potential king position is free for current enemy figure
@@ -593,7 +594,6 @@ public class MyController {
 
 			if (freeToMove)
 				return false;
-
 		}
 
 		return true;
@@ -679,6 +679,12 @@ public class MyController {
 	 * Pops up a window that asks for player name input
 	 */
 	private void askForPlayers() {
+		if (game_active) {
+			PopUp info = new PopUp();
+			info.createInfoPopUp("Game is already active!\nEnd the game!");
+			info.showPopUp();
+			return;
+		}
 		PopUp playerSet = new PopUp();
 		playerSet.createInputPopUp();
 		String[] players = playerSet.showInputPopUp();
