@@ -294,24 +294,27 @@ public class MyLocalNetworkController {
 					// checkMatt will yet not cover moves from not_king_figures to block "matt"
 					// Workaround for now: ask the player if there is a way to block "matt"
 					PopUp decision = new PopUp();
-					decision.createDecisionPopUp("Is there any way to block the enemy from setting you Matt?");
-					if (decision.showPopUp()) {
-						switchPlayer();
-					} else {
+					decision.createDecisionPopUp("Is there any way the enemy could escape from setting you Matt?");
+					if (!decision.showPopUp()) {
 						gameActive = false;
 						PopUp ending = new PopUp();
 						ending.createWinningPopUp(getActivePlayer().getName());
 						ending.showPopUp();
 					}
-					return;
 				}
 
-				// enemy is not set to "matt"
+				// enemy is not set to "matt", but "schach" --> send telegram and switch player
+				sendString(getChannel(), getPrefix(2)
+						+ generateMoveMsg(lastMove[0], lastMove[1], lastMove[2], lastMove[3], true, false));
+
 				switchPlayer();
 				return;
 			}
 
-			// no one set to "schach", end the move and switch player
+			// no one set to "schach", send telegram and switch player
+			sendString(getChannel(),
+					getPrefix(2) + generateMoveMsg(lastMove[0], lastMove[1], lastMove[2], lastMove[3], false, false));
+
 			switchPlayer();
 		}
 	}
@@ -493,6 +496,32 @@ public class MyLocalNetworkController {
 		System.out.println("Server thread started");
 	}
 
+	private String generateMoveMsg(int oldX, int oldY, int newX, int newY, boolean schach, boolean matt) {
+		String message = "";
+		if (oldX < 10)
+			message += "0";
+		message += oldX + "";
+		if (oldY < 10)
+			message += "0";
+		message += oldY + "";
+		if (newX < 10)
+			message += "0";
+		message += newX + "";
+		if (newY < 10)
+			message += "0";
+		message += newY;
+
+		if (schach)
+			message += "01";
+		else
+			message += "00";
+		if (matt)
+			message += "01";
+		else
+			message += "00";
+		return message;
+	}
+
 	private void receiveString(SocketChannel channel) {
 		// Size of the File Buffer
 		int bufferSize = 8192;
@@ -548,7 +577,7 @@ public class MyLocalNetworkController {
 	/**
 	 * Acts on received messages</br>
 	 * Structure: </br>
-	 * [Numer] represents the method</br>
+	 * [Number] represents the method</br>
 	 * [Zero] represents the client in sending direction</br>
 	 * Example:</br>
 	 * --> 01 --> Method 1 (second Player Name) is send to Server from Client</br>
@@ -567,7 +596,7 @@ public class MyLocalNetworkController {
 			// Server replies with his player name and starts the game on his application
 			player2 = new Player(2, message);
 			setPlayerNames();
-			Platform.runLater(() -> sendString(serverChannel, "10" + player1.getName()));
+			Platform.runLater(() -> sendString(getChannel(), getPrefix(1) + player1.getName()));
 			// Game starts here for server
 			startGame();
 			break;
@@ -575,17 +604,80 @@ public class MyLocalNetworkController {
 
 		// Server -> Client
 		case "10": {
-			// Client recieves servers player name and starts the game on his application
+			// Client receives servers player name and starts the game on his application
 			player1 = new Player(1, message);
 			setPlayerNames();
 			// Game starts here for client
 			startGame();
 			break;
 		}
+
+		// Client --> Server
+		case "02": {
+			// Server receives a move --> has to update its gamefield
+			updateGamefield(message);
+			break;
+		}
+
+		// Server --> Client
+		case "20": {
+			// Client receives a move --> has to update its gamefield
+			updateGamefield(message);
+			break;
+		}
+
+		case "03": {
+			//
+
+			break;
+		}
+		case "30": {
+			//
+
+			break;
+		}
 		default: {
 			break;
 		}
 		}
+	}
+
+	/**
+	 * Updates the gamefield internally and visually according to the enemies
+	 * move</br>
+	 * Structure: oldX oldY newX newY schach matt --> 0X 0X 0Y 0Y 01 00-->
+	 * 0X0X0Y0Y0100</br>
+	 * Example: move from x:5,y:6 to x:3,y:11 with info schach:yes, matt:no -->
+	 * "050603110100"</br>
+	 * 
+	 * @param telegramMsg provides information about the enemies move
+	 */
+	private void updateGamefield(String telegramMsg) {
+		int oldX, oldY, newX, newY;
+		int schach, matt;
+		oldX = Integer.valueOf(telegramMsg.substring(0, 2));
+		oldY = Integer.valueOf(telegramMsg.substring(2, 4));
+		newX = Integer.valueOf(telegramMsg.substring(4, 6));
+		newY = Integer.valueOf(telegramMsg.substring(6, 8));
+		schach = Integer.valueOf(telegramMsg.substring(8, 10));
+		matt = Integer.valueOf(telegramMsg.substring(10, telegramMsg.length()));
+
+		gamefield[newX][newY] = gamefield[oldX][oldY];
+		gamefield[oldX][oldY] = 0;
+
+		if (schach == 1) {
+			PopUp info = new PopUp();
+			info.createInfoPopUp("\"SCHACH!\"" + "\n\nOh no, will he end the game?");
+			info.showPopUp();
+		}
+
+		if (matt == 1) {
+
+		}
+
+		printField();
+		setPlayers();
+		switchPlayer();
 	}
 
 	private void startGame() {
@@ -901,7 +993,7 @@ public class MyLocalNetworkController {
 
 		if (clientState == 1) {
 			player2 = new Player(2, players[0]);
-			sendString(clientChannel, "01" + player2.getName());
+			sendString(getChannel(), getPrefix(1) + player2.getName());
 		}
 
 	}
@@ -1070,10 +1162,13 @@ public class MyLocalNetworkController {
 		}
 	}
 
+	/**
+	 * Checks if your move is locked because the opponent player is active or not
+	 * 
+	 * @return true if your move should be locked and false if not
+	 */
 	private boolean moveLock() {
-		if (clientState == 1 && getActivePlayer() == player2)
-			return false;
-		if (clientState == 2 && getActivePlayer() == player1)
+		if (clientState == 1 && getActivePlayer() == player2 || (clientState == 2 && getActivePlayer() == player1))
 			return false;
 		return true;
 	}
@@ -1101,6 +1196,36 @@ public class MyLocalNetworkController {
 			return player1;
 		if (player2.isActive())
 			return player2;
+		return null;
+	}
+
+	/**
+	 * Methods: </br>
+	 * 1 - exchange player names</br>
+	 * 2 - exchange figure moves</br>
+	 * 3 - exchange winner</br>
+	 * 4 - exchange surrender
+	 * 
+	 * @param method the method to be used in telegram
+	 * @return correct (clientState related) telegram prefix
+	 */
+	private String getPrefix(int method) {
+		if (clientState == 1)
+			return ("0" + method);
+		if (clientState == 2)
+			return (method + "0");
+		return "";
+	}
+
+	/**
+	 * 
+	 * @return the clientState related SocketChannel
+	 */
+	private SocketChannel getChannel() {
+		if (clientState == 1)
+			return clientChannel;
+		if (clientState == 2)
+			return serverChannel;
 		return null;
 	}
 
