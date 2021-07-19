@@ -69,10 +69,13 @@ public class PopUp {
 
 	/**
 	 * Construction method for player name input popUp
+	 * 
+	 * @param player1 promptName for Player1
+	 * @param player2 promptName for Player2
 	 */
-	public void createInputPopUp() {
+	public void createInputPopUp(String player1, String player2) {
 		players = new String[2];
-		createPopUp(false, true, false, "Player1", "Player2");
+		createPopUp(false, true, false, player1, player2);
 	}
 
 	/**
@@ -112,8 +115,7 @@ public class PopUp {
 		popUp.initModality(Modality.APPLICATION_MODAL);
 		popUp.setMinHeight(250);
 		popUp.setMinWidth(300);
-		popUp.getIcons()
-				.add(new Image(getClass().getResource("/de/ifd/mad/SimpleChess/images/king1.png").toString()));
+		popUp.getIcons().add(new Image(getClass().getResource("/de/ifd/mad/SimpleChess/images/king1.png").toString()));
 		Label label = new Label();
 		label.setFont(new Font("Berlin Sans FB", 20));
 		label.setTextAlignment(TextAlignment.CENTER);
@@ -133,13 +135,16 @@ public class PopUp {
 			text1.setPromptText(info);
 			text1.setFont(label.getFont());
 
-			Label label2 = new Label("Enter Name:");
-			label2.setStyle(label.getStyle());
-			label2.setFont(label.getFont());
-
 			TextField text2 = new TextField();
-			text2.setPromptText(info2);
-			text2.setFont(label.getFont());
+			if (!info2.isBlank()) {
+				Label label2 = new Label("Enter Name:");
+				label2.setStyle(label.getStyle());
+				label2.setFont(label.getFont());
+
+				text2.setPromptText(info2);
+				text2.setFont(label.getFont());
+				vBox.getChildren().addAll(label2, text2);
+			}
 
 			Button button = new Button("Proceed");
 			button.setPrefSize(80, 40);
@@ -158,13 +163,16 @@ public class PopUp {
 				players[0] = text1.getText().trim();
 				if (text1.getText().isBlank())
 					players[0] = text1.getPromptText().trim();
-				players[1] = text2.getText().trim();
-				if (text2.getText().isBlank())
-					players[1] = text2.getPromptText().trim();
+				if (!info2.isBlank()) {
+					players[1] = text2.getText().trim();
+					if (text2.getText().isBlank())
+						players[1] = text2.getPromptText().trim();
+				}
+
 				popUp.close();
 
 			});
-			vBox.getChildren().addAll(label, text1, label2, text2, button);
+			vBox.getChildren().addAll(label, text1, button);
 
 			// popUp asks for decision (yes-no)
 		} else if (yesno) {

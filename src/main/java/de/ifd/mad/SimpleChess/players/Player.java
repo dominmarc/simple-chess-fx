@@ -29,6 +29,7 @@ public class Player {
 			id = 1;
 		if (name.isBlank())
 			this.name = "Player" + id;
+		this.active = false;
 	}
 
 	/**

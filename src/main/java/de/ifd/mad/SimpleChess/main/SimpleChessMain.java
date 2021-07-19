@@ -5,13 +5,7 @@
 package de.ifd.mad.SimpleChess.main;
 
 import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.image.Image;
-import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 
 /**
  * Main class for new simplechess starting window
@@ -21,11 +15,6 @@ import javafx.stage.StageStyle;
  */
 
 public class SimpleChessMain extends Application {
-	/** x value of the upper left scene corner */
-	private double xOffset = 0;
-	/** y value of the upper left scene corner */
-	private double yOffset = 0;
-
 	/**
 	 * Application start point
 	 * 
@@ -41,33 +30,12 @@ public class SimpleChessMain extends Application {
 	 */
 	@Override
 	public void start(Stage primaryStage) throws Exception {
-		// setting the scene based on a fxml file
-		Parent root = FXMLLoader.load(getClass().getResource("StartingForm.fxml"));
-		Scene myScene = new Scene(root);
-		// set transparent background
-		myScene.setFill(Color.TRANSPARENT);
+		FxmlOpener newFXML = new FxmlOpener(
+				getClass().getResource("/de/ifd/mad/SimpleChess/main/" + "StartingForm.fxml"), 0, null,
+				getClass().getResource("/de/ifd/mad/SimpleChess/main/" + "StartingFileStyle.css").toString());
 
-		// save x and y coordinates of scene
-		root.setOnMousePressed(e -> {
-			xOffset = e.getSceneX();
-			yOffset = e.getSceneY();
-		});
-
-		// move the stage, if the user drags the topBar-Label (height 27) of the scene
-		root.setOnMouseDragged(e -> {
-			if (yOffset < 26) {
-				primaryStage.setX(e.getScreenX() - xOffset);
-				primaryStage.setY(e.getScreenY() - yOffset);
-			}
-		});
-
-		// show the stage, apply transparent style, icon and a style-sheet
-		primaryStage.initStyle(StageStyle.TRANSPARENT);
-		primaryStage.setScene(myScene);
-		primaryStage.getIcons()
-				.add(new Image(getClass().getResource("/de/ifd/mad/SimpleChess/images/king1.png").toString()));
-		primaryStage.getScene().getStylesheets().add(getClass().getResource("StartingFileStyle.css").toString());
-		primaryStage.setResizable(false);
-		primaryStage.show();
+		if (!newFXML.open()) {
+			System.out.println("IOException on opening " + "StartingForm.fxml" + "...");
+		}
 	}
 }

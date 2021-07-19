@@ -698,7 +698,7 @@ public class MyLocalController {
 			return;
 		}
 		PopUp playerSet = new PopUp();
-		playerSet.createInputPopUp();
+		playerSet.createInputPopUp("Player1", "Player2");
 		String[] players = playerSet.showInputPopUp();
 		player1 = new Player(1, players[0]);
 		player2 = new Player(2, players[1]);
