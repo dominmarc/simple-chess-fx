@@ -32,6 +32,8 @@ public class PopUp {
 	/** boolean to indicate whether the user decided for yes or no */
 	private boolean userDecision = false;
 
+	private boolean active;
+
 	private String[] players;
 
 	/* Style for our buttons */
@@ -54,7 +56,7 @@ public class PopUp {
 	 * Constructor
 	 */
 	public PopUp() {
-
+		this.active = false;
 	}
 
 	/**
@@ -98,6 +100,10 @@ public class PopUp {
 	 * @return boolean true (yes) or false (no)
 	 */
 	public boolean showPopUp() {
+		this.active = true;
+		popUp.setOnHidden(event -> {
+			this.active = false;
+		});
 		popUp.showAndWait();
 		return userDecision;
 	}
@@ -108,6 +114,14 @@ public class PopUp {
 		list.add(Optional.ofNullable(players[0]));
 		list.add(Optional.ofNullable(players[1]));
 		return list;
+	}
+
+	/**
+	 * Closes the referenced open popUp
+	 */
+	public void closePopUp() {
+		this.active = false;
+		popUp.close();
 	}
 
 	/**
@@ -238,6 +252,14 @@ public class PopUp {
 		vBox.setSpacing(5);
 		Scene scene = new Scene(vBox);
 		popUp.setScene(scene);
+	}
+
+	public boolean isActive() {
+		return active;
+	}
+
+	public void setActive(boolean active) {
+		this.active = active;
 	}
 
 }

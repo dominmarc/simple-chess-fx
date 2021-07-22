@@ -121,8 +121,17 @@ public class MyLocalNetworkController {
 	private boolean connected = false;
 	static final Charset charset = StandardCharsets.UTF_8;
 	static final int PORT = 8000;
-	/**manages the connection while the connection is stable*/
+	/** manages the connection while the connection is stable */
 	private Thread workerThread;
+
+	/**
+	 * As soon as an agreement has to be made this variable gets assigned with a
+	 * certain value, until that it remains null.</br>
+	 * The variable should also be set back to null afterwards!</br>
+	 * 0 - disagreement</br>
+	 * 1 - agreement
+	 */
+	private Optional<Integer> agreement = Optional.ofNullable(null);
 
 	/**
 	 * specifies whether this plays server or client </br>
@@ -298,13 +307,36 @@ public class MyLocalNetworkController {
 					// Workaround for now: ask the player if there is a way to block "matt"
 					PopUp decision = new PopUp();
 					decision.createDecisionPopUp(
-							"Is there any way the enemy could escape from setting you \"Schach-Matt\"?");
+							"Is there a way the enemy could stop you from setting him \"Schach-Matt\"?");
 
 					if (!decision.showPopUp()) {
-						gameActive = false;
-						PopUp ending = new PopUp();
-						ending.createWinningPopUp(getActivePlayer().getName());
-						ending.showPopUp();
+						sendTelegram(getChannel(), getPrefix(2)
+								+ generateMoveMsg(lastMove[0], lastMove[1], lastMove[2], lastMove[3], true, true));
+
+						PopUp wait = new PopUp();
+						wait.createInfoPopUp("Please wait for " + getInActivePlayer().getName() + "'s decision!");
+
+						do {
+							if (!wait.isActive())
+								wait.showPopUp();
+							try {
+								Thread.sleep((1 * 1000));
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+						} while (!agreement.isPresent());
+
+						// if opponent agrees
+						if (agreement.get() == 1)
+							endGameWithWinner(
+									"Congratulations, you won the game!\nThank you for playing!\nHave a nice day :)");
+						// if opponent disagrees
+						if (agreement.get() == 0)
+							switchPlayer();
+
+						// reset agreement variable
+						agreement = Optional.ofNullable(null);
+						return;
 					}
 				}
 
@@ -621,25 +653,26 @@ public class MyLocalNetworkController {
 		// Client --> Server
 		case "02": {
 			// Server receives a move --> has to update its gamefield
-			updateGamefield(message);
+			updateGamefieldFromTelMesg(message);
 			break;
 		}
 
 		// Server --> Client
 		case "20": {
 			// Client receives a move --> has to update its gamefield
-			updateGamefield(message);
+			updateGamefieldFromTelMesg(message);
 			break;
 		}
 
+		// message: 00 --> disagreement, 01 --> agreement
 		case "03": {
-			//
-
+			// Server receives decision message
+			agreement = Optional.of(Integer.valueOf(message));
 			break;
 		}
 		case "30": {
-			//
-
+			// Client receives decision message
+			agreement = Optional.of(Integer.valueOf(message));
 			break;
 		}
 
@@ -686,7 +719,7 @@ public class MyLocalNetworkController {
 	 * 
 	 * @param telegramMsg provides information about the enemies move
 	 */
-	private void updateGamefield(String telegramMsg) {
+	private void updateGamefieldFromTelMesg(String telegramMsg) {
 		int oldX, oldY, newX, newY;
 		int schach, matt;
 		oldX = Integer.valueOf(telegramMsg.substring(0, 2));
@@ -706,7 +739,20 @@ public class MyLocalNetworkController {
 		}
 
 		if (matt == 1) {
-
+			// the opponent request "schach-matt"
+			printField();
+			setPlayers();
+			PopUp question = new PopUp();
+			question.createDecisionPopUp(
+					getInActivePlayer().getName() + " claims you are set \"Schach-Matt\"\nDo you agree?");
+			if (question.showPopUp()) {
+				// agreement
+				sendTelegram(getChannel(), getPrefix(3) + "01");
+				endGameWithWinner(
+						getActivePlayer().getName() + " won the game!\nThank you for playing!\nHave a nice day :)");
+				return;
+			}
+			sendTelegram(getChannel(), getPrefix(3) + "00");
 		}
 
 		printField();
@@ -1021,7 +1067,7 @@ public class MyLocalNetworkController {
 		PopUp playerSet = new PopUp();
 		playerSet.createInputPopUp("Player1", "");
 		List<Optional<String>> players = playerSet.showInputPopUp();
-		
+
 		if (clientState == 2)
 			player1 = new Player(1, players.get(0));
 
@@ -1237,7 +1283,7 @@ public class MyLocalNetworkController {
 	 * Methods: </br>
 	 * 1 - exchange player names</br>
 	 * 2 - exchange figure moves</br>
-	 * 3 - exchange winner</br>
+	 * 3 - exchange decision (send agreement or disagreement)</br>
 	 * 4 - exchange surrender
 	 * 
 	 * @param method the method to be used in telegram
