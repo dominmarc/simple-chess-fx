@@ -4,6 +4,9 @@
 
 package de.ifd.mad.SimpleChess.controller;
 
+import java.util.List;
+import java.util.Optional;
+
 import de.ifd.mad.SimpleChess.figures.Bishop;
 import de.ifd.mad.SimpleChess.figures.King;
 import de.ifd.mad.SimpleChess.figures.Knight;
@@ -699,9 +702,9 @@ public class MyLocalController {
 		}
 		PopUp playerSet = new PopUp();
 		playerSet.createInputPopUp("Player1", "Player2");
-		String[] players = playerSet.showInputPopUp();
-		player1 = new Player(1, players[0]);
-		player2 = new Player(2, players[1]);
+		List<Optional<String>> players = playerSet.showInputPopUp();
+		player1 = new Player(1, players.get(0));
+		player2 = new Player(2, players.get(1));
 
 		setPlayerNames();
 	}

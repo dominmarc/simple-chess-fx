@@ -15,6 +15,8 @@ import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
 
 import de.ifd.mad.SimpleChess.figures.Bishop;
 import de.ifd.mad.SimpleChess.figures.King;
@@ -119,6 +121,7 @@ public class MyLocalNetworkController {
 	private boolean connected = false;
 	static final Charset charset = StandardCharsets.UTF_8;
 	static final int PORT = 8000;
+	/**manages the connection while the connection is stable*/
 	private Thread workerThread;
 
 	/**
@@ -284,7 +287,7 @@ public class MyLocalNetworkController {
 			}
 
 			// check if you set your enemy to "schach"
-			if (checkSchach(btnIndex, getInActivePlayer())) {
+			if (checkSchach(getInActivePlayer())) {
 				PopUp info = new PopUp();
 				info.createInfoPopUp("\"SCHACH!\"" + "\n\nCan you end the game?");
 				info.showPopUp();
@@ -294,7 +297,9 @@ public class MyLocalNetworkController {
 					// checkMatt will yet not cover moves from not_king_figures to block "matt"
 					// Workaround for now: ask the player if there is a way to block "matt"
 					PopUp decision = new PopUp();
-					decision.createDecisionPopUp("Is there any way the enemy could escape from setting you Matt?");
+					decision.createDecisionPopUp(
+							"Is there any way the enemy could escape from setting you \"Schach-Matt\"?");
+
 					if (!decision.showPopUp()) {
 						gameActive = false;
 						PopUp ending = new PopUp();
@@ -304,7 +309,7 @@ public class MyLocalNetworkController {
 				}
 
 				// enemy is not set to "matt", but "schach" --> send telegram and switch player
-				sendString(getChannel(), getPrefix(2)
+				sendTelegram(getChannel(), getPrefix(2)
 						+ generateMoveMsg(lastMove[0], lastMove[1], lastMove[2], lastMove[3], true, false));
 
 				switchPlayer();
@@ -312,7 +317,7 @@ public class MyLocalNetworkController {
 			}
 
 			// no one set to "schach", send telegram and switch player
-			sendString(getChannel(),
+			sendTelegram(getChannel(),
 					getPrefix(2) + generateMoveMsg(lastMove[0], lastMove[1], lastMove[2], lastMove[3], false, false));
 
 			switchPlayer();
@@ -343,12 +348,12 @@ public class MyLocalNetworkController {
 	 * Ends the game, shows the winner
 	 */
 	public void surrenderButtonClicked() {
-		gameActive = false;
-		PopUp ending = new PopUp();
-		// ending.createWinningPopUp(getInActivePlayer().getName());
-		ending.showPopUp();
-		startButton.setText("START GAME");
-		infoLabel.setText("PRESS START");
+		// send surrender message to opponent
+		sendTelegram(getChannel(), getPrefix(4));
+
+		// end the game
+		endGameWithWinner("You surrendered!\n" + getInActivePlayer().getName()
+				+ " won!\nThank you for playing! Have a nice day!");
 	}
 
 	/**
@@ -549,7 +554,7 @@ public class MyLocalNetworkController {
 		}
 	}
 
-	private void sendString(SocketChannel channel, String message) {
+	private void sendTelegram(SocketChannel channel, String message) {
 		System.out.println("Trying to send: " + message);
 		CharBuffer charBuffer = CharBuffer.wrap(message);
 		// allocate memory for the Bytes to be send
@@ -583,7 +588,8 @@ public class MyLocalNetworkController {
 	 * --> 01 --> Method 1 (second Player Name) is send to Server from Client</br>
 	 * --> 10 --> Method 1 (second Player Name) is send to Client from Server
 	 * 
-	 * @param message as String
+	 * @param message Telegram message as string containing game relevant
+	 *                information
 	 */
 	private void encodeMessage(String message) {
 		String method = message.substring(0, 2);
@@ -594,9 +600,9 @@ public class MyLocalNetworkController {
 		// Client -> Server
 		case "01": {
 			// Server replies with his player name and starts the game on his application
-			player2 = new Player(2, message);
+			player2 = new Player(2, Optional.of(message));
 			setPlayerNames();
-			Platform.runLater(() -> sendString(getChannel(), getPrefix(1) + player1.getName()));
+			Platform.runLater(() -> sendTelegram(getChannel(), getPrefix(1) + player1.getName()));
 			// Game starts here for server
 			startGame();
 			break;
@@ -605,7 +611,7 @@ public class MyLocalNetworkController {
 		// Server -> Client
 		case "10": {
 			// Client receives servers player name and starts the game on his application
-			player1 = new Player(1, message);
+			player1 = new Player(1, Optional.of(message));
 			setPlayerNames();
 			// Game starts here for client
 			startGame();
@@ -636,10 +642,38 @@ public class MyLocalNetworkController {
 
 			break;
 		}
+
+		case "04": {
+			// Server receives surrender message --> server won
+			endGameWithWinner(getActivePlayer().getName()
+					+ " surrendered!\nCongratulations, you won the game!\nThank you for playing! Have a nice day!");
+			break;
+		}
+		case "40": {
+			// Client receives surrender message --> client won
+			endGameWithWinner(getActivePlayer().getName()
+					+ " surrendered!\nCongratulations, you won the game!\nThank you for playing! Have a nice day!");
+			break;
+		}
 		default: {
+			System.out.println("Telegram error: Parsing failure on prefix: " + method);
 			break;
 		}
 		}
+	}
+
+	/**
+	 * Ends the game with a winner
+	 * 
+	 * @param player the winner
+	 */
+	private void endGameWithWinner(String message) {
+		gameActive = false;
+		PopUp ending = new PopUp();
+		ending.createWinningPopUp(message);
+		ending.showPopUp();
+		startButton.setText("START GAME");
+		infoLabel.setText("PRESS START");
 	}
 
 	/**
@@ -699,17 +733,16 @@ public class MyLocalNetworkController {
 
 	/**
 	 * Checks weather the enemy's king is in a problematic game situation and has to
-	 * move or not </br>
+	 * move or not, checks if any of the activePlayers' figures sets the opponents
+	 * king to "schach" </br>
 	 * This is called after a player made his move to check if "you" set your enemy
 	 * to "schach"
 	 * 
-	 * @param btnIdx the button index of the "king attacker"
-	 * @param player object to identify whose king should be checked
+	 * @param player object to identify whose king should be checked (the
+	 *               inActivePlayer)
 	 * @return true, if king is in problematic situation and false, if he is not
 	 */
-	private boolean checkSchach(int btnIdx, Player player) {
-		int enemyX = giveXY(btnIdx)[0];
-		int enemyY = giveXY(btnIdx)[1];
+	private boolean checkSchach(Player player) {
 		int kingX = 0;
 		int kingY = 0;
 
@@ -731,32 +764,32 @@ public class MyLocalNetworkController {
 			return false;
 		}
 
-		// try to make the move to the king
-		if (tryMove(enemyX, enemyY, kingX, kingY)) {
-			problemKing[0] = kingX;
-			problemKing[1] = kingY;
-			return true;
-		} else {
-			return false;
+		// try to make a move to the king from all of the opponent's (specified in
+		// method) figures
+		for (int y = 1; y < 9; y++) {
+			for (int x = 1; x < 9; x++) {
+				if (gamefield[x][y] > 0 && gamefield[x][y] <= 6 && getOpponent(player) == player1
+						|| (gamefield[x][y] >= 7 && getOpponent(player) == player2)) {
+					if (tryMove(x, y, kingX, kingY)) {
+						problemKing[0] = kingX;
+						problemKing[1] = kingY;
+						return true;
+					}
+				}
+			}
 		}
+		return false;
 	}
 
 	/**
 	 * loop through all figures from the enemy and check if they set the
 	 * activePlayers king "schach"
 	 * 
-	 * @return
+	 * @return true if I am set to "schach", false if I am not
 	 */
 	private boolean checkOwnSchach() {
-		for (int y = 1; y < 9; y++) {
-			for (int x = 1; x < 9; x++) {
-				if (gamefield[x][y] > 0 && gamefield[x][y] <= 6 && getInActivePlayer() == player1
-						|| (gamefield[x][y] >= 7 && getInActivePlayer() == player2)) {
-					if (checkSchach(giveIndex(x, y), getActivePlayer())) {
-						return true;
-					}
-				}
-			}
+		if (checkSchach(getActivePlayer())) {
+			return true;
 		}
 		return false;
 	}
@@ -987,13 +1020,14 @@ public class MyLocalNetworkController {
 		}
 		PopUp playerSet = new PopUp();
 		playerSet.createInputPopUp("Player1", "");
-		String[] players = playerSet.showInputPopUp();
+		List<Optional<String>> players = playerSet.showInputPopUp();
+		
 		if (clientState == 2)
-			player1 = new Player(1, players[0]);
+			player1 = new Player(1, players.get(0));
 
 		if (clientState == 1) {
-			player2 = new Player(2, players[0]);
-			sendString(getChannel(), getPrefix(1) + player2.getName());
+			player2 = new Player(2, players.get(0));
+			sendTelegram(getChannel(), getPrefix(1) + player2.getName());
 		}
 
 	}
@@ -1236,6 +1270,19 @@ public class MyLocalNetworkController {
 		player1.switchStatus();
 		player2.switchStatus();
 		setStatusLabelBackgrounds();
+	}
+
+	/**
+	 * 
+	 * @param player
+	 * @return the opponent of the given @param player
+	 */
+	private Player getOpponent(Player player) {
+		if (player == player1)
+			return player2;
+		if (player == player2)
+			return player1;
+		return null;
 	}
 
 	/**

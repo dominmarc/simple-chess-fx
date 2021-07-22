@@ -3,6 +3,8 @@
  */
 package de.ifd.mad.SimpleChess.players;
 
+import java.util.Optional;
+
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.paint.Color;
@@ -22,13 +24,16 @@ public class Player {
 	private int id;
 
 	// Constructor
-	public Player(int id, String name) {
-		this.name = name;
+	public Player(int id, Optional<String> name) {
 		this.id = id;
 		if (id <= 0 || id > 2)
 			id = 1;
-		if (name.isBlank())
+
+		if (name.isPresent())
+			this.name = name.get();
+		else
 			this.name = "Player" + id;
+
 		this.active = false;
 	}
 

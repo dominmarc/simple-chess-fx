@@ -3,6 +3,10 @@
  */
 package de.ifd.mad.SimpleChess.main;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -56,8 +60,8 @@ public class PopUp {
 	/**
 	 * Construction method for winning popUp
 	 */
-	public void createWinningPopUp(String playerName) {
-		createPopUp(true, false, false, playerName, null);
+	public void createWinningPopUp(String message) {
+		createPopUp(true, false, false, message, null);
 	}
 
 	/**
@@ -75,6 +79,8 @@ public class PopUp {
 	 */
 	public void createInputPopUp(String player1, String player2) {
 		players = new String[2];
+		players[0] = null;
+		players[1] = null;
 		createPopUp(false, true, false, player1, player2);
 	}
 
@@ -96,9 +102,12 @@ public class PopUp {
 		return userDecision;
 	}
 
-	public String[] showInputPopUp() {
+	public List<Optional<String>> showInputPopUp() {
 		popUp.showAndWait();
-		return players;
+		List<Optional<String>> list = new ArrayList<Optional<String>>();
+		list.add(Optional.ofNullable(players[0]));
+		list.add(Optional.ofNullable(players[1]));
+		return list;
 	}
 
 	/**
@@ -125,7 +134,7 @@ public class PopUp {
 		// popUp displays the winner
 		if (win) {
 			popUp.setTitle("Game Over!");
-			label.setText("Player " + info + " won!\nThank you for playing, have a nice day!");
+			label.setText(info);
 			vBox.getChildren().add(label);
 
 			// popUp asks for player names
