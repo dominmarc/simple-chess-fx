@@ -108,6 +108,13 @@ public class PopUp {
 		return userDecision;
 	}
 
+	/**
+	 * Opens the popUp (does not "freeze" the gui)
+	 */
+	public void showNonWaitingPopUp() {
+		popUp.show();
+	}
+
 	public List<Optional<String>> showInputPopUp() {
 		popUp.showAndWait();
 		List<Optional<String>> list = new ArrayList<Optional<String>>();

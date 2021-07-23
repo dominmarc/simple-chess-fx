@@ -24,6 +24,7 @@ import de.ifd.mad.SimpleChess.figures.Knight;
 import de.ifd.mad.SimpleChess.figures.Pawn;
 import de.ifd.mad.SimpleChess.figures.Queen;
 import de.ifd.mad.SimpleChess.figures.Rook;
+import de.ifd.mad.SimpleChess.main.FxmlOpener;
 import de.ifd.mad.SimpleChess.main.PopUp;
 import de.ifd.mad.SimpleChess.players.Player;
 import javafx.application.Platform;
@@ -47,11 +48,11 @@ import javafx.stage.Stage;
  */
 public class MyLocalNetworkController {
 	@FXML
-	AnchorPane mypane, buttonPane;
+	AnchorPane mainPane, buttonPane;
 	@FXML
 	Button[] buttons;
 	@FXML
-	Button minButton, closeButton;
+	Button minButton, closeButton, backButton;
 	@FXML
 	Label active1Label, active2Label, infoLabel, topBar;
 	@FXML
@@ -186,9 +187,7 @@ public class MyLocalNetworkController {
 				buttons[btnIndex].setOnMouseClicked(e -> {
 					// check if game is running
 					if (!gameActive) {
-						PopUp info = new PopUp();
-						info.createInfoPopUp("Please start the game!");
-						info.showPopUp();
+						infoUser("Please start the game!").showPopUp();
 						return;
 					}
 
@@ -221,9 +220,7 @@ public class MyLocalNetworkController {
 	 */
 	private void clickOnField(int btnIndex) {
 		if (moveLock()) {
-			PopUp pop = new PopUp();
-			pop.createInfoPopUp("Wait for your opponent!");
-			pop.showPopUp();
+			infoUser("Wait for your opponent!").showPopUp();
 			return;
 		}
 
@@ -248,9 +245,7 @@ public class MyLocalNetworkController {
 
 				// player wants to select field with enemy figure
 			} else {
-				PopUp info = new PopUp();
-				info.createInfoPopUp("It is your turn!\nMake your move!");
-				info.showPopUp();
+				infoUser("It is your turn!\nMake your move!").showPopUp();
 				return;
 			}
 
@@ -269,9 +264,7 @@ public class MyLocalNetworkController {
 			// check if the move is invalid
 			if ((!tryMove(oldX, oldY, newX, newY)) || (checkIfFieldBlocked(newX, newY, getActivePlayer()))) {
 				// show information
-				PopUp info = new PopUp();
-				info.createInfoPopUp("Can not move player!\nInvalid move!");
-				info.showPopUp();
+				infoUser("Can not move player!\nInvalid move!").showPopUp();
 				// unselect button
 				unselectButton();
 				return;
@@ -288,18 +281,14 @@ public class MyLocalNetworkController {
 			// "schach"
 			// if you did so --> move the last move back and set the correct active player
 			if (checkOwnSchach()) {
-				PopUp info = new PopUp();
-				info.createInfoPopUp("Wrong move! \nYou are set \"schach\"!");
-				info.showPopUp();
+				infoUser("Wrong move! \nYou are set \"schach\"!").showPopUp();
 				stepBack();
 				return;
 			}
 
 			// check if you set your enemy to "schach"
 			if (checkSchach(getInActivePlayer())) {
-				PopUp info = new PopUp();
-				info.createInfoPopUp("\"SCHACH!\"" + "\n\nCan you end the game?");
-				info.showPopUp();
+				infoUser("\"SCHACH!\"" + "\n\nCan you end the game?").showPopUp();
 
 				// check if the game should end
 				if (checkMatt()) {
@@ -314,7 +303,7 @@ public class MyLocalNetworkController {
 								+ generateMoveMsg(lastMove[0], lastMove[1], lastMove[2], lastMove[3], true, true));
 
 						PopUp wait = new PopUp();
-						wait.createInfoPopUp("Please wait for " + getInActivePlayer().getName() + "'s decision!");
+						wait.createInfoPopUp("Please wait for " + getOpponent(null).getName() + "'s decision!");
 
 						do {
 							if (!wait.isActive())
@@ -371,6 +360,20 @@ public class MyLocalNetworkController {
 			setPlayers();
 		} else {
 			// network
+			if (workerThread != null)
+				if (workerThread.isAlive()) {
+					// still connected --> reset game and start new round
+					startGame();
+					// send to opponent this client is ready
+					sendTelegram(getChannel(), getPrefix(5) + "00");
+					// set activGame to false, because we have to wait for opponent
+					gameActive = false;
+					// notify the user
+					infoUser("The game will start as soon as your opponent also restarted his game!").showPopUp();
+					return;
+				}
+
+			// no connection --> start server or client
 			tryConnect();
 			askForPlayers();
 		}
@@ -380,6 +383,10 @@ public class MyLocalNetworkController {
 	 * Ends the game, shows the winner
 	 */
 	public void surrenderButtonClicked() {
+		if ((!gameActive) || (!connected)) {
+			infoUser("Please start the game!").showPopUp();
+			return;
+		}
 		// send surrender message to opponent
 		sendTelegram(getChannel(), getPrefix(4));
 
@@ -431,6 +438,9 @@ public class MyLocalNetworkController {
 									clientState = 1;
 									connected = true;
 									System.out.println("Client connection made!");
+									Platform.runLater(() -> infoUser("You successfully connected to a host!")
+											.showNonWaitingPopUp());
+
 								} catch (Exception e) {
 									// start server instead
 									clientState = 2;
@@ -485,6 +495,9 @@ public class MyLocalNetworkController {
 
 				// bind server socket to port
 				serverSocketChannel.socket().bind(new InetSocketAddress("localhost", PORT));
+
+				// info user
+				Platform.runLater(() -> infoUser("You are now hosting the game!").showNonWaitingPopUp());
 
 				// register the channel, add key "ACCEPT KEY" (isAcceptable will be true)
 				serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
@@ -678,14 +691,46 @@ public class MyLocalNetworkController {
 
 		case "04": {
 			// Server receives surrender message --> server won
-			endGameWithWinner(getActivePlayer().getName()
+			endGameWithWinner(getOpponent(null).getName()
 					+ " surrendered!\nCongratulations, you won the game!\nThank you for playing! Have a nice day!");
 			break;
 		}
 		case "40": {
 			// Client receives surrender message --> client won
-			endGameWithWinner(getActivePlayer().getName()
+			endGameWithWinner(getOpponent(null).getName()
 					+ " surrendered!\nCongratulations, you won the game!\nThank you for playing! Have a nice day!");
+			break;
+		}
+
+		// 00 - opponent is ready to play, 01 - opponent left
+		case "05": {
+			if (Integer.valueOf(message) == 0) {
+				// client receives start game (after restart) message
+				gameActive = true;
+				infoUser("You can now start playing!").showPopUp();
+
+			} else if (Integer.valueOf(message) == 1) {
+				// Client receives server left message
+				connected = false;
+				gameActive = false;
+				infoUser("Player " + getOpponent(null).getName() + " left the game!").showNonWaitingPopUp();
+				;
+			}
+			break;
+		}
+		case "50": {
+			if (Integer.valueOf(message) == 0) {
+				// server receives start game (after restart) message
+				gameActive = true;
+				infoUser("You can now start playing!").showPopUp();
+
+			} else if (Integer.valueOf(message) == 1) {
+				// server receives server left message
+				connected = false;
+				gameActive = false;
+				infoUser("Player " + getOpponent(null).getName() + " left the game!").showNonWaitingPopUp();
+				;
+			}
 			break;
 		}
 		default: {
@@ -732,11 +777,8 @@ public class MyLocalNetworkController {
 		gamefield[newX][newY] = gamefield[oldX][oldY];
 		gamefield[oldX][oldY] = 0;
 
-		if (schach == 1) {
-			PopUp info = new PopUp();
-			info.createInfoPopUp("\"SCHACH!\"" + "\n\nOh no, will he end the game?");
-			info.showPopUp();
-		}
+		if (schach == 1)
+			infoUser("\"SCHACH!\"" + "\n\nOh no, will he end the game?").showPopUp();
 
 		if (matt == 1) {
 			// the opponent request "schach-matt"
@@ -804,9 +846,7 @@ public class MyLocalNetworkController {
 
 		// no king found
 		if (kingX == 0 || kingY == 0) {
-			PopUp info = new PopUp();
-			info.createInfoPopUp("Location-Error\nYou may restart the game!");
-			info.showPopUp();
+			infoUser("Location-Error\nYou may restart the game!").showPopUp();
 			return false;
 		}
 
@@ -947,9 +987,7 @@ public class MyLocalNetworkController {
 		}
 		/////////////////////////////////////////////////////////////////////////////
 		default: {
-			PopUp info = new PopUp();
-			info.createInfoPopUp("Figure-Selection-Error\nYou may restart the game!");
-			info.showPopUp();
+			infoUser("Figure-Selection-Error\nYou may restart the game!").showPopUp();
 			return false;
 		}
 		}
@@ -1059,9 +1097,7 @@ public class MyLocalNetworkController {
 	 */
 	private void askForPlayers() {
 		if (gameActive) {
-			PopUp info = new PopUp();
-			info.createInfoPopUp("Game is already active!\nEnd the game!");
-			info.showPopUp();
+			infoUser("Game is already active!\nEnd the game!").showPopUp();
 			return;
 		}
 		PopUp playerSet = new PopUp();
@@ -1090,6 +1126,7 @@ public class MyLocalNetworkController {
 		lastMove[1] = 0;
 		lastMove[2] = 0;
 		lastMove[3] = 0;
+		agreement = Optional.ofNullable(null);
 	}
 
 	/**
@@ -1280,11 +1317,24 @@ public class MyLocalNetworkController {
 	}
 
 	/**
+	 * Creates a new infoPopUp
+	 * 
+	 * @param message you want to display to the user
+	 * @return the created PopUp
+	 */
+	private PopUp infoUser(String message) {
+		PopUp info = new PopUp();
+		info.createInfoPopUp(message);
+		return info;
+	}
+
+	/**
 	 * Methods: </br>
 	 * 1 - exchange player names</br>
 	 * 2 - exchange figure moves</br>
 	 * 3 - exchange decision (send agreement or disagreement)</br>
-	 * 4 - exchange surrender
+	 * 4 - exchange surrender </br>
+	 * 5 - exchange start game information (game start and client left)
 	 * 
 	 * @param method the method to be used in telegram
 	 * @return correct (clientState related) telegram prefix
@@ -1319,15 +1369,22 @@ public class MyLocalNetworkController {
 	}
 
 	/**
+	 * Returns the opponent player object of given player.</br>
+	 * Returns opponent of the current instance if null is inserted in this method!
 	 * 
-	 * @param player
-	 * @return the opponent of the given @param player
+	 * @param player object or null
+	 * @return the opponent of the given @param player or of the current instance
 	 */
 	private Player getOpponent(Player player) {
 		if (player == player1)
 			return player2;
 		if (player == player2)
 			return player1;
+		if (player == null)
+			if (clientState == 1)
+				return player1;
+			else
+				return player2;
 		return null;
 	}
 
@@ -1356,14 +1413,14 @@ public class MyLocalNetworkController {
 	 * @param y
 	 * @return
 	 */
-	private int giveIndex(int x, int y) {
-		if (x % 8 == 0) {
-			return (x * y);
-		} else {
-			y -= 1;
-			return ((y * 8) + x);
-		}
-	}
+//	private int giveIndex(int x, int y) {
+//		if (x % 8 == 0) {
+//			return (x * y);
+//		} else {
+//			y -= 1;
+//			return ((y * 8) + x);
+//		}
+//	}
 
 	/**
 	 * Function to return the coordinates from game_field, according to given button
@@ -1393,10 +1450,30 @@ public class MyLocalNetworkController {
 	}
 
 	/**
+	 * Button to go back to menu
+	 */
+	public void backButtonClicked() {
+		// send info
+		if (connected)
+			sendTelegram(getChannel(), getPrefix(5) + "01");
+
+		// close current window
+		Stage current = (Stage) mainPane.getScene().getWindow();
+		current.close();
+
+		FxmlOpener newFXML = new FxmlOpener(getClass().getResource("/de/ifd/mad/SimpleChess/main/StartingForm.fxml"), 0,
+				null, getClass().getResource("/de/ifd/mad/SimpleChess/main/StartingFileStyle.css").toString());
+
+		if (!newFXML.open())
+			System.out.println("IOException on opening StartingForm.fxml...");
+
+	}
+
+	/**
 	 * Button to minimize the application
 	 */
 	public void minButtonClicked() {
-		Stage tempStage = (Stage) mypane.getScene().getWindow();
+		Stage tempStage = (Stage) mainPane.getScene().getWindow();
 		tempStage.setIconified(true);
 	}
 
@@ -1404,7 +1481,7 @@ public class MyLocalNetworkController {
 	 * Button to close the application
 	 */
 	public void closeButtonClicked() {
-		Stage temp = (Stage) mypane.getScene().getWindow();
+		Stage temp = (Stage) mainPane.getScene().getWindow();
 		temp.close();
 		System.exit(0);
 	}
