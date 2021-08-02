@@ -21,6 +21,7 @@ public class Player {
 	private Background green = new Background(new BackgroundFill(Color.GREEN, null, null));
 	private String name;
 	private boolean active;
+	private boolean ready;
 	private int id;
 
 	// Constructor
@@ -35,6 +36,7 @@ public class Player {
 			this.name = "Player" + id;
 
 		this.active = false;
+		this.ready = false;
 	}
 
 	/**
@@ -60,8 +62,17 @@ public class Player {
 	}
 
 	// Getters and Setters
+
 	public String getName() {
 		return name;
+	}
+
+	public boolean isReady() {
+		return ready;
+	}
+
+	public void setReady(boolean ready) {
+		this.ready = ready;
 	}
 
 	public void setName(String name) {

@@ -33,6 +33,7 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -115,12 +116,16 @@ public class MyLocalNetworkController {
 	Player player2;
 
 	// local network connection variables
+	// the channels to write to
 	private SocketChannel clientChannel = null;
 	private SocketChannel serverChannel = null;
 	private Selector selector = null;
 	private Iterator<SelectionKey> iterator = null;
+	/** Indicates if there is an established, active connection or not */
 	private boolean connected = false;
+	/** Main char-set for encoding and decoding */
 	static final Charset charset = StandardCharsets.UTF_8;
+	/** The port to connect to/ to bind the server to */
 	static final int PORT = 8000;
 	/** manages the connection while the connection is stable */
 	private Thread workerThread;
@@ -185,14 +190,18 @@ public class MyLocalNetworkController {
 
 				// set event if user clicks on game field (button)
 				buttons[btnIndex].setOnMouseClicked(e -> {
-					// check if game is running
-					if (!gameActive) {
-						infoUser("Please start the game!").showPopUp();
+					// check if game is running & if opponent is ready
+					if ((!gameActive) || (!getOpponent(null).isReady())) {
+						infoUser("Please start the game or wait for your opponent!").showPopUp();
 						return;
 					}
+					if (e.getButton().equals(MouseButton.PRIMARY))
+						// click on field function
+						clickOnField(btnIdx);
+					else if (e.getButton().equals(MouseButton.SECONDARY))
+						// remove players selection on right click
+						removeClickOnField(btnIdx);
 
-					// click on field function
-					clickOnField(btnIdx);
 				});
 				btnIndex++;
 				x += 45;
@@ -346,30 +355,44 @@ public class MyLocalNetworkController {
 	}
 
 	/**
+	 * Click event for right mouse button on game field
+	 * 
+	 * @param buttonIndex identifies the button (game field) the player clicked on
+	 */
+	private void removeClickOnField(int buttonIndex) {
+		if (selectedButton[0] != buttonIndex)
+			return;
+
+		unselectButton();
+	}
+
+	/**
 	 * Starts the game
 	 */
 	public void startButtonClicked() {
 		if (gameActive) {
-			startButton.setText("START GAME");
-			gameActive = false;
-			player1.setActive(false);
-			player2.setActive(false);
-			setStatusLabelBackgrounds();
-			infoLabel.setText("PRESS START");
-			prepareGameField();
-			setPlayers();
+			PopUp decision = new PopUp();
+			decision.createDecisionPopUp("Are you sure you want to request a restart of the game?");
+			if (decision.showPopUp()) {
+				sendTelegram(getChannel(), getPrefix(6) + "00");
+				infoUser("Sending request...").showNonWaitingPopUp();
+			}
+
 		} else {
 			// network
 			if (workerThread != null)
 				if (workerThread.isAlive()) {
-					// still connected --> reset game and start new round
+					// still connected --> reset game and start new round without opponent being
+					// ready because we have to wait for him
 					startGame();
 					// send to opponent this client is ready
 					sendTelegram(getChannel(), getPrefix(5) + "00");
-					// set activGame to false, because we have to wait for opponent
-					gameActive = false;
+
 					// notify the user
-					infoUser("The game will start as soon as your opponent also restarted his game!").showPopUp();
+					if (!getOpponent(null).isReady())
+						infoUser("The game will start as soon as your opponent also restarted his game!").showPopUp();
+					else
+						infoUser(getOpponent(null).getName() + " is ready!\n The game can start!").showPopUp();
 					return;
 				}
 
@@ -471,6 +494,8 @@ public class MyLocalNetworkController {
 				} while (connected);
 			} catch (IOException | InterruptedException e) {
 				e.printStackTrace();
+				System.out.println("!Error: " + e.getMessage());
+
 			}
 
 		});
@@ -539,6 +564,7 @@ public class MyLocalNetworkController {
 					serverSocketChannel.close();
 				} catch (IOException | NullPointerException e) {
 					e.printStackTrace();
+					System.out.println("Error on closing server socket channel!");
 				}
 			}
 		});
@@ -650,6 +676,7 @@ public class MyLocalNetworkController {
 			Platform.runLater(() -> sendTelegram(getChannel(), getPrefix(1) + player1.getName()));
 			// Game starts here for server
 			startGame();
+			getOpponent(null).setReady(true);
 			break;
 		}
 
@@ -660,6 +687,7 @@ public class MyLocalNetworkController {
 			setPlayerNames();
 			// Game starts here for client
 			startGame();
+			getOpponent(null).setReady(true);
 			break;
 		}
 
@@ -706,31 +734,87 @@ public class MyLocalNetworkController {
 		case "05": {
 			if (Integer.valueOf(message) == 0) {
 				// client receives start game (after restart) message
-				gameActive = true;
-				infoUser("You can now start playing!").showPopUp();
+				getOpponent(null).setReady(true);
+				infoUser(getOpponent(null).getName() + " is ready!\nYou can now start playing!").showPopUp();
 
 			} else if (Integer.valueOf(message) == 1) {
 				// Client receives server left message
 				connected = false;
 				gameActive = false;
 				infoUser("Player " + getOpponent(null).getName() + " left the game!").showNonWaitingPopUp();
-				;
+
 			}
 			break;
 		}
 		case "50": {
 			if (Integer.valueOf(message) == 0) {
 				// server receives start game (after restart) message
-				gameActive = true;
-				infoUser("You can now start playing!").showPopUp();
+				getOpponent(null).setReady(true);
+				infoUser(getOpponent(null).getName() + " is ready!\nYou can now start playing!").showPopUp();
 
 			} else if (Integer.valueOf(message) == 1) {
 				// server receives server left message
 				connected = false;
 				gameActive = false;
 				infoUser("Player " + getOpponent(null).getName() + " left the game!").showNonWaitingPopUp();
-				;
+
 			}
+			break;
+		}
+		case "06": {
+			// client receives a restart message from server
+			if (Integer.valueOf(message) == 0) {
+				// client receives a restart request from server
+				PopUp decision = new PopUp();
+				decision.createDecisionPopUp(getOpponent(null).getName() + " asks for a restart!\nDo you accept that?");
+				if (!decision.showPopUp())
+					sendTelegram(getChannel(), getPrefix(6) + "02");
+				else {
+					sendTelegram(getChannel(), getPrefix(6) + "01");
+					restartGame();
+					getOpponent(null).setReady(true);
+				}
+
+			} else if (Integer.valueOf(message) == 1) {
+				// server receives a positive restart response from client
+				infoUser(getOpponent(null).getName() + " accepted the restart request!\nRestarting game...")
+						.showNonWaitingPopUp();
+				restartGame();
+				getOpponent(null).setReady(true);
+
+			} else if (Integer.valueOf(message) == 2) {
+				// server receives a negative restart response from client
+				infoUser(getOpponent(null).getName() + " rejected the restart request!").showNonWaitingPopUp();
+			}
+
+			break;
+		}
+		case "60": {
+			// server receives a restart message from client
+			if (Integer.valueOf(message) == 0) {
+				// server receives a restart request from client
+				PopUp decision = new PopUp();
+				decision.createDecisionPopUp(getOpponent(null).getName() + " asks for a restart!\nDo you accept that?");
+				if (!decision.showPopUp())
+					sendTelegram(getChannel(), getPrefix(6) + "02");
+				else {
+					sendTelegram(getChannel(), getPrefix(6) + "01");
+					restartGame();
+					getOpponent(null).setReady(true);
+				}
+
+			} else if (Integer.valueOf(message) == 1) {
+				// server receives a positive restart response from client
+				infoUser(getOpponent(null).getName() + " accepted the restart request!\nRestarting game...")
+						.showNonWaitingPopUp();
+				restartGame();
+				getOpponent(null).setReady(true);
+
+			} else if (Integer.valueOf(message) == 2) {
+				// server receives a negative restart response from client
+				infoUser(getOpponent(null).getName() + " rejected the restart request!").showNonWaitingPopUp();
+			}
+
 			break;
 		}
 		default: {
@@ -747,6 +831,7 @@ public class MyLocalNetworkController {
 	 */
 	private void endGameWithWinner(String message) {
 		gameActive = false;
+		getOpponent(null).setReady(false);
 		PopUp ending = new PopUp();
 		ending.createWinningPopUp(message);
 		ending.showPopUp();
@@ -802,6 +887,9 @@ public class MyLocalNetworkController {
 		switchPlayer();
 	}
 
+	/**
+	 * Starts the game
+	 */
 	private void startGame() {
 		System.out.println("clientState: " + clientState);
 		startButton.setText("RESTART GAME");
@@ -811,12 +899,26 @@ public class MyLocalNetworkController {
 		prepareGameField();
 		setPlayers();
 
-		// server should start (TODO:change this later)
 		player1.setActive(true);
 		player2.setActive(false);
 
 		// activity label
 		setStatusLabelBackgrounds();
+
+	}
+
+	/**
+	 * Restarts the game
+	 */
+	private void restartGame() {
+		gameActive = false;
+		player1.setReady(false);
+		player2.setReady(false);
+		player1.setActive(false);
+		player2.setActive(false);
+		setStatusLabelBackgrounds();
+
+		startGame();
 	}
 
 	/**
@@ -1287,6 +1389,7 @@ public class MyLocalNetworkController {
 	private boolean moveLock() {
 		if (clientState == 1 && getActivePlayer() == player2 || (clientState == 2 && getActivePlayer() == player1))
 			return false;
+
 		return true;
 	}
 
@@ -1334,7 +1437,8 @@ public class MyLocalNetworkController {
 	 * 2 - exchange figure moves</br>
 	 * 3 - exchange decision (send agreement or disagreement)</br>
 	 * 4 - exchange surrender </br>
-	 * 5 - exchange start game information (game start and client left)
+	 * 5 - exchange start game information (game start and client left) </br>
+	 * 6 - exchange restart request/response
 	 * 
 	 * @param method the method to be used in telegram
 	 * @return correct (clientState related) telegram prefix
@@ -1457,13 +1561,17 @@ public class MyLocalNetworkController {
 		if (connected)
 			sendTelegram(getChannel(), getPrefix(5) + "01");
 
+		connected = false;
+
 		// close current window
 		Stage current = (Stage) mainPane.getScene().getWindow();
 		current.close();
 
+		// load FXML
 		FxmlOpener newFXML = new FxmlOpener(getClass().getResource("/de/ifd/mad/SimpleChess/main/StartingForm.fxml"), 0,
 				null, getClass().getResource("/de/ifd/mad/SimpleChess/main/StartingFileStyle.css").toString());
 
+		// open FXML
 		if (!newFXML.open())
 			System.out.println("IOException on opening StartingForm.fxml...");
 

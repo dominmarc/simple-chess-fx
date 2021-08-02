@@ -20,6 +20,7 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -35,7 +36,7 @@ import javafx.stage.Stage;
  */
 public class MyLocalController {
 	@FXML
-	AnchorPane mypane, buttonPane;
+	AnchorPane mainPane, buttonPane;
 	@FXML
 	Button[] buttons;
 	@FXML
@@ -158,8 +159,12 @@ public class MyLocalController {
 						return;
 					}
 
-					// click on field function
-					clickOnField(btnIdx);
+					if (e.getButton().equals(MouseButton.PRIMARY))
+						// click on field function
+						clickOnField(btnIdx);
+					else if (e.getButton().equals(MouseButton.SECONDARY))
+						removeClickOnField(btnIdx);
+
 				});
 				btnIndex++;
 				x += 45;
@@ -306,6 +311,18 @@ public class MyLocalController {
 			// no one set to "schach", end the move and switch player
 			switchPlayer();
 		}
+	}
+
+	/**
+	 * Click event for right mouse button on game field
+	 * 
+	 * @param buttonIndex identifies the button (game field) the player clicked on
+	 */
+	private void removeClickOnField(int buttonIndex) {
+		if (selectedButton[0] != buttonIndex)
+			return;
+
+		unselectButton();
 	}
 
 	/**
@@ -888,7 +905,7 @@ public class MyLocalController {
 	 * Button to minimize the application
 	 */
 	public void minButtonClicked() {
-		Stage tempStage = (Stage) mypane.getScene().getWindow();
+		Stage tempStage = (Stage) mainPane.getScene().getWindow();
 		tempStage.setIconified(true);
 	}
 
@@ -896,7 +913,7 @@ public class MyLocalController {
 	 * Button to close the application
 	 */
 	public void closeButtonClicked() {
-		Stage temp = (Stage) mypane.getScene().getWindow();
+		Stage temp = (Stage) mainPane.getScene().getWindow();
 		temp.close();
 		System.exit(0);
 	}
