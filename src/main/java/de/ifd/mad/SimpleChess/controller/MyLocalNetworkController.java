@@ -119,6 +119,7 @@ public class MyLocalNetworkController {
 	// the channels to write to
 	private SocketChannel clientChannel = null;
 	private SocketChannel serverChannel = null;
+	private ServerSocketChannel serverSocketChannel = null;
 	private Selector selector = null;
 	private Iterator<SelectionKey> iterator = null;
 	/** Indicates if there is an established, active connection or not */
@@ -146,6 +147,8 @@ public class MyLocalNetworkController {
 	int clientState = 0;
 
 	public void initialize() {
+
+		workerThread = null;
 
 		// set start button text
 		startButton.setText("START GAME");
@@ -380,7 +383,7 @@ public class MyLocalNetworkController {
 
 		} else {
 			// network
-			if (workerThread != null)
+			if (workerThread != null && connected)
 				if (workerThread.isAlive()) {
 					// still connected --> reset game and start new round without opponent being
 					// ready because we have to wait for him
@@ -397,8 +400,16 @@ public class MyLocalNetworkController {
 				}
 
 			// no connection --> start server or client
-			tryConnect();
-			askForPlayers();
+			if (workerThread == null) {
+				tryConnect();
+				askForPlayers();
+				return;
+			}
+			// server waits for client and wants to start the game (connected = false, but
+			// workerThread already active)
+			infoUser("Please wait for a client to connect!\nThe game will start automatically. :)")
+					.showNonWaitingPopUp();
+			;
 		}
 	}
 
@@ -483,7 +494,7 @@ public class MyLocalNetworkController {
 						if (key.isReadable()) {
 							clientChannel = (SocketChannel) key.channel();
 							Platform.runLater(() -> receiveString(clientChannel));
-							connected = true;
+//							connected = true;
 
 							// jump to next iterator part (next key)
 							continue;
@@ -510,7 +521,6 @@ public class MyLocalNetworkController {
 	private void startServer() {
 		System.out.println("Trying to start server");
 		workerThread = new Thread(() -> {
-			ServerSocketChannel serverSocketChannel = null;
 			try {
 				selector = Selector.open();
 
@@ -562,6 +572,7 @@ public class MyLocalNetworkController {
 			} finally {
 				try {
 					serverSocketChannel.close();
+					selector.close();
 				} catch (IOException | NullPointerException e) {
 					e.printStackTrace();
 					System.out.println("Error on closing server socket channel!");
@@ -570,6 +581,7 @@ public class MyLocalNetworkController {
 		});
 		workerThread.start();
 		System.out.println("Server thread started");
+		Platform.runLater(() -> infoLabel.setText("Please wait..."));
 	}
 
 	private String generateMoveMsg(int oldX, int oldY, int newX, int newY, boolean schach, boolean matt) {
@@ -1563,6 +1575,21 @@ public class MyLocalNetworkController {
 
 		connected = false;
 
+		try {
+			if (serverSocketChannel != null)
+				serverSocketChannel.close();
+			if (selector != null)
+				selector.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		serverSocketChannel = null;
+		clientChannel = null;
+		serverChannel = null;
+		selector = null;
+		iterator = null;
+
 		// close current window
 		Stage current = (Stage) mainPane.getScene().getWindow();
 		current.close();
@@ -1590,6 +1617,11 @@ public class MyLocalNetworkController {
 	 */
 	public void closeButtonClicked() {
 		Stage temp = (Stage) mainPane.getScene().getWindow();
+
+		// send info
+		if (connected)
+			sendTelegram(getChannel(), getPrefix(5) + "01");
+
 		temp.close();
 		System.exit(0);
 	}
