@@ -1,17 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.paint.*?>
+<?import javafx.scene.text.*?>
 <?import javafx.scene.control.*?>
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane fx:id="backPane" prefHeight="310.0" prefWidth="510.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.ifd.mad.SimpleChess.controller.StartingController">
+<AnchorPane fx:id="backPane" prefHeight="310.0" prefWidth="510.0" stylesheets="@StartingFileStyle.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.ifd.mad.SimpleChess.controller.StartingController">
    <children>
       <Label fx:id="topBar" prefHeight="31.0" prefWidth="510.0" text="SimpleChess" textFill="WHITE" />
-      <Button fx:id="loMuButton" layoutX="87.0" layoutY="195.0" mnemonicParsing="false" onMouseClicked="#loMuButtonClicked" text="Local Multiplayer" />
-      <Button fx:id="loNeButton" layoutX="297.0" layoutY="195.0" mnemonicParsing="false" onMouseClicked="#loNeButtonClicked" text="Local Network" />
-      <Button fx:id="closeButton" layoutX="480.0" mnemonicParsing="false" onMouseClicked="#closeButtonClicked" prefHeight="30.0" prefWidth="30.0" text="X" textFill="WHITE" />
-      <Button fx:id="minButton" layoutX="450.0" mnemonicParsing="false" onMouseClicked="#minButtonClicked" prefHeight="30.0" prefWidth="30.0" text="_" textFill="WHITE" />
-      <Label fx:id="chessLabel" layoutX="211.0" layoutY="109.0" text="Simple Chess" />
+      <Button fx:id="loMuButton" layoutX="68.0" layoutY="132.0" mnemonicParsing="false" onMouseClicked="#loMuButtonClicked" prefHeight="45.0" prefWidth="155.0" text="Local Multiplayer" />
+      <Button fx:id="closeButton" layoutX="480.0" mnemonicParsing="false" onMouseClicked="#closeButtonClicked" prefHeight="29.0" prefWidth="30.0" text="X" textFill="WHITE" />
+      <Button fx:id="minButton" layoutX="450.0" mnemonicParsing="false" onMouseClicked="#minButtonClicked" prefHeight="29.0" prefWidth="30.0" text="_" textFill="WHITE" />
+      <Label layoutX="160.0" layoutY="39.0" text="Choose Mode">
+         <font>
+            <Font name="Arial Black" size="26.0" />
+         </font>
+         <textFill>
+            <RadialGradient centerX="0.5" centerY="0.470873786407767" radius="0.975609756097561">
+               <stops>
+                  <Stop color="#ffd30a" />
+                  <Stop color="#f87008" offset="1.0" />
+               </stops>
+            </RadialGradient>
+         </textFill></Label>
+      <AnchorPane layoutX="280.0" layoutY="78.0" prefHeight="200.0" prefWidth="200.0">
+         <children>
+            <Button fx:id="startServerButton" layoutX="47.0" layoutY="143.0" mnemonicParsing="false" onMouseClicked="#startServerButtonClicked" text="Start Server" />
+            <TextField fx:id="txtPort" layoutX="42.0" layoutY="53.0" prefHeight="30.0" prefWidth="115.0" promptText="PORT" />
+            <Button fx:id="connectButton" layoutX="57.0" layoutY="100.0" mnemonicParsing="false" onMouseClicked="#connectButtonClicked" text="Connect" />
+            <Label layoutX="38.0" layoutY="25.0" text="Enter Your Port:" textFill="WHITE">
+               <font>
+                  <Font name="Arial Black" size="14.0" />
+               </font>
+            </Label>
+         </children>
+      </AnchorPane>
+      <Button fx:id="helpButton" layoutX="14.0" layoutY="263.0" mnemonicParsing="false" onMouseClicked="#helpButtonClicked" text="HELP" />
    </children>
 </AnchorPane>

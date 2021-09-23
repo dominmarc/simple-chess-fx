@@ -47,7 +47,7 @@ import javafx.stage.Stage;
  * @author MAD
  * @author iFD
  */
-public class MyLocalNetworkController {
+public class MyLocalNetworkController implements IController {
 	@FXML
 	AnchorPane mainPane, buttonPane;
 	@FXML
@@ -68,26 +68,26 @@ public class MyLocalNetworkController {
 	 * </br>
 	 * -1 - Frame, 0 - no figure
 	 */
-	int[][] gamefield;
+	private int[][] gamefield;
 
 	/**
 	 * 0 = oldX, 1 = oldY, 2 = newX, 3 = newY</br>
 	 * old = former position, new = current position
 	 */
-	int[] lastMove = { 0, 0, 0, 0 };
+	private int[] lastMove = { 0, 0, 0, 0 };
 
 	/**
 	 * [0]=ButtonIndex (1...64) </br>
 	 * [1]=PlayerInfo (1,2) </br>
 	 * zeroes mean no selected button
 	 */
-	int[] selectedButton = { 0, 0 };
+	private int[] selectedButton = { 0, 0 };
 
 	/**
 	 * [0] = X</br>
 	 * [1] = Y
 	 */
-	int[] problemKing = { 0, 0 };
+	private int[] problemKing = { 0, 0 };
 
 	// selectedButtonStyles
 	String player1SelectedButton = "-fx-border-color: #2AB4FF; -fx-border-width: 4px; ";
@@ -99,7 +99,7 @@ public class MyLocalNetworkController {
 	Background black;
 
 	// check if the game is active
-	boolean gameActive = false;
+	private boolean gameActive = false;
 
 	// initialize figure objects
 	Pawn pawn = new Pawn();
@@ -127,7 +127,7 @@ public class MyLocalNetworkController {
 	/** Main char-set for encoding and decoding */
 	static final Charset charset = StandardCharsets.UTF_8;
 	/** The port to connect to/ to bind the server to */
-	static final int PORT = 8000;
+	private int PORT = 8000;
 	/** manages the connection while the connection is stable */
 	private Thread workerThread;
 
@@ -144,9 +144,20 @@ public class MyLocalNetworkController {
 	 * specifies whether this plays server or client </br>
 	 * 1 means client, 2 means server
 	 */
-	int clientState = 0;
+	private int clientState = 0;
+
+	@Override
+	public void initVariable(String value) {
+
+		try {
+			PORT = Integer.valueOf(value);
+		} catch (NumberFormatException e) {
+			// PORT stays at 8000
+		}
+	}
 
 	public void initialize() {
+		infoUser("Please press START GAME!");
 
 		workerThread = null;
 
@@ -409,7 +420,7 @@ public class MyLocalNetworkController {
 			// workerThread already active)
 			infoUser("Please wait for a client to connect!\nThe game will start automatically. :)")
 					.showNonWaitingPopUp();
-			;
+
 		}
 	}
 
@@ -497,7 +508,7 @@ public class MyLocalNetworkController {
 //							connected = true;
 
 							// jump to next iterator part (next key)
-							continue;
+							// continue;
 						}
 
 					}
@@ -511,8 +522,6 @@ public class MyLocalNetworkController {
 
 		});
 		workerThread.start();
-
-		return;
 	}
 
 	/**
@@ -532,7 +541,8 @@ public class MyLocalNetworkController {
 				serverSocketChannel.socket().bind(new InetSocketAddress("localhost", PORT));
 
 				// info user
-				Platform.runLater(() -> infoUser("You are now hosting the game!").showNonWaitingPopUp());
+				Platform.runLater(
+						() -> infoUser("You are now hosting the game!\nAt port: " + PORT).showNonWaitingPopUp());
 
 				// register the channel, add key "ACCEPT KEY" (isAcceptable will be true)
 				serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);

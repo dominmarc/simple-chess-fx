@@ -34,7 +34,7 @@ import javafx.stage.Stage;
  * @author MAD
  * @author iFD
  */
-public class MyLocalController {
+public class MyLocalController implements IController {
 	@FXML
 	AnchorPane mainPane, buttonPane;
 	@FXML
@@ -99,6 +99,11 @@ public class MyLocalController {
 	// initialize player objects
 	Player player1;
 	Player player2;
+
+	@Override
+	public void initVariable(String value) {
+		// nothing (this is in local network controller used for port share)
+	}
 
 	/**
 	 * Called right before the application opens up

@@ -6,6 +6,7 @@ package de.ifd.mad.SimpleChess.main;
 import java.io.IOException;
 import java.net.URL;
 
+import de.ifd.mad.SimpleChess.controller.IController;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -24,13 +25,22 @@ public class FxmlOpener {
 
 	/** Window stage */
 	Stage stage;
+	/** Location of the FXML file */
+	URL fxmlFile;
+	/** Height of the draggable top of the window */
+	int topHeight;
+
+	Image icon;
+
+	String style;
+	/** Value used to exchange information between controllers */
+	String passingValue = "";
+	/** Used to load the fxml file */
+	FXMLLoader loader;
 
 	// window location
 	private double xOffset = 0;
 	private double yOffset = 0;
-
-	/** indicated whether the building process has failed or not */
-	private boolean complete = false;
 
 	/**
 	 * Constructor for a fxml file to open
@@ -41,11 +51,20 @@ public class FxmlOpener {
 	 * @param icon      the displayed app icon (insert null for standard)
 	 */
 	public FxmlOpener(URL fxmlFile, int topHeight, Image icon, String style) {
-		if (topHeight == 0)
+		if (topHeight == 0 || topHeight < 0)
 			topHeight = 29;
+
 		if (icon == null)
 			icon = new Image(getClass().getResource("/de/ifd/mad/SimpleChess/images/king1.png").toString());
-		buildStage(fxmlFile, topHeight, icon, style);
+
+		this.topHeight = topHeight;
+		this.icon = icon;
+		this.style = style;
+		this.loader = new FXMLLoader(fxmlFile);
+	}
+
+	public void setInitialValue(String value) {
+		this.passingValue = value;
 	}
 
 	/**
@@ -56,11 +75,18 @@ public class FxmlOpener {
 	 *                  standardly set 29
 	 * @param icon
 	 */
-	private void buildStage(URL fxmlFile, int topHeight, Image icon, String style) {
+	private boolean buildStage(int topHeight, Image icon, String style) {
 		try {
 			// setting the scene based on a fxml file
 			this.stage = new Stage();
-			Parent newRoot = FXMLLoader.load(fxmlFile);
+			Parent newRoot = this.loader.load();
+
+			// pass a value to the new controller if there is a value set (probably port)
+			if (!this.passingValue.isBlank()) {
+				IController controller = loader.getController();
+				controller.initVariable(passingValue);
+			}
+
 			Scene myScene = new Scene(newRoot);
 			// set transparent background
 			myScene.setFill(Color.TRANSPARENT);
@@ -93,10 +119,9 @@ public class FxmlOpener {
 
 		} catch (IOException e) {
 			e.printStackTrace();
-			this.complete = false;
-			return;
+			return false;
 		}
-		this.complete = true;
+		return true;
 	}
 
 	/**
@@ -105,13 +130,13 @@ public class FxmlOpener {
 	 * @return true or false, depending on stage ready status
 	 */
 	public boolean open() {
-		if (complete) {
+		// try to build the stage
+		if (buildStage(topHeight, icon, style)) {
 			this.stage.show();
 			return true;
 		} else {
 			return false;
 		}
-
 	}
 
 }

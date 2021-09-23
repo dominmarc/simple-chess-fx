@@ -13,8 +13,10 @@ import javafx.stage.Stage;
  * @author MAD
  * @author iFD
  */
-
 public class SimpleChessMain extends Application {
+	static final String STARTFORM = "StartingForm.fxml";
+	static final String STARTSTYLE = "StartingFileStyle.css";
+
 	/**
 	 * Application start point
 	 * 
@@ -30,12 +32,11 @@ public class SimpleChessMain extends Application {
 	 */
 	@Override
 	public void start(Stage primaryStage) throws Exception {
-		FxmlOpener newFXML = new FxmlOpener(
-				getClass().getResource("/de/ifd/mad/SimpleChess/main/" + "StartingForm.fxml"), 0, null,
-				getClass().getResource("/de/ifd/mad/SimpleChess/main/" + "StartingFileStyle.css").toString());
+		FxmlOpener newFXML = new FxmlOpener(getClass().getResource("/de/ifd/mad/SimpleChess/main/" + STARTFORM), 0,
+				null, getClass().getResource("/de/ifd/mad/SimpleChess/main/" + STARTSTYLE).toString());
 
 		if (!newFXML.open()) {
-			System.out.println("IOException on opening " + "StartingForm.fxml" + "...");
+			System.out.println("IOException on opening " + STARTFORM + "...");
 		}
 	}
 }
