@@ -10,7 +10,6 @@ Play against your friends in the local network!
   - create (host) your own server and wait for your friend to join
   - join your friends server by selecting it in the server-availability list 
 <br />
-<br />
 
 - Features:
   - figure based movement functionality
