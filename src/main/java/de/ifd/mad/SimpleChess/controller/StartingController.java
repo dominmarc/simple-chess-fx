@@ -38,19 +38,23 @@ public class StartingController implements IController {
 	@FXML
 	ListView<String> adressView = new ListView<>();
 
-	int port;
+	/* PopUp-Object */
 	PopUp info;
+
 	/** Text to be displayed if the user presses the help button */
 	static final String INFO_MSG = "Local Multiplayer\n" + "Play against your friends just on that pc!\n\n"
 			+ "NetworkMultiplayer\n" + "Connect to your friend with his given port!\n"
 			+ "Or simply start your own server and let him connect! :)";
 
+	// constant file names
 	static final String LN_CHESS = "LocalNetworkChess.fxml";
 	static final String L_CHESS = "LocalChess.fxml";
 	static final String LN_CHESS_STYLE = "LocalStyleFile.css";
 	static final String L_CHESS_STYLE = "LocalStyleFile.css";
 
+	/* max. port */
 	private static final int MAX_PORT = 9999;
+	/* min. port */
 	private static final int MIN_PORT = 1024;
 
 	@Override
@@ -76,16 +80,21 @@ public class StartingController implements IController {
 	 * Connect button click event
 	 */
 	public void connectButtonClicked() {
+		int port = 0;
+
+		// check if user selected an adress
 		if (adressView.getSelectionModel().getSelectedItem() != null)
-			this.port = givePort(adressView.getSelectionModel().getSelectedItem());
+			port = givePort(adressView.getSelectionModel().getSelectedItem());
 		else
 			popUp("Please select a server!");
 
-		if (this.port == 0) {
+		// in case givePort() somehow returns 0
+		if (port == 0) {
 			popUp("Something went wrong!");
 			return;
 		}
 
+		// start
 		open(LN_CHESS, null, LN_CHESS_STYLE, String.valueOf(port));
 	}
 
@@ -106,10 +115,12 @@ public class StartingController implements IController {
 
 		int randomPort = 0;
 
+		// generate new port until the port is available
 		do {
 			randomPort = rand.nextInt(MAX_PORT - MIN_PORT + 1) + MIN_PORT;
 		} while (Boolean.FALSE.equals(available(randomPort)));
 
+		// start
 		open(LN_CHESS, null, LN_CHESS_STYLE, String.valueOf(randomPort));
 	}
 
@@ -133,6 +144,7 @@ public class StartingController implements IController {
 		// cut "localhost:"
 		input = input.substring("localhost:".length());
 
+		// just return a number in order to check port
 		try {
 			return Integer.valueOf(input);
 		} catch (NumberFormatException e) {
@@ -159,8 +171,10 @@ public class StartingController implements IController {
 		FxmlOpener newFXML = new FxmlOpener(getClass().getResource("/de/ifd/mad/SimpleChess/main/" + fxmlFile), 0, icon,
 				getClass().getResource("/de/ifd/mad/SimpleChess/main/" + style).toString());
 
+		// pass a value (port)
 		newFXML.setInitialValue(initialValue);
 
+		// open
 		if (!newFXML.open())
 			System.out.println("IOException on opening " + fxmlFile + "...");
 
@@ -187,10 +201,12 @@ public class StartingController implements IController {
 		} catch (IOException e) {
 			// nothing
 		} finally {
+			// close datagram socket
 			if (ds != null) {
 				ds.close();
 			}
 
+			// close server socket
 			if (ss != null) {
 				try {
 					ss.close();

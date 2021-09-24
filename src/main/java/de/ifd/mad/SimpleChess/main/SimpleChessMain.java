@@ -14,6 +14,7 @@ import javafx.stage.Stage;
  * @author iFD
  */
 public class SimpleChessMain extends Application {
+	// file name constants
 	static final String STARTFORM = "StartingForm.fxml";
 	static final String STARTSTYLE = "StartingFileStyle.css";
 
