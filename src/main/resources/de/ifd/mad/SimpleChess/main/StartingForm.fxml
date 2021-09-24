@@ -25,16 +25,16 @@
                </stops>
             </RadialGradient>
          </textFill></Label>
-      <AnchorPane layoutX="280.0" layoutY="78.0" prefHeight="200.0" prefWidth="200.0">
+      <AnchorPane layoutX="280.0" layoutY="75.0" prefHeight="233.0" prefWidth="200.0">
          <children>
-            <Button fx:id="startServerButton" layoutX="47.0" layoutY="143.0" mnemonicParsing="false" onMouseClicked="#startServerButtonClicked" text="Start Server" />
-            <TextField fx:id="txtPort" layoutX="42.0" layoutY="53.0" prefHeight="30.0" prefWidth="115.0" promptText="PORT" />
-            <Button fx:id="connectButton" layoutX="57.0" layoutY="100.0" mnemonicParsing="false" onMouseClicked="#connectButtonClicked" text="Connect" />
-            <Label layoutX="38.0" layoutY="25.0" text="Enter Your Port:" textFill="WHITE">
+            <Button fx:id="startServerButton" layoutX="47.0" layoutY="181.0" mnemonicParsing="false" onMouseClicked="#startServerButtonClicked" text="Start Server" />
+            <Button fx:id="connectButton" layoutX="57.0" layoutY="138.0" mnemonicParsing="false" onMouseClicked="#connectButtonClicked" text="Connect" />
+            <Label layoutX="34.0" layoutY="22.0" text="Select Your Port:" textFill="WHITE">
                <font>
                   <Font name="Arial Black" size="14.0" />
                </font>
             </Label>
+            <ListView fx:id="adressView" layoutY="51.0" prefHeight="82.0" prefWidth="200.0" />
          </children>
       </AnchorPane>
       <Button fx:id="helpButton" layoutX="14.0" layoutY="263.0" mnemonicParsing="false" onMouseClicked="#helpButtonClicked" text="HELP" />

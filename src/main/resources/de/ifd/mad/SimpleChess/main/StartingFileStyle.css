@@ -92,14 +92,14 @@
 #topBar{
 	-fx-background-color: #272727;
 }
-#txtPort {
-    -fx-background-color: #a9a9a9 , rgba(53,89,119,0.4) , rgba(53,89,119,0.4);
-    -fx-background-insets: 0 -1 -1 -1, 0 0 0 0, 0 -1 3 -1;
-}
-
-#txtPort:focused {
-    -fx-background-color: #a9a9a9 , white , white;
-    -fx-background-insets: 0 -1 -1 -1, 0 0 0 0, 0 -1 3 -1;
+#adressView{
+	-fx-background-color: transparent;
+	-fx-border-width: 2px;
+	-fx-border-color: grey;
+	-fx-background-insets: 0; 
+	-fx-padding: 0;
+	-fx-control-inner-background: transparent;
+	-fx-control-inner-font-family: "Arial";
 }
 #minButton{
 	-fx-background-color: #272727;

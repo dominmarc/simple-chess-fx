@@ -6,6 +6,7 @@ package de.ifd.mad.SimpleChess.controller;
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
+import java.security.SecureRandom;
 
 import de.ifd.mad.SimpleChess.main.FxmlOpener;
 import de.ifd.mad.SimpleChess.main.PopUp;
@@ -13,7 +14,7 @@ import javafx.fxml.FXML;
 
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.ListView;
 import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 
@@ -35,7 +36,7 @@ public class StartingController implements IController {
 	@FXML
 	AnchorPane backPane;
 	@FXML
-	TextField txtPort;
+	ListView<String> adressView = new ListView<>();
 
 	int port;
 	PopUp info;
@@ -49,10 +50,14 @@ public class StartingController implements IController {
 	static final String LN_CHESS_STYLE = "LocalStyleFile.css";
 	static final String L_CHESS_STYLE = "LocalStyleFile.css";
 
+	private static final int MAX_PORT = 9999;
+	private static final int MIN_PORT = 1024;
+
 	@Override
 	public void initialize() {
 		info = new PopUp();
 		info.createInfoPopUp(INFO_MSG);
+		fillAdressList();
 	}
 
 	@Override
@@ -71,15 +76,13 @@ public class StartingController implements IController {
 	 * Connect button click event
 	 */
 	public void connectButtonClicked() {
-		this.port = checkPort(txtPort.getText());
+		if (adressView.getSelectionModel().getSelectedItem() != null)
+			this.port = givePort(adressView.getSelectionModel().getSelectedItem());
+		else
+			popUp("Please select a server!");
 
 		if (this.port == 0) {
-			popUp(getPortMsg());
-			return;
-		}
-
-		if (available(this.port)) {
-			popUp("No one is hosting a server there!");
+			popUp("Something went wrong!");
 			return;
 		}
 
@@ -94,43 +97,47 @@ public class StartingController implements IController {
 	}
 
 	/**
-	 * Local network multiplayer button click event
+	 * Local network multiplayer button click event </br>
+	 * Start local network multiplayer with a random port
 	 */
 	public void startServerButtonClicked() {
-		this.port = checkPort(txtPort.getText());
+		// random
+		SecureRandom rand = new SecureRandom();
 
-		if (this.port == 0) {
-			popUp(getPortMsg());
-			return;
-		}
+		int randomPort = 0;
 
-		if (available(this.port))
-			open(LN_CHESS, null, LN_CHESS_STYLE, String.valueOf(port));
-		else
-			popUp("This port is currently not available!");
+		do {
+			randomPort = rand.nextInt(MAX_PORT - MIN_PORT + 1) + MIN_PORT;
+		} while (Boolean.FALSE.equals(available(randomPort)));
+
+		open(LN_CHESS, null, LN_CHESS_STYLE, String.valueOf(randomPort));
+	}
+
+	// fills the ip/ adress list view with active servers
+	private void fillAdressList() {
+		for (int i = MIN_PORT; i <= MAX_PORT; i++)
+			if (Boolean.FALSE.equals(available(i)))
+				adressView.getItems().add(("localhost:" + i));
+
 	}
 
 	/**
-	 * Checks if the input matches a port
+	 * Returns the selected port
 	 * 
 	 * @param input the port to be checked as String
 	 * @return the Port as int
 	 * @author MAD
 	 * @author iFD
 	 */
-	private int checkPort(String input) {
-		if (input.isBlank())
-			return 0;
-
-		if (input.matches(""))
-			return 0;
+	private int givePort(String input) {
+		// cut "localhost:"
+		input = input.substring("localhost:".length());
 
 		try {
 			return Integer.valueOf(input);
 		} catch (NumberFormatException e) {
 			return 0;
 		}
-
 	}
 
 	private void popUp(String msg) {
@@ -160,20 +167,12 @@ public class StartingController implements IController {
 	}
 
 	/**
-	 * 
-	 * @return the wrong port message
-	 */
-	private String getPortMsg() {
-		return "Your port [" + this.port + "] seems to be wrong!\nPlease use port within the range: 1024 to 9999.";
-	}
-
-	/**
 	 * Checks to see if a specific port is available.
 	 *
 	 * @param port the port to check for availability
 	 */
 	public static boolean available(int port) {
-		if (port < 1024 || port > 9999) {
+		if (port < MIN_PORT || port > MAX_PORT) {
 			throw new IllegalArgumentException("Invalid start port: " + port);
 		}
 
@@ -186,6 +185,7 @@ public class StartingController implements IController {
 			ds.setReuseAddress(true);
 			return true;
 		} catch (IOException e) {
+			// nothing
 		} finally {
 			if (ds != null) {
 				ds.close();
