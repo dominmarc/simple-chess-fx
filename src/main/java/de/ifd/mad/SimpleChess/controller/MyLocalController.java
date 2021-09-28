@@ -5,6 +5,7 @@
 package de.ifd.mad.SimpleChess.controller;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import de.ifd.mad.SimpleChess.figures.Bishop;
@@ -257,7 +258,8 @@ public class MyLocalController implements IController {
 			int newY = giveXY(btnIndex)[1];
 
 			// check if the move is invalid
-			if ((!tryMove(oldX, oldY, newX, newY)) || (checkIfFieldBlocked(newX, newY, getActivePlayer()))) {
+			if ((!tryMove(oldX, oldY, newX, newY, getActivePlayer()))
+					|| (checkIfFieldBlocked(newX, newY, getActivePlayer()))) {
 				// show information
 				PopUp info = new PopUp();
 				info.createInfoPopUp("Can not move player!\nInvalid move!");
@@ -293,18 +295,11 @@ public class MyLocalController implements IController {
 
 				// check if the game should end
 				if (checkMatt()) {
-					// checkMatt will yet not cover moves from not_king_figures to block "matt"
-					// Workaround for now: ask the player if there is a way to block "matt"
-					PopUp decision = new PopUp();
-					decision.createDecisionPopUp("Is there any way to block the enemy from setting you Matt?");
-					if (decision.showPopUp()) {
-						switchPlayer();
-					} else {
-						gameActive = false;
-						PopUp ending = new PopUp();
-						ending.createWinningPopUp(getActivePlayer().getName());
-						ending.showPopUp();
-					}
+					gameActive = false;
+					PopUp ending = new PopUp();
+					ending.createWinningPopUp("Congratulations, " + getActivePlayer().getName()
+							+ " won the game!\\nThank you for playing!\\nHave a nice day :)");
+					ending.showPopUp();
 					return;
 				}
 
@@ -462,7 +457,7 @@ public class MyLocalController implements IController {
 		}
 
 		// try to make the move to the king
-		if (tryMove(enemyX, enemyY, kingX, kingY)) {
+		if (tryMove(enemyX, enemyY, kingX, kingY, getActivePlayer())) {
 			problemKing[0] = kingX;
 			problemKing[1] = kingY;
 			return true;
@@ -482,7 +477,7 @@ public class MyLocalController implements IController {
 	 * @return true or false, depending on if the move is valid or not (depends not
 	 *         on if the position is blocked)
 	 */
-	private boolean tryMove(int oldX, int oldY, int newX, int newY) {
+	private boolean tryMove(int oldX, int oldY, int newX, int newY, Player player) {
 		int type = gamefield[oldX][oldY];
 
 		if (type > 6)
@@ -492,7 +487,7 @@ public class MyLocalController implements IController {
 		/////////////////////////////////////////////////////////////////////////////
 		case 1: {
 			// Bauer:
-			if (pawn.tryMove(oldX, oldY, newX, newY, getActivePlayer(), gamefield))
+			if (pawn.tryMove(oldX, oldY, newX, newY, player, gamefield))
 				return true;
 
 			break;
@@ -500,7 +495,7 @@ public class MyLocalController implements IController {
 		/////////////////////////////////////////////////////////////////////////////
 		case 2: {
 			// Turm
-			if (rook.tryMove(oldX, oldY, newX, newY, getActivePlayer(), gamefield))
+			if (rook.tryMove(oldX, oldY, newX, newY, player, gamefield))
 				return true;
 
 			break;
@@ -508,7 +503,7 @@ public class MyLocalController implements IController {
 		/////////////////////////////////////////////////////////////////////////////
 		case 3: {
 			// Pferd
-			if (knight.tryMove(oldX, oldY, newX, newY, getActivePlayer(), gamefield))
+			if (knight.tryMove(oldX, oldY, newX, newY, player, gamefield))
 				return true;
 
 			break;
@@ -516,7 +511,7 @@ public class MyLocalController implements IController {
 		/////////////////////////////////////////////////////////////////////////////
 		case 4: {
 			// Springer
-			if (bishop.tryMove(oldX, oldY, newX, newY, getActivePlayer(), gamefield))
+			if (bishop.tryMove(oldX, oldY, newX, newY, player, gamefield))
 				return true;
 
 			break;
@@ -524,7 +519,7 @@ public class MyLocalController implements IController {
 		/////////////////////////////////////////////////////////////////////////////
 		case 5: {
 			// queen = rook oder bishop
-			if (queen.tryMove(oldX, oldY, newX, newY, getActivePlayer(), gamefield, rook, bishop))
+			if (queen.tryMove(oldX, oldY, newX, newY, player, gamefield, rook, bishop))
 				return true;
 
 			break;
@@ -532,7 +527,7 @@ public class MyLocalController implements IController {
 		/////////////////////////////////////////////////////////////////////////////
 		case 6: {
 			// Koenig
-			if (king.tryMove(oldX, oldY, newX, newY, getActivePlayer(), gamefield))
+			if (king.tryMove(oldX, oldY, newX, newY, player, gamefield))
 				return true;
 
 			break;
@@ -549,11 +544,75 @@ public class MyLocalController implements IController {
 	}
 
 	/**
+	 * 
+	 * @param x
+	 * @param y
+	 * @param kingX
+	 * @param kingY
+	 * 
+	 * @return
+	 * 
+	 * @author MAD
+	 * @author iFD
+	 */
+	private Map<Integer, Integer> getFieldsOfMovement(int x, int y, int kingX, int kingY, Player player,
+			int[][] gamefield) {
+		switch (gamefield[x][y]) {
+		case 2:
+		case 8:
+			return rook.fieldsOfMovement(x, y, kingX, kingY, player, gamefield);
+		case 4:
+		case 10:
+			return bishop.fieldsOfMovement(x, y, kingX, kingY, gamefield);
+		case 5:
+		case 11:
+			return queen.fieldsOfMovement(x, y, kingX, kingY, player, gamefield, rook, bishop);
+		default:
+			return null;
+		}
+	}
+
+	/**
+	 * Checks all the figures of the given player; if at least one of them is able
+	 * to move to the given position
+	 * 
+	 * @param player the player whos figures should be checked
+	 * @param posX   the position x we are looking to move to
+	 * @param posY   the position y we are looking to move to
+	 * 
+	 * @return true if he can, false if he cant
+	 * 
+	 * @author MAD
+	 * @author iFD
+	 */
+	private boolean canAnyFigureMoveThere(Player player, int posX, int posY) {
+		// loop through gamefield
+		for (int y = 1; y < 9; y++) {
+			for (int x = 1; x < 9; x++) {
+				int fieldVal = gamefield[x][y];
+
+				if (fieldVal > 0 && fieldVal < 7 && (fieldVal != 6) && player == player1) {
+					// player1 moves
+					if (Boolean.TRUE.equals(tryMove(x, y, posX, posY, player1))) {
+						return true;
+					}
+				}
+				if (fieldVal > 6 && (fieldVal != 12) && player == player2) {
+					// player2 moves
+					if (Boolean.TRUE.equals(tryMove(x, y, posX, posY, player2))) {
+						return true;
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Checks weather the enemies king is able to get out of a problematic game
 	 * situation or not</br>
 	 * this is called after a player was set to "schach"</br>
-	 * TODO: Problem: a player can block "matt" with a different figure instead of
-	 * moving the king -->workaround for now: asking the players
 	 * 
 	 * @return true, if he is not able and false, if he is
 	 */
@@ -606,7 +665,7 @@ public class MyLocalController implements IController {
 					// just go through player1 or player2 positions
 					if (gamefield[x][y] > 0 && gamefield[x][y] < 7 && getActivePlayer() == player1
 							|| (gamefield[x][y] > 6 && getActivePlayer() == player2)) {
-						if (tryMove(x, y, posX, posY)) {
+						if (tryMove(x, y, posX, posY, getActivePlayer())) {
 							// potential king position is covered --> screw
 							freeToMove = false;
 						} else {
@@ -618,6 +677,59 @@ public class MyLocalController implements IController {
 
 			if (freeToMove)
 				return false;
+		}
+
+		// look for all the fields that can be blocked by the insulted players figures
+		for (int y = 1; y < 9; y++) {
+			for (int x = 1; x < 9; x++) {
+				// player2 gets attacked by player1
+				if (gamefield[x][y] > 0 && gamefield[x][y] < 7 && insultedPlayer == player2) {
+					// if attacker can attack the king and is no knight or pawn or king then he can
+					// be
+					// blocked
+					if (tryMove(x, y, kingX, kingY, getActivePlayer()) && (gamefield[x][y] != 3) && gamefield[x][y] != 1
+							&& gamefield[x][y] != 6) {
+						// get all the fields that would block the move
+						Map<Integer, Integer> fields = getFieldsOfMovement(x, y, kingX, kingY, player1, gamefield);
+						if (fields == null) {
+							// error happened
+						} else {
+							// we have the fields --> now look if any figure of the insulted player can move
+							// there
+							for (Integer xx : fields.keySet()) {
+								if (Boolean.TRUE.equals(canAnyFigureMoveThere(insultedPlayer, xx, fields.get(xx)))) {
+									// not matt, move can be blocked
+									return false;
+								}
+							}
+						}
+
+					}
+				}
+				// player1 gets attacked by player2
+				if (gamefield[x][y] > 6 && insultedPlayer == player1) {
+					// if attacker can attack the king and is no knight or pawn or king then he can
+					// be
+					// blocked
+					if (tryMove(x, y, kingX, kingY, getActivePlayer()) && (gamefield[x][y] != 9) && gamefield[x][y] != 7
+							&& gamefield[x][y] != 12) {
+						// get all the fields that would block the move
+						Map<Integer, Integer> fields = getFieldsOfMovement(x, y, kingX, kingY, player2, gamefield);
+						if (fields == null) {
+							// error happened
+						} else {
+							// we have the fields --> now look if any figure of the insulted player can move
+							// there
+							for (Integer xx : fields.keySet()) {
+								if (Boolean.TRUE.equals(canAnyFigureMoveThere(insultedPlayer, xx, fields.get(xx)))) {
+									// not matt, move can be blocked
+									return false;
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 
 		return true;

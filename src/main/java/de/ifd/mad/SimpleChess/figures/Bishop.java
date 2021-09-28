@@ -3,6 +3,9 @@
  */
 package de.ifd.mad.SimpleChess.figures;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import de.ifd.mad.SimpleChess.players.Player;
 import javafx.scene.image.Image;
 
@@ -78,6 +81,63 @@ public class Bishop {
 		}
 
 		return false;
+	}
+
+	public Map<Integer, Integer> fieldsOfMovement(int oldX, int oldY, int newX, int newY, int[][] gamefield) {
+		Map<Integer, Integer> fields = new HashMap<>();
+
+		int temp1 = oldX - newX;
+		int temp2 = oldY - newY;
+		if (temp1 < 0)
+			temp1 *= (-1);
+		if (temp2 < 0)
+			temp2 *= (-1);
+
+		if (temp1 == temp2) {
+			// move is diagonally
+			// up, left
+			int counter = 0;
+			if (newY < oldY && newX < oldX) {
+				for (int k = 1; k < temp1; k++) {
+					if (gamefield[oldX - k][oldY - k] > 0)
+						counter++;
+					else
+						fields.put(oldX - k, oldY - k);
+				}
+			}
+			// up, right
+			if (newY < oldY && newX > oldX) {
+				for (int k = 1; k < temp1; k++) {
+					if (gamefield[oldX + k][oldY - k] > 0)
+						counter++;
+					else
+						fields.put(oldX + k, oldY - k);
+				}
+			}
+			// down, left
+			if (newY > oldY && newX < oldX) {
+				for (int k = 1; k < temp1; k++) {
+					if (gamefield[oldX - k][oldY + k] > 0)
+						counter++;
+					else
+						fields.put(oldX - k, oldY + k);
+				}
+			}
+			// down, right
+			if (newY > oldY && newX > oldX) {
+				for (int k = 1; k < temp1; k++) {
+					if (gamefield[oldX + k][oldY + k] > 0)
+						counter++;
+					else
+						fields.put(oldX + k, oldY + k);
+				}
+			}
+			if (counter <= 0) {
+				return fields;
+			}
+		}
+
+		return null;
 	}
 
 	// Getters and Setters

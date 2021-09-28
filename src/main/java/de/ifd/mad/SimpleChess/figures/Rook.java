@@ -3,6 +3,9 @@
  */
 package de.ifd.mad.SimpleChess.figures;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import de.ifd.mad.SimpleChess.players.Player;
 import javafx.scene.image.Image;
 
@@ -77,6 +80,73 @@ public class Rook {
 
 		// neither horizontal nor vertical or move violation
 		return false;
+	}
+
+	/**
+	 * 
+	 * @param oldX
+	 * @param oldY
+	 * @param newX
+	 * @param newY
+	 * @param player
+	 * @param gamefield
+	 * 
+	 * @return
+	 * 
+	 * @author MAD
+	 * @author iFD
+	 */
+	public Map<Integer, Integer> fieldsOfMovement(int oldX, int oldY, int newX, int newY, Player player,
+			int[][] gamefield) {
+		Map<Integer, Integer> fields = new HashMap<>();
+
+		int counter = 0;
+		// vertical (y) movement
+		if (newX == oldX) {
+			if (newY > oldY) {
+				for (int y = oldY + 1; y < newY; y++) {
+					if (gamefield[newX][y] > 0)
+						counter++;
+					else
+						fields.put(newX, y);
+				}
+			} else if (newY < oldY) {
+				for (int y = oldY - 1; y > newY; y--) {
+					if (gamefield[newX][y] > 0)
+						counter++;
+					else
+						fields.put(newX, y);
+				}
+			}
+			if (counter <= 0) {
+				// way is free for the figure to move
+				return fields;
+			}
+
+			// horizontal (x) movement
+		} else if (newY == oldY) {
+			if (player.getId() == 1) {
+				for (int x = oldX + 1; x < newX; x++) {
+					if (gamefield[x][newY] > 0)
+						counter++;
+					else
+						fields.put(x, newY);
+				}
+			} else if (player.getId() == 2) {
+				for (int x = oldX - 1; x > newX; x--) {
+					if (gamefield[x][newY] > 0)
+						counter++;
+					else
+						fields.put(x, newY);
+				}
+			}
+			if (counter <= 0) {
+				return fields;
+			}
+		}
+
+		// neither horizontal nor vertical or move violation
+		return null;
 	}
 
 	// Getters and Setters

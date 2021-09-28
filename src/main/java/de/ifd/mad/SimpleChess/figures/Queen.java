@@ -3,6 +3,9 @@
  */
 package de.ifd.mad.SimpleChess.figures;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import de.ifd.mad.SimpleChess.players.Player;
 import javafx.scene.image.Image;
 
@@ -52,6 +55,20 @@ public class Queen {
 		}
 
 		return false;
+	}
+
+	public Map<Integer, Integer> fieldsOfMovement(int oldX, int oldY, int newX, int newY, Player player,
+			int[][] gamefield, Rook rook, Bishop bishop) {
+		Map<Integer, Integer> fields = new HashMap<>();
+
+		// rook movement
+		if (newX == oldX || newY == oldY) {
+			return rook.fieldsOfMovement(oldX, oldY, newX, newY, player, gamefield);
+
+			// bishop movement
+		} else {
+			return bishop.fieldsOfMovement(oldX, oldY, newX, newY, gamefield);
+		}
 	}
 
 	// Getters and Setters
