@@ -14,6 +14,7 @@ import de.ifd.mad.SimpleChess.figures.Knight;
 import de.ifd.mad.SimpleChess.figures.Pawn;
 import de.ifd.mad.SimpleChess.figures.Queen;
 import de.ifd.mad.SimpleChess.figures.Rook;
+import de.ifd.mad.SimpleChess.helpers.BasicGameFunctionsHelper;
 import de.ifd.mad.SimpleChess.main.PopUp;
 import de.ifd.mad.SimpleChess.players.Player;
 import javafx.fxml.FXML;
@@ -101,6 +102,9 @@ public class MyLocalController implements IController {
 	Player player1;
 	Player player2;
 
+	// constant text
+	private static final String BUTTON_START_TEXT = "START GAME";
+
 	@Override
 	public void initVariable(String value) {
 		// nothing (this is in local network controller used for port share)
@@ -115,7 +119,7 @@ public class MyLocalController implements IController {
 		setStatusLabelBackgrounds();
 
 		// set start button text
-		startButton.setText("START GAME");
+		startButton.setText(BUTTON_START_TEXT);
 
 		// initialize button storage
 		buttons = new Button[82];
@@ -126,52 +130,7 @@ public class MyLocalController implements IController {
 		int btnIndex = 1;
 		for (int i = 1; i < 9; i++) {
 			for (int t = 1; t < 9; t++) {
-				// Instantiate the buttons and add them to the button container
-				buttons[btnIndex] = new Button();
-				buttonPane.getChildren().add(buttons[btnIndex]);
-
-				// configure the buttons
-				buttons[btnIndex].setLayoutX(x);
-				buttons[btnIndex].setLayoutY(y);
-				buttons[btnIndex].setPrefWidth(45);
-				buttons[btnIndex].setPrefHeight(45);
-				buttons[btnIndex].setPadding(new Insets(0));
-				white = new Background(new BackgroundFill(Color.rgb(224, 201, 160), null, null));
-				black = new Background(new BackgroundFill(Color.rgb(164, 120, 91), null, null));
-
-				// chess-like color switching on game fields
-				if (i % 2 == 0) {
-					if (t % 2 == 0)
-						buttons[btnIndex].setBackground(white);
-					else
-						buttons[btnIndex].setBackground(black);
-				} else {
-					if (t % 2 == 0)
-						buttons[btnIndex].setBackground(black);
-					else
-						buttons[btnIndex].setBackground(white);
-				}
-
-				// finalize variable in order to use in enclosing scope (mouse event)
-				final int btnIdx = btnIndex;
-
-				// set event if user clicks on game field (button)
-				buttons[btnIndex].setOnMouseClicked(e -> {
-					// check if game is running
-					if (!gameActive) {
-						PopUp info = new PopUp();
-						info.createInfoPopUp("Please start the game!");
-						info.showPopUp();
-						return;
-					}
-
-					if (e.getButton().equals(MouseButton.PRIMARY))
-						// click on field function
-						clickOnField(btnIdx);
-					else if (e.getButton().equals(MouseButton.SECONDARY))
-						removeClickOnField(btnIdx);
-
-				});
+				buildButtons(x, y, i, t, btnIndex);
 				btnIndex++;
 				x += 45;
 			}
@@ -199,9 +158,9 @@ public class MyLocalController implements IController {
 	private boolean checkOwnSchach() {
 		for (int y = 1; y < 9; y++) {
 			for (int x = 1; x < 9; x++) {
-				if (gamefield[x][y] > 0 && gamefield[x][y] <= 6 && getInActivePlayer() == player1
-						|| (gamefield[x][y] >= 7 && getInActivePlayer() == player2)) {
-					if (checkSchach(giveIndex(x, y), getActivePlayer())) {
+				if (gamefield[x][y] > 0 && gamefield[x][y] <= 6 && getOppositePlayer(getActivePlayer()) == player1
+						|| (gamefield[x][y] >= 7 && getOppositePlayer(getActivePlayer()) == player2)) {
+					if (checkSchach(BasicGameFunctionsHelper.giveIndex(x, y), getActivePlayer())) {
 						return true;
 					}
 				}
@@ -220,34 +179,7 @@ public class MyLocalController implements IController {
 
 		// player wants to select a figure to make a move
 		if (selectedButton[0] == 0) {
-			int selectedX = giveXY(btnIndex)[0];
-			int selectedY = giveXY(btnIndex)[1];
-
-			// player 1 clicks on field with one of his figures
-			if (gamefield[selectedX][selectedY] > 0 && gamefield[selectedX][selectedY] < 7
-					&& getActivePlayer() == player1) {
-				buttons[btnIndex].setStyle(player1SelectedButton);
-
-				// player 2 clicks on field with one of his figures
-			} else if (gamefield[selectedX][selectedY] > 6 && getActivePlayer() == player2) {
-				buttons[btnIndex].setStyle(player2SelectedButton);
-
-				// player clicks on field with no figure
-			} else if (gamefield[selectedX][selectedY] == 0) {
-				// nothing should happen
-				return;
-
-				// player wants to select field with enemy figure
-			} else {
-				PopUp info = new PopUp();
-				info.createInfoPopUp("Player " + getActivePlayer().getName() + " is active!\nMake your move!");
-				info.showPopUp();
-				return;
-			}
-
-			// set (save) the selected button
-			selectedButton[0] = btnIndex;
-			selectedButton[1] = getActivePlayer().getId();
+			selectFigure(btnIndex);
 
 			// player has already selected a figure and now wants to move it
 		} else if (selectedButton[0] > 0 && selectedButton[0] < 65) {
@@ -288,7 +220,7 @@ public class MyLocalController implements IController {
 			}
 
 			// check if you set your enemy to "schach"
-			if (checkSchach(btnIndex, getInActivePlayer())) {
+			if (checkSchach(btnIndex, getOppositePlayer(getActivePlayer()))) {
 				PopUp info = new PopUp();
 				info.createInfoPopUp("\"SCHACH!\"" + "\n\nCan you end the game?");
 				info.showPopUp();
@@ -311,6 +243,44 @@ public class MyLocalController implements IController {
 			// no one set to "schach", end the move and switch player
 			switchPlayer();
 		}
+	}
+
+	/**
+	 * Selects the field of a figure.</br>
+	 * -visually (setStyle)</br>
+	 * -internally (@selectedButton)</br>
+	 * 
+	 * @param btnIdx Index of the button the user clicked on to select.
+	 */
+	private void selectFigure(int btnIdx) {
+		int selectedX = giveXY(btnIdx)[0];
+		int selectedY = giveXY(btnIdx)[1];
+
+		// player 1 clicks on field with one of his figures
+		if (gamefield[selectedX][selectedY] > 0 && gamefield[selectedX][selectedY] < 7
+				&& getActivePlayer() == player1) {
+			buttons[btnIdx].setStyle(player1SelectedButton);
+
+			// player 2 clicks on field with one of his figures
+		} else if (gamefield[selectedX][selectedY] > 6 && getActivePlayer() == player2) {
+			buttons[btnIdx].setStyle(player2SelectedButton);
+
+			// player clicks on field with no figure
+		} else if (gamefield[selectedX][selectedY] == 0) {
+			// nothing should happen
+			return;
+
+			// player wants to select field with enemy figure
+		} else {
+			PopUp info = new PopUp();
+			info.createInfoPopUp("Player " + getActivePlayer().getName() + " is active!\nMake your move!");
+			info.showPopUp();
+			return;
+		}
+
+		// set (save) the selected button
+		selectedButton[0] = btnIdx;
+		selectedButton[1] = getActivePlayer().getId();
 	}
 
 	/**
@@ -360,18 +330,7 @@ public class MyLocalController implements IController {
 	 * @return true if the field is blocked, false if it is not blocked
 	 */
 	private boolean checkIfFieldBlocked(int x, int y, Player player) {
-		if (x > 9 || y > 9 || x < 0 || y < 0)
-			return true;
-
-		int fieldValue = gamefield[x][y];
-
-		if (fieldValue > -1 && fieldValue < 7 && player == player2)
-			return false;
-
-		if ((fieldValue == 0 || (fieldValue < 13 && fieldValue > 6)) && player == player1)
-			return false;
-
-		return true;
+		return BasicGameFunctionsHelper.checkIfFieldBlocked(x, y, gamefield, player);
 	}
 
 	/**
@@ -386,7 +345,6 @@ public class MyLocalController implements IController {
 		gamefield[oldX][oldY] = gamefield[newX][newY];
 		gamefield[newX][newY] = 0;
 
-		printField();
 		setPlayers();
 
 	}
@@ -409,7 +367,6 @@ public class MyLocalController implements IController {
 		gamefield[newX][newY] = gamefield[oldX][oldY];
 		gamefield[oldX][oldY] = 0;
 
-		printField();
 		setPlayers();
 	}
 
@@ -478,79 +435,21 @@ public class MyLocalController implements IController {
 	 *         on if the position is blocked)
 	 */
 	private boolean tryMove(int oldX, int oldY, int newX, int newY, Player player) {
-		int type = gamefield[oldX][oldY];
-
-		if (type > 6)
-			type -= 6;
-
-		switch (type) {
-		/////////////////////////////////////////////////////////////////////////////
-		case 1: {
-			// Bauer:
-			if (pawn.tryMove(oldX, oldY, newX, newY, player, gamefield))
-				return true;
-
-			break;
-		}
-		/////////////////////////////////////////////////////////////////////////////
-		case 2: {
-			// Turm
-			if (rook.tryMove(oldX, oldY, newX, newY, player, gamefield))
-				return true;
-
-			break;
-		}
-		/////////////////////////////////////////////////////////////////////////////
-		case 3: {
-			// Pferd
-			if (knight.tryMove(oldX, oldY, newX, newY, player, gamefield))
-				return true;
-
-			break;
-		}
-		/////////////////////////////////////////////////////////////////////////////
-		case 4: {
-			// Springer
-			if (bishop.tryMove(oldX, oldY, newX, newY, player, gamefield))
-				return true;
-
-			break;
-		}
-		/////////////////////////////////////////////////////////////////////////////
-		case 5: {
-			// queen = rook oder bishop
-			if (queen.tryMove(oldX, oldY, newX, newY, player, gamefield, rook, bishop))
-				return true;
-
-			break;
-		}
-		/////////////////////////////////////////////////////////////////////////////
-		case 6: {
-			// Koenig
-			if (king.tryMove(oldX, oldY, newX, newY, player, gamefield))
-				return true;
-
-			break;
-		}
-		/////////////////////////////////////////////////////////////////////////////
-		default: {
-			PopUp info = new PopUp();
-			info.createInfoPopUp("Figure-Selection-Error\nYou may restart the game!");
-			info.showPopUp();
-			return false;
-		}
-		}
-		return false;
+		return BasicGameFunctionsHelper.tryMove(oldX, oldY, newX, newY, gamefield, player);
 	}
 
 	/**
+	 * Tries to collect all the fields a figure needs to pass in order to reach the
+	 * goal.</br>
+	 * This should never be called without first checking if the figure can actually
+	 * reach the attacked position.</br>
 	 * 
-	 * @param x
-	 * @param y
-	 * @param kingX
-	 * @param kingY
+	 * @param x     the field X, where the attacker is situated
+	 * @param y     the field Y, where the attacker is situated
+	 * @param kingX the field X, the figure tries to attack
+	 * @param kingY the field Y, the figure tries to attack
 	 * 
-	 * @return
+	 * @return Map<x,y> representing each field the figure has to pass
 	 * 
 	 * @author MAD
 	 * @author iFD
@@ -586,27 +485,7 @@ public class MyLocalController implements IController {
 	 * @author iFD
 	 */
 	private boolean canAnyFigureMoveThere(Player player, int posX, int posY) {
-		// loop through gamefield
-		for (int y = 1; y < 9; y++) {
-			for (int x = 1; x < 9; x++) {
-				int fieldVal = gamefield[x][y];
-
-				if (fieldVal > 0 && fieldVal < 7 && (fieldVal != 6) && player == player1) {
-					// player1 moves
-					if (Boolean.TRUE.equals(tryMove(x, y, posX, posY, player1))) {
-						return true;
-					}
-				}
-				if (fieldVal > 6 && (fieldVal != 12) && player == player2) {
-					// player2 moves
-					if (Boolean.TRUE.equals(tryMove(x, y, posX, posY, player2))) {
-						return true;
-					}
-				}
-			}
-		}
-
-		return false;
+		return BasicGameFunctionsHelper.canAnyFigureMoveThere(player, posX, posY, gamefield);
 	}
 
 	/**
@@ -617,24 +496,18 @@ public class MyLocalController implements IController {
 	 * @return true, if he is not able and false, if he is
 	 */
 	private boolean checkMatt() {
-		// strategy:
-		// 1)
-		// 2)
-		// 2.1)free to move to means: king is not attacked there by any enemy
-		// go threw all enemies and try to make a move to the currently pointing
-		// position
-		// 3)if there is positions left king is not "schach-matt", return false
-		// 4)if there is none left king is "schach-matt", return true
-
+		// save data from attacked king
 		int kingX = problemKing[0];
 		int kingY = problemKing[1];
-		Player insultedPlayer;
 
+		// get the insulted player
+		Player insultedPlayer;
 		if (gamefield[kingX][kingY] == 6)
 			insultedPlayer = player1;
 		else
 			insultedPlayer = player2;
 
+		// save fields around insulted king to check if they are free for him to move to
 		int[][] posList = new int[8][2]; // max 8 positions with 2 values (x,y)
 		int counter = 0; // counts the number of positions
 
@@ -736,74 +609,22 @@ public class MyLocalController implements IController {
 	}
 
 	/**
-	 * Prepares the int[][] array representing the field of the game
-	 */
-	private void prepareGameField() {
-		gamefield = new int[10][10];
-
-		for (int y = 1; y < 9; y++) {
-			int temp = 2;
-			for (int x = 1; x < 9; x++) {
-				if (y == 1) {
-					if (x >= 6) {
-						gamefield[x][y] = x - temp;
-						temp += 2;
-					} else {
-						gamefield[x][y] = x + 1;
-					}
-
-				} else if (y == 2 || y == 7) {
-					if (y == 2)
-						gamefield[x][y] = 1;
-					if (y == 7)
-						gamefield[x][y] = 7;
-				} else if (y == 8) {
-					if (x >= 6) {
-						gamefield[x][y] = x + 6 - temp;
-						temp += 2;
-					} else {
-						gamefield[x][y] = x + 1 + 6;
-					}
-				} else {
-					gamefield[x][y] = 0;
-				}
-			}
-		}
-
-		// print field && initialize the frame with -1 (0, 9)
-		for (int g = 0; g < 10; g++) {
-			for (int h = 0; h < 10; h++) {
-				if (g == 0 || g == 9) {
-					gamefield[h][g] = -1;
-				}
-				if (h == 0 || h == 9) {
-					gamefield[h][g] = -1;
-				}
-				System.out.print(gamefield[h][g] + "\t");
-			}
-			System.out.println();
-		}
-	}
-
-	/**
 	 * Starts the game
 	 */
 	public void startButtonClicked() {
 		if (gameActive) {
-			startButton.setText("START GAME");
+			startButton.setText(BUTTON_START_TEXT);
 			gameActive = false;
 			player1.setActive(false);
 			player2.setActive(false);
 			setStatusLabelBackgrounds();
 			infoLabel.setText("PRESS START");
-			prepareGameField();
 			setPlayers();
 		} else {
-			startButton.setText("RESTART GAME");
+			startButton.setText("RE" + BUTTON_START_TEXT);
 			infoLabel.setText("LET'S PLAY");
 			resetGlobalVars();
 			gameActive = true;
-			prepareGameField();
 			setPlayers();
 			player1.setActive(true);
 			player2.setActive(false);
@@ -818,9 +639,9 @@ public class MyLocalController implements IController {
 	public void surrenderButtonClicked() {
 		gameActive = false;
 		PopUp ending = new PopUp();
-		ending.createWinningPopUp(getInActivePlayer().getName());
+		ending.createWinningPopUp(getOppositePlayer(getActivePlayer()).getName());
 		ending.showPopUp();
-		startButton.setText("START GAME");
+		startButton.setText(BUTTON_START_TEXT);
 		infoLabel.setText("PRESS START");
 	}
 
@@ -844,7 +665,8 @@ public class MyLocalController implements IController {
 	}
 
 	/**
-	 * Resets all the global values in order to restart the game
+	 * Resets all the global values and creates a fresh new gamefield in order to
+	 * restart the game
 	 */
 	private void resetGlobalVars() {
 		selectedButton[0] = 0;
@@ -855,6 +677,7 @@ public class MyLocalController implements IController {
 		lastMove[1] = 0;
 		lastMove[2] = 0;
 		lastMove[3] = 0;
+		gamefield = BasicGameFunctionsHelper.createGamefield();
 	}
 
 	/**
@@ -866,73 +689,61 @@ public class MyLocalController implements IController {
 		for (int i = 1; i < 9; i++) {
 			for (int k = 1; k < 9; k++) {
 				if (gamefield[k][i] == 0) {
-					if (i % 2 == 0) {
-						if (k % 2 == 0) {
-							buttons[z].setBackground(white);
-						} else {
-							buttons[z].setBackground(black);
-						}
-					} else {
-						if (k % 2 == 0) {
-							buttons[z].setBackground(black);
-						} else {
-							buttons[z].setBackground(white);
-						}
-					}
+					setBackgrounds(i, k, z);
 				}
 				buttons[z].setGraphic(null);
 				switch (gamefield[k][i]) {
-				case 1: {
+				case 1:
 					buttons[z].setGraphic(new ImageView(pawn.getBlack()));
 					break;
-				}
-				case 2: {
+
+				case 2:
 					buttons[z].setGraphic(new ImageView(rook.getBlack()));
 					break;
-				}
-				case 3: {
+
+				case 3:
 					buttons[z].setGraphic(new ImageView(knight.getBlack()));
 					break;
-				}
-				case 4: {
+
+				case 4:
 					buttons[z].setGraphic(new ImageView(bishop.getBlack()));
 					break;
-				}
-				case 5: {
+
+				case 5:
 					buttons[z].setGraphic(new ImageView(queen.getBlack()));
 					break;
-				}
-				case 6: {
+
+				case 6:
 					buttons[z].setGraphic(new ImageView(king.getBlack()));
 					break;
-				}
-				case 7: {
+
+				case 7:
 					buttons[z].setGraphic(new ImageView(pawn.getWhite()));
 					break;
-				}
-				case 8: {
+
+				case 8:
 					buttons[z].setGraphic(new ImageView(rook.getWhite()));
 					break;
-				}
-				case 9: {
+
+				case 9:
 					buttons[z].setGraphic(new ImageView(knight.getWhite()));
 					break;
-				}
-				case 10: {
+
+				case 10:
 					buttons[z].setGraphic(new ImageView(bishop.getWhite()));
 					break;
-				}
-				case 11: {
+
+				case 11:
 					buttons[z].setGraphic(new ImageView(queen.getWhite()));
 					break;
-				}
-				case 12: {
+
+				case 12:
 					buttons[z].setGraphic(new ImageView(king.getWhite()));
 					break;
-				}
-				default: {
+
+				default:
 					break;
-				}
+
 				}
 				buttons[z].setStyle(playerNonSelectedButton);
 				z++;
@@ -941,16 +752,23 @@ public class MyLocalController implements IController {
 	}
 
 	/**
-	 * Returns the currently inactive player
-	 * 
-	 * @return currently inactive player object instance
+	 * Sets the backgrounds on the game field (arranges the rights colors to the
+	 * right buttons)
 	 */
-	public Player getInActivePlayer() {
-		if (player1.isActive())
-			return player2;
-		if (player2.isActive())
-			return player1;
-		return null;
+	private void setBackgrounds(int i, int k, int z) {
+		if (i % 2 == 0) {
+			if (k % 2 == 0) {
+				buttons[z].setBackground(white);
+			} else {
+				buttons[z].setBackground(black);
+			}
+		} else {
+			if (k % 2 == 0) {
+				buttons[z].setBackground(black);
+			} else {
+				buttons[z].setBackground(white);
+			}
+		}
 	}
 
 	/**
@@ -966,29 +784,84 @@ public class MyLocalController implements IController {
 		return null;
 	}
 
-	public void printField() {
-		for (int g = 0; g < 10; g++) {
-			for (int h = 0; h < 10; h++) {
-				System.out.print(gamefield[h][g] + "\t");
-			}
-			System.out.println();
-		}
+	/**
+	 * Returns the opposite player
+	 * 
+	 * @param player the player you want the opposite from
+	 * @return Player-Object
+	 */
+	public Player getOppositePlayer(Player player) {
+		if (player == player1)
+			return player2;
+		else
+			return player1;
 	}
 
+//	public void printField() {
+//		for (int g = 0; g < 10; g++) {
+//			for (int h = 0; h < 10; h++) {
+//				System.out.print(gamefield[h][g] + "\t");
+//			}
+//			System.out.println();
+//		}
+//	}
+
 	/**
-	 * Function to return the index of a button with given game_field coordinates
+	 * Function to add the buttons themselves and their functionality
 	 * 
-	 * @param x
-	 * @param y
-	 * @return
+	 * @param x        Layout of the button
+	 * @param y        Layout of the button
+	 * @param i        gamefield field y coordinate
+	 * @param t        gamefield field x coordinate
+	 * @param btnIndex Index of the buttons (1...81)
 	 */
-	private int giveIndex(int x, int y) {
-		if (x % 8 == 0) {
-			return (x * y);
+	private void buildButtons(int x, int y, int i, int t, int btnIndex) {
+		// Instantiate the buttons and add them to the button container
+		buttons[btnIndex] = new Button();
+		buttonPane.getChildren().add(buttons[btnIndex]);
+
+		// configure the buttons
+		buttons[btnIndex].setLayoutX(x);
+		buttons[btnIndex].setLayoutY(y);
+		buttons[btnIndex].setPrefWidth(45);
+		buttons[btnIndex].setPrefHeight(45);
+		buttons[btnIndex].setPadding(new Insets(0));
+		white = new Background(new BackgroundFill(Color.rgb(224, 201, 160), null, null));
+		black = new Background(new BackgroundFill(Color.rgb(164, 120, 91), null, null));
+
+		// chess-like color switching on game fields
+		if (i % 2 == 0) {
+			if (t % 2 == 0)
+				buttons[btnIndex].setBackground(white);
+			else
+				buttons[btnIndex].setBackground(black);
 		} else {
-			y -= 1;
-			return ((y * 8) + x);
+			if (t % 2 == 0)
+				buttons[btnIndex].setBackground(black);
+			else
+				buttons[btnIndex].setBackground(white);
 		}
+
+		// finalize variable in order to use in enclosing scope (mouse event)
+		final int btnIdx = btnIndex;
+
+		// set event if user clicks on game field (button)
+		buttons[btnIndex].setOnMouseClicked(e -> {
+			// check if game is running
+			if (!gameActive) {
+				PopUp info = new PopUp();
+				info.createInfoPopUp("Please start the game!");
+				info.showPopUp();
+				return;
+			}
+
+			if (e.getButton().equals(MouseButton.PRIMARY))
+				// click on field function
+				clickOnField(btnIdx);
+			else if (e.getButton().equals(MouseButton.SECONDARY))
+				removeClickOnField(btnIdx);
+
+		});
 	}
 
 	/**
@@ -1001,21 +874,7 @@ public class MyLocalController implements IController {
 	 * @return int[2]
 	 */
 	private int[] giveXY(int idx) {
-		int[] val = new int[2];
-		if (idx % 8 == 0) {
-			int y = idx / 8;
-			int x = 8;
-			val[0] = x;
-			val[1] = y;
-			return val;
-		} else {
-			int y = (idx / 8);
-			int x = idx - (y * 8);
-			y++;
-			val[0] = x;
-			val[1] = y;
-			return val;
-		}
+		return BasicGameFunctionsHelper.giveXY(idx);
 	}
 
 	/**
