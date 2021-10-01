@@ -83,15 +83,20 @@ public class Rook {
 	}
 
 	/**
+	 * Tries to collect all the fields a figure needs to pass in order to reach the
+	 * goal.</br>
+	 * This should never be called without first checking if the figure can actually
+	 * reach the attacked position.</br>
 	 * 
-	 * @param oldX
-	 * @param oldY
-	 * @param newX
-	 * @param newY
-	 * @param player
-	 * @param gamefield
+	 * @param oldX      the field X, where the attacker is situated
+	 * @param oldY      the field Y, where the attacker is situated
+	 * @param newX      the field X, the figure tries to attack
+	 * @param newY      the field Y, the figure tries to attack
+	 * @param player    player object referring to the player, that would make the
+	 *                  move
+	 * @param gamefield 2d-int array representing the current gamefield situation
 	 * 
-	 * @return
+	 * @return Map<x,y> representing each field the figure has to pass
 	 * 
 	 * @author MAD
 	 * @author iFD

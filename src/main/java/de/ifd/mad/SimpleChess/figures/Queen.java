@@ -3,7 +3,6 @@
  */
 package de.ifd.mad.SimpleChess.figures;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import de.ifd.mad.SimpleChess.players.Player;
@@ -57,9 +56,25 @@ public class Queen {
 		return false;
 	}
 
+	/**
+	 * Tries to collect all the fields a figure needs to pass in order to reach the
+	 * goal.</br>
+	 * This should never be called without first checking if the figure can actually
+	 * reach the attacked position.</br>
+	 * 
+	 * @param oldX      the field X, where the attacker is situated
+	 * @param oldY      the field Y, where the attacker is situated
+	 * @param newX      the field X, the figure tries to attack
+	 * @param newY      the field Y, the figure tries to attack
+	 * @param player    player object referring to the player, that would make the
+	 *                  move
+	 * @param gamefield 2d-int array representing the current gamefield situation
+	 * @param rook
+	 * @param bishop
+	 * @return Map<x,y> representing each field the figure has to pass
+	 */
 	public Map<Integer, Integer> fieldsOfMovement(int oldX, int oldY, int newX, int newY, Player player,
 			int[][] gamefield, Rook rook, Bishop bishop) {
-		Map<Integer, Integer> fields = new HashMap<>();
 
 		// rook movement
 		if (newX == oldX || newY == oldY) {

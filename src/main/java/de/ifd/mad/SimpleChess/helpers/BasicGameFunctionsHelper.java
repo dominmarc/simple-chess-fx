@@ -1,4 +1,9 @@
+/* 
+ * Copyright (c) 2021 iFD  Chemnitz http://www.ifd-.com
+ */
 package de.ifd.mad.SimpleChess.helpers;
+
+import java.util.Map;
 
 import de.ifd.mad.SimpleChess.figures.Bishop;
 import de.ifd.mad.SimpleChess.figures.King;
@@ -9,6 +14,12 @@ import de.ifd.mad.SimpleChess.figures.Rook;
 import de.ifd.mad.SimpleChess.main.PopUp;
 import de.ifd.mad.SimpleChess.players.Player;
 
+/**
+ * Helper Class for chess game by MAD
+ * 
+ * @author MAD
+ * @author iFD
+ */
 public class BasicGameFunctionsHelper {
 	// initialize figure objects
 	private static final Pawn PAWN = new Pawn();
@@ -18,14 +29,27 @@ public class BasicGameFunctionsHelper {
 	private static final Queen QUEEN = new Queen();
 	private static final King KING = new King();
 
+	private BasicGameFunctionsHelper() {
+		// we don't need to construct objects of this class
+	}
+
+//====================================================================================================
+//==																								==	
+//==General Helper Functions:																		==
+//==																								==	
+//====================================================================================================
+
 	/**
 	 * Checks if the move to the new field is valid (does not check the field,
 	 * actually moves nothing)
 	 * 
-	 * @param oldX figures old x position
-	 * @param oldY figures old y position
-	 * @param newX figures new x position
-	 * @param newY figures new y position
+	 * @param oldX      figures old x position
+	 * @param oldY      figures old y position
+	 * @param newX      figures new x position
+	 * @param newY      figures new y position
+	 * @param gamefield 2d-int array representing the current gamefield situation
+	 * @param player    the player object referring to the player that tries to make
+	 *                  the move
 	 * @return true or false, depending on if the move is valid or not (depends not
 	 *         on if the position is blocked)
 	 */
@@ -99,9 +123,10 @@ public class BasicGameFunctionsHelper {
 	 * Checks all the figures of the given player; if at least one of them is able
 	 * to move to the given position
 	 * 
-	 * @param player the player whos figures should be checked
-	 * @param posX   the position x we are looking to move to
-	 * @param posY   the position y we are looking to move to
+	 * @param player    the player whos figures should be checked
+	 * @param posX      the position x we are looking to move to
+	 * @param posY      the position y we are looking to move to
+	 * @param gamefield 2d-int array representing the current gamefield situation
 	 * 
 	 * @return true if he can, false if he cant
 	 * 
@@ -135,9 +160,10 @@ public class BasicGameFunctionsHelper {
 	/**
 	 * Checks if the new position is free to move to (just this field)
 	 * 
-	 * @param newX   figures new x position
-	 * @param newY   figures new y position
-	 * @param player object to identify the related player
+	 * @param x         figures new x position
+	 * @param y         figures new y position
+	 * @param gamefield 2d-int array representing the current gamefield situation
+	 * @param player    object to identify the related player
 	 * @return true if the field is blocked, false if it is not blocked
 	 */
 	public static boolean checkIfFieldBlocked(int x, int y, int[][] gamefield, Player player) {
@@ -153,6 +179,309 @@ public class BasicGameFunctionsHelper {
 			return false;
 
 		return true;
+	}
+
+	/**
+	 * 
+	 * @param player    the player who should be checked for "check"
+	 * @param gamefield 2d-int array representing the current gamefield situation
+	 * @param player1   instance of player referring to player1
+	 * @param player2   instance of player referring to player2
+	 * @return int[2] array with 0 representing the insulted kingX and 1
+	 *         representing the insulted kingY
+	 */
+	public static int[] isChecked(Player player, int[][] gamefield, Player player1, Player player2) {
+		int kingX = 0;
+		int kingY = 0;
+		int[] kingXY = { 0, 0 };
+
+		Player opponent = getOpponentOnId(player.getId(), player1, player2);
+
+		// searches for the king of the specified player
+		for (int y = 1; y < 9; y++) {
+			for (int x = 1; x < 9; x++) {
+				if ((gamefield[x][y] == 6 && player.getId() == 1) || (gamefield[x][y] == 12 && player.getId() == 2)) {
+					kingX = x;
+					kingY = y;
+				}
+			}
+		}
+
+		// no king found
+		if (kingX == 0 || kingY == 0)
+			return kingXY;
+
+		// try to make a move to the king from all of the opponent's (specified in
+		// method) figures
+		for (int y = 1; y < 9; y++) {
+			for (int x = 1; x < 9; x++) {
+				if (isPlayerField(x, y, gamefield, opponent)) {
+					if (tryMove(x, y, kingX, kingY, gamefield, opponent)) {
+						kingXY[0] = kingX;
+						kingXY[1] = kingY;
+						return kingXY;
+					}
+				}
+			}
+		}
+		return kingXY;
+	}
+
+	/**
+	 * This function checks for a checkmate.</br>
+	 * This happens on the assumption, that there is an insulted king.</br>
+	 * </br>
+	 * First it will check if there are fields left, that the king could move
+	 * to.</br>
+	 * Secondly it will check if there are any figures that could block the way to
+	 * the king and prevent a check.</br>
+	 * Thirdly it will check if any figure of the insulted player can actually
+	 * attack the king attacker.</br>
+	 * 
+	 * @param kingX     the kingX position of the insulted king
+	 * @param kingY     the kingY position of the insulted king
+	 * @param gamefield 2d-int array representing the current gamefield situation
+	 * @param player1   instance of player referring to player1
+	 * @param player2   instance of player referring to player2
+	 * 
+	 * @return true if checkmate, false if not
+	 * 
+	 * @author MAD
+	 * @author iFD
+	 */
+	public static boolean isCheckmate(int kingX, int kingY, int[][] gamefield, Player player1, Player player2) {
+		// get the insulted player (the attacked player)
+		Player insultedPlayer;
+		if (gamefield[kingX][kingY] == 6)
+			insultedPlayer = player1;
+		else if (gamefield[kingX][kingY] == 12)
+			insultedPlayer = player2;
+		else
+			return false;
+
+		// get the attacker
+		Player opponent = getOpponentOnId(insultedPlayer.getId(), player1, player2);
+
+		// 1)
+		if (existFreeFieldsAroundKing(kingX, kingY, insultedPlayer, opponent, gamefield))
+			return false;
+
+		// 2)
+		if (canTheCheckBeBlocked(kingX, kingY, insultedPlayer, opponent, gamefield))
+			return false;
+
+		// 3)
+		if (canAttackKingAttacker(kingX, kingY, insultedPlayer, opponent, gamefield))
+			return false;
+
+		return true;
+	}
+
+	/**
+	 * 
+	 * @param kingX          the kingX position of the insulted king
+	 * @param kingY          the kingY position of the insulted king
+	 * @param insultedPlayer the player object referring to the insulted player
+	 * @param gamefield      2d-int array representing the current gamefield
+	 *                       situation
+	 * @return true if there are free fields for the king to move to, false if there
+	 *         is none
+	 */
+	private static boolean existFreeFieldsAroundKing(int kingX, int kingY, Player insultedPlayer, Player opponent,
+			int[][] gamefield) {
+		// save fields around insulted king to check if they are free for him to move to
+		int[][] posList = new int[8][2]; // max 8 positions with 2 values (x,y)
+		int counter = 0; // counts the number of positions
+
+		// list up all positions the king can move to
+		for (int y = kingY - 1; y <= kingY + 1; y++) { // loop around the king
+			for (int x = kingX - 1; x <= kingX + 1; x++) {
+				// king can just move one field to each side, so just check if that field is
+				// blocked
+				if (!checkIfFieldBlocked(x, y, gamefield, insultedPlayer)) {
+					posList[counter][0] = x;
+					posList[counter][1] = y;
+					counter++;
+				}
+			}
+		}
+
+		// go threw all the positions the king can move to and see if they are free to
+		// move to
+		for (int k = 0; k <= counter - 1; k++) {
+			int posX = posList[k][0];
+			int posY = posList[k][1];
+
+			// Indicates whether the king is able to make a move (escape "check") or not
+			// NOTE that this gets reset per field around the king, so we check for each
+			// field around him if he can move there and as soon as there is a field we
+			// return true
+			boolean freeToMove = true;
+
+			for (int y = 1; y < 9; y++) {
+				for (int x = 1; x < 9; x++) {
+					// just go through opponent fields and see if his figures block our fields
+					if (isPlayerField(x, y, gamefield, opponent))
+						if (tryMove(x, y, posX, posY, gamefield, opponent)) {
+							freeToMove = false;
+							continue;
+						}
+
+				}
+			}
+
+			if (freeToMove)
+				return true;
+
+		}
+		return false;
+	}
+
+	/**
+	 * 
+	 * @param kingX
+	 * @param kingY
+	 * @param insultedPlayer
+	 * @param opponent
+	 * @param gamefield
+	 * @return
+	 */
+	private static boolean canTheCheckBeBlocked(int kingX, int kingY, Player insultedPlayer, Player opponent,
+			int[][] gamefield) {
+		// look for all the fields that can be blocked by the insulted players figures
+		for (int y = 1; y < 9; y++) {
+			for (int x = 1; x < 9; x++) {
+
+				if (isPlayerField(x, y, gamefield, opponent)) {
+					// 1, 3, 6, 7, 9, 12 cannot be blocked(no knight or pawn or king)
+					if ((tryMove(x, y, kingX, kingY, gamefield, opponent)) && (gamefield[x][y] != 1)
+							&& (gamefield[x][y] != 3) && (gamefield[x][y] != 6) && (gamefield[x][y] != 7)
+							&& (gamefield[x][y] != 9) && (gamefield[x][y] != 12)) {
+						Map<Integer, Integer> fields = getFieldsOfMovement(x, y, kingX, kingY, opponent, gamefield);
+						if (fields == null) {
+							// error happened
+						} else {
+							// we have the fields --> now look if any figure of the insulted player can move
+							// there
+							for (Integer xx : fields.keySet()) {
+								if (Boolean.TRUE
+										.equals(canAnyFigureMoveThere(insultedPlayer, xx, fields.get(xx), gamefield))) {
+									// move (check) can be blocked
+									return true;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * This function checks if the insulted player can attack the attacker of his
+	 * king.
+	 * 
+	 * @param kingX          the kingX position of the insulted king
+	 * @param kingY          the kingY position of the insulted king
+	 * @param insultedPlayer the player object referring to the insulted player
+	 * @param gamefield      2d-int array representing the current gamefield
+	 *                       situation
+	 * @return true, if the insulted player can attack the king attacker & false if
+	 *         not
+	 */
+	private static boolean canAttackKingAttacker(int kingX, int kingY, Player insultedPlayer, Player opponent,
+			int[][] gamefield) {
+		int attackerX = 0;
+		int attackerY = 0;
+
+		// 1st we need to get the attacker
+		for (int y = 1; y < 9; y++) {
+			for (int x = 1; x < 9; x++) {
+				if (isPlayerField(x, y, gamefield, opponent)) {
+					if (tryMove(x, y, kingX, kingY, gamefield, opponent)) {
+						// safe attacker
+						attackerX = x;
+						attackerY = y;
+						// exit loop
+						y = 9;
+					}
+				}
+			}
+		}
+
+		// no attacker
+		if (attackerX == 0 || attackerY == 0)
+			return false;
+
+		// after that we check if there is a figure that can attack the attacker
+		for (int y = 1; y < 9; y++) {
+			for (int x = 1; x < 9; x++) {
+				if (isPlayerField(x, y, gamefield, insultedPlayer))
+					if (tryMove(x, y, attackerX, attackerY, gamefield, insultedPlayer))
+						return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * 
+	 * @param posX      the position x to be checked
+	 * @param posY      the position y to be checked
+	 * @param gamefield 2d-int array representing the current gamefield situation
+	 * @param player    the corresponding player to be checked
+	 * @return true if this is a field of the referred player, false if not
+	 */
+	public static boolean isPlayerField(int posX, int posY, int[][] gamefield, Player player) {
+		int fieldVal = 0;
+		if (posX > 8 || posX < 0 || posY > 8 || posY < 0)
+			return false;
+
+		if (player == null)
+			return false;
+
+		fieldVal = gamefield[posX][posY];
+
+		return ((fieldVal > 0 && fieldVal < 7 && player.getId() == 1) || (fieldVal > 6 && player.getId() == 2));
+
+	}
+
+	/**
+	 * Tries to collect all the fields a figure needs to pass in order to reach the
+	 * goal.</br>
+	 * This should never be called without first checking if the figure can actually
+	 * reach the attacked position.</br>
+	 * 
+	 * @param x         the field X, where the attacker is situated
+	 * @param y         the field Y, where the attacker is situated
+	 * @param kingX     the field X, the figure tries to attack
+	 * @param kingY     the field Y, the figure tries to attack
+	 * @param player    player object referring to the player, that would make the
+	 *                  move
+	 * @param gamefield 2d-int array representing the current gamefield situation
+	 * 
+	 * @return Map<x,y> representing each field the figure has to pass
+	 * 
+	 * @author MAD
+	 * @author iFD
+	 */
+	private static Map<Integer, Integer> getFieldsOfMovement(int x, int y, int kingX, int kingY, Player player,
+			int[][] gamefield) {
+		switch (gamefield[x][y]) {
+		case 2:
+		case 8:
+			return ROOK.fieldsOfMovement(x, y, kingX, kingY, player, gamefield);
+		case 4:
+		case 10:
+			return BISHOP.fieldsOfMovement(x, y, kingX, kingY, gamefield);
+		case 5:
+		case 11:
+			return QUEEN.fieldsOfMovement(x, y, kingX, kingY, player, gamefield, ROOK, BISHOP);
+		default:
+			return null;
+		}
 	}
 
 	/**
@@ -207,6 +536,21 @@ public class BasicGameFunctionsHelper {
 	}
 
 	/**
+	 * 
+	 * @param id
+	 * @param player1 instance of player referring to player1
+	 * @param player2 instance of player referring to player2
+	 * @return corresponding player object
+	 */
+	private static Player getOpponentOnId(int id, Player player1, Player player2) {
+		if (id == 1)
+			return player2;
+		if (id == 2)
+			return player1;
+		return null;
+	}
+
+	/**
 	 * Function to return the index of a button with given game_field coordinates
 	 * 
 	 * @param x
@@ -247,6 +591,38 @@ public class BasicGameFunctionsHelper {
 			val[1] = y;
 			return val;
 		}
+	}
+
+//====================================================================================================
+//==																								==	
+//==Helper Functions for Local Network:																==
+//==																								==	
+//====================================================================================================
+
+	public static String generateMoveMsg(int oldX, int oldY, int newX, int newY, boolean schach, boolean matt) {
+		String message = "";
+		if (oldX < 10)
+			message += "0";
+		message += oldX + "";
+		if (oldY < 10)
+			message += "0";
+		message += oldY + "";
+		if (newX < 10)
+			message += "0";
+		message += newX + "";
+		if (newY < 10)
+			message += "0";
+		message += newY;
+
+		if (schach)
+			message += "01";
+		else
+			message += "00";
+		if (matt)
+			message += "01";
+		else
+			message += "00";
+		return message;
 	}
 
 }
