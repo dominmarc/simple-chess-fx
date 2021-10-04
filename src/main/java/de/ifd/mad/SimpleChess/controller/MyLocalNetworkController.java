@@ -132,6 +132,8 @@ public class MyLocalNetworkController implements IController {
 	/** manages the connection while the connection is stable */
 	private Thread workerThread;
 
+	//Logger LOGGER = LoggerFactory.get;
+	
 	/**
 	 * specifies whether this plays server or client </br>
 	 * 1 means client, 2 means server
@@ -762,7 +764,7 @@ public class MyLocalNetworkController implements IController {
 		gamefield[oldX][oldY] = 0;
 
 		if (check == 1)
-			infoUser("\"CHECK!\"" + "\n\nOh no, will he end the game?").showPopUp();
+			infoUser("CHECK!" + "\n\nOh no, will he end the game?").showPopUp();
 
 		if (checkmate == 1) {
 			// printField();

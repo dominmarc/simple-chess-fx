@@ -9,6 +9,7 @@ module SimpleChess {
 	requires transitive javafx.controls;
 	requires javafx.fxml;
 	requires java.desktop;
+	requires org.slf4j;
 	
 	opens de.ifd.mad.SimpleChess.controller;
 	opens de.ifd.mad.SimpleChess.main;

@@ -1,0 +1,281 @@
+08:15:50.169 INFO  MyLocalController - ==============================================
+08:15:50.182 INFO  MyLocalController - ==============Local Multiplayer===============
+08:15:50.183 INFO  MyLocalController - ==============================================
+08:15:50.183 INFO  MyLocalController - Starting initialization...
+08:15:50.183 INFO  MyLocalController - Asking for players...
+08:15:55.262 INFO  MyLocalController - Building the gamefield...
+08:15:55.281 INFO  MyLocalController - Successfully built the field!
+08:15:55.281 INFO  MyLocalController - Drawing lines...
+08:15:55.284 INFO  MyLocalController - Successfully drew lines!
+08:15:55.284 INFO  MyLocalController - Initialization finished!
+08:15:55.287 INFO  MyLocalController - ==============================================
+08:15:59.705 INFO  MyLocalController - Starting the game...
+08:15:59.747 INFO  MyLocalController - Reset global variables, created new gamefield!
+08:15:59.889 INFO  MyLocalController - The game has started with players 1=eric, 2=marc - 1 starts!
+08:16:01.609 INFO  MyLocalController - User [eric] clicks on Button [53]
+08:16:01.610 INFO  MyLocalController - eric wants to select Button [53]
+08:16:01.610 WARN  MyLocalController - Enemy figure on field [53] with field value=7.
+08:16:03.617 INFO  MyLocalController - User [eric] clicks on Button [14]
+08:16:03.617 INFO  MyLocalController - eric wants to select Button [14]
+08:16:03.618 INFO  MyLocalController - Field selected!
+08:16:04.144 INFO  MyLocalController - User [eric] clicks on Button [22]
+08:16:04.145 INFO  MyLocalController - User [eric] wants to move his selected figure from [6|2] (val=1) to [6|3] (val=0)
+08:16:04.159 INFO  MyLocalController - Valid move, [x:6,y:2] is now val=0 and [x:6,y:3] is now val=1
+08:16:04.160 INFO  MyLocalController - Switching active player from eric to marc
+08:16:11.544 INFO  MyLocalController - User [marc] clicks on Button [55]
+08:16:11.545 INFO  MyLocalController - marc wants to select Button [55]
+08:16:11.545 INFO  MyLocalController - Field selected!
+08:16:12.169 INFO  MyLocalController - User [marc] clicks on Button [39]
+08:16:12.170 INFO  MyLocalController - User [marc] wants to move his selected figure from [7|7] (val=7) to [7|5] (val=0)
+08:16:12.182 INFO  MyLocalController - Valid move, [x:7,y:7] is now val=0 and [x:7,y:5] is now val=7
+08:16:12.183 INFO  MyLocalController - Switching active player from marc to eric
+08:16:15.273 INFO  MyLocalController - User [eric] clicks on Button [7]
+08:16:15.273 INFO  MyLocalController - eric wants to select Button [7]
+08:16:15.274 INFO  MyLocalController - Field selected!
+08:16:16.033 INFO  MyLocalController - User [eric] clicks on Button [24]
+08:16:16.034 INFO  MyLocalController - User [eric] wants to move his selected figure from [7|1] (val=3) to [8|3] (val=0)
+08:16:16.044 INFO  MyLocalController - Valid move, [x:7,y:1] is now val=0 and [x:8,y:3] is now val=3
+08:16:16.044 INFO  MyLocalController - Switching active player from eric to marc
+08:16:17.632 INFO  MyLocalController - User [marc] clicks on Button [63]
+08:16:17.632 INFO  MyLocalController - marc wants to select Button [63]
+08:16:17.632 INFO  MyLocalController - Field selected!
+08:16:19.432 INFO  MyLocalController - User [marc] clicks on Button [46]
+08:16:19.433 INFO  MyLocalController - User [marc] wants to move his selected figure from [7|8] (val=9) to [6|6] (val=0)
+08:16:19.447 INFO  MyLocalController - Valid move, [x:7,y:8] is now val=0 and [x:6,y:6] is now val=9
+08:16:19.447 INFO  MyLocalController - Switching active player from marc to eric
+08:16:46.725 INFO  MyLocalController - Successfully saved file: C:\Users\mad\Documents\game1.txt
+08:17:01.218 WARN  MyLocalController - Someone closed the application on exit button.
+08:17:01.220 INFO  MyLocalController - ==============================================
+08:17:01.220 INFO  MyLocalController - =====================END======================
+08:17:01.221 INFO  MyLocalController - ==============================================
+08:19:04.678 INFO  MyLocalController - ==============================================
+08:19:04.682 INFO  MyLocalController - ==============Local Multiplayer===============
+08:19:04.683 INFO  MyLocalController - ==============================================
+08:19:04.683 INFO  MyLocalController - Starting initialization...
+08:19:04.683 INFO  MyLocalController - Asking for players...
+08:19:12.614 INFO  MyLocalController - Building the gamefield...
+08:19:12.634 INFO  MyLocalController - Successfully built the field!
+08:19:12.635 INFO  MyLocalController - Drawing lines...
+08:19:12.637 INFO  MyLocalController - Successfully drew lines!
+08:19:12.638 INFO  MyLocalController - Initialization finished!
+08:19:12.638 INFO  MyLocalController - ==============================================
+08:19:23.703 INFO  MyLocalController - Starting the game...
+08:19:23.747 INFO  MyLocalController - Reset global variables, created new gamefield!
+08:19:23.899 INFO  MyLocalController - The game has started with players 1=eric, 2=marc - 2 starts!
+08:19:25.182 INFO  MyLocalController - User [marc] clicks on Button [14]
+08:19:25.183 INFO  MyLocalController - marc wants to select Button [14]
+08:19:25.184 WARN  MyLocalController - Enemy figure on field [14] with field value=1.
+08:19:27.421 INFO  MyLocalController - User [marc] clicks on Button [51]
+08:19:27.422 INFO  MyLocalController - marc wants to select Button [51]
+08:19:27.422 INFO  MyLocalController - Field selected!
+08:19:27.982 INFO  MyLocalController - User [marc] clicks on Button [35]
+08:19:27.983 INFO  MyLocalController - User [marc] wants to move his selected figure from [3|7] (val=7) to [3|5] (val=0)
+08:19:27.996 INFO  MyLocalController - Valid move, [x:3,y:7] is now val=0 and [x:3,y:5] is now val=7
+08:19:27.997 INFO  MyLocalController - Switching active player from marc to eric
+08:19:29.238 INFO  MyLocalController - User [eric] clicks on Button [7]
+08:19:29.239 INFO  MyLocalController - eric wants to select Button [7]
+08:19:29.239 INFO  MyLocalController - Field selected!
+08:19:29.813 INFO  MyLocalController - User [eric] clicks on Button [22]
+08:19:29.814 INFO  MyLocalController - User [eric] wants to move his selected figure from [7|1] (val=3) to [6|3] (val=0)
+08:19:29.827 INFO  MyLocalController - Valid move, [x:7,y:1] is now val=0 and [x:6,y:3] is now val=3
+08:19:29.828 INFO  MyLocalController - Switching active player from eric to marc
+08:19:55.658 INFO  MyLocalController - Successfully saved file: C:\Users\mad\Documents\gamefield.txt
+08:21:03.504 WARN  MyLocalController - Someone closed the application on exit button.
+08:21:03.505 INFO  MyLocalController - ==============================================
+08:21:03.506 INFO  MyLocalController - =====================END======================
+08:21:03.506 INFO  MyLocalController - ==============================================
+09:40:15.567 INFO  MyLocalController - ==============================================
+09:40:15.571 INFO  MyLocalController - ==============Local Multiplayer===============
+09:40:15.571 INFO  MyLocalController - ==============================================
+09:40:15.572 INFO  MyLocalController - Starting initialization...
+09:40:15.572 INFO  MyLocalController - Asking for players...
+09:40:21.284 INFO  MyLocalController - Building the gamefield...
+09:40:21.304 INFO  MyLocalController - Successfully built the field!
+09:40:21.304 INFO  MyLocalController - Drawing lines...
+09:40:21.307 INFO  MyLocalController - Successfully drew lines!
+09:40:21.307 INFO  MyLocalController - Initialization finished!
+09:40:21.307 INFO  MyLocalController - ==============================================
+09:40:24.422 INFO  MyLocalController - Starting the game...
+09:40:35.910 WARN  MyLocalController - Someone closed the application on exit button.
+09:40:35.911 INFO  MyLocalController - ==============================================
+09:40:35.911 INFO  MyLocalController - =====================END======================
+09:40:35.911 INFO  MyLocalController - ==============================================
+09:41:24.127 INFO  MyLocalController - ==============================================
+09:41:24.132 INFO  MyLocalController - ==============Local Multiplayer===============
+09:41:24.132 INFO  MyLocalController - ==============================================
+09:41:24.133 INFO  MyLocalController - Starting initialization...
+09:41:24.133 INFO  MyLocalController - Asking for players...
+09:41:28.701 INFO  MyLocalController - Building the gamefield...
+09:41:28.721 INFO  MyLocalController - Successfully built the field!
+09:41:28.722 INFO  MyLocalController - Drawing lines...
+09:41:28.764 INFO  MyLocalController - Reset global variables, created new gamefield!
+09:41:28.764 INFO  MyLocalController - Successfully drew lines!
+09:41:28.765 INFO  MyLocalController - Initialization finished!
+09:41:28.765 INFO  MyLocalController - ==============================================
+09:41:34.175 INFO  MyLocalController - Starting the game...
+09:41:34.648 INFO  MyLocalController - The game has started with players 1=[eric], 2=[marc] - 1 starts!
+09:41:38.286 INFO  MyLocalController - User [eric] clicks on Button [14]
+09:41:38.287 INFO  MyLocalController - eric wants to select Button [14]
+09:41:38.288 INFO  MyLocalController - Field selected!
+09:41:39.023 INFO  MyLocalController - User [eric] clicks on Button [30]
+09:41:39.024 INFO  MyLocalController - User [eric] wants to move his selected figure from [6|2] (val=1) to [6|4] (val=0)
+09:41:39.038 INFO  MyLocalController - Valid move, [x:6,y:2] is now val=0 and [x:6,y:4] is now val=1
+09:41:39.038 INFO  MyLocalController - Switching active player from eric to marc
+09:41:40.423 INFO  MyLocalController - User [marc] clicks on Button [50]
+09:41:40.424 INFO  MyLocalController - marc wants to select Button [50]
+09:41:40.425 INFO  MyLocalController - Field selected!
+09:41:41.215 INFO  MyLocalController - User [marc] clicks on Button [34]
+09:41:41.216 INFO  MyLocalController - User [marc] wants to move his selected figure from [2|7] (val=7) to [2|5] (val=0)
+09:41:41.226 INFO  MyLocalController - Valid move, [x:2,y:7] is now val=0 and [x:2,y:5] is now val=7
+09:41:41.227 INFO  MyLocalController - Switching active player from marc to eric
+09:41:54.303 INFO  MyLocalController - eric clicked on reset. Ending the game!
+09:41:54.303 INFO  MyLocalController - Reset global variables, created new gamefield!
+09:43:43.266 INFO  MyLocalController - Starting the game...
+09:43:43.278 INFO  MyLocalController - The game has started with players 1=[eric], 2=[marc] - 2 starts!
+09:43:46.754 INFO  MyLocalController - User [marc] clicks on Button [13]
+09:43:46.754 INFO  MyLocalController - marc wants to select Button [13]
+09:43:46.754 WARN  MyLocalController - Enemy figure on field [13] with field value=1.
+09:43:48.842 INFO  MyLocalController - User [marc] clicks on Button [53]
+09:43:48.842 INFO  MyLocalController - marc wants to select Button [53]
+09:43:48.842 INFO  MyLocalController - Field selected!
+09:43:49.314 INFO  MyLocalController - User [marc] clicks on Button [45]
+09:43:49.314 INFO  MyLocalController - User [marc] wants to move his selected figure from [5|7] (val=7) to [5|6] (val=0)
+09:43:49.321 INFO  MyLocalController - Valid move, [x:5,y:7] is now val=0 and [x:5,y:6] is now val=7
+09:43:49.322 INFO  MyLocalController - Switching active player from marc to eric
+09:43:50.650 INFO  MyLocalController - User [eric] clicks on Button [14]
+09:43:50.650 INFO  MyLocalController - eric wants to select Button [14]
+09:43:50.650 INFO  MyLocalController - Field selected!
+09:43:51.170 INFO  MyLocalController - User [eric] clicks on Button [30]
+09:43:51.170 INFO  MyLocalController - User [eric] wants to move his selected figure from [6|2] (val=1) to [6|4] (val=0)
+09:43:51.181 INFO  MyLocalController - Valid move, [x:6,y:2] is now val=0 and [x:6,y:4] is now val=1
+09:43:51.182 INFO  MyLocalController - Switching active player from eric to marc
+09:43:52.602 INFO  MyLocalController - User [marc] clicks on Button [63]
+09:43:52.603 INFO  MyLocalController - marc wants to select Button [63]
+09:43:52.603 INFO  MyLocalController - Field selected!
+09:43:53.137 INFO  MyLocalController - User [marc] clicks on Button [48]
+09:43:53.138 INFO  MyLocalController - User [marc] wants to move his selected figure from [7|8] (val=9) to [8|6] (val=0)
+09:43:53.144 INFO  MyLocalController - Valid move, [x:7,y:8] is now val=0 and [x:8,y:6] is now val=9
+09:43:53.144 INFO  MyLocalController - Switching active player from marc to eric
+09:43:56.347 INFO  MyLocalController - User [eric] clicks on Button [2]
+09:43:56.347 INFO  MyLocalController - eric wants to select Button [2]
+09:43:56.348 INFO  MyLocalController - Field selected!
+09:43:56.938 INFO  MyLocalController - User [eric] clicks on Button [19]
+09:43:56.939 INFO  MyLocalController - User [eric] wants to move his selected figure from [2|1] (val=3) to [3|3] (val=0)
+09:43:56.945 INFO  MyLocalController - Valid move, [x:2,y:1] is now val=0 and [x:3,y:3] is now val=3
+09:43:56.946 INFO  MyLocalController - Switching active player from eric to marc
+09:44:08.391 INFO  MyLocalController - Successfully saved file: C:\Users\mad\Documents\field1.field
+09:44:24.066 INFO  MyLocalController - User [marc] clicks on Button [48]
+09:44:24.067 INFO  MyLocalController - marc wants to select Button [48]
+09:44:24.068 INFO  MyLocalController - Field selected!
+09:44:24.803 INFO  MyLocalController - User [marc] clicks on Button [31]
+09:44:24.804 INFO  MyLocalController - User [marc] wants to move his selected figure from [8|6] (val=9) to [7|4] (val=0)
+09:44:24.811 INFO  MyLocalController - Valid move, [x:8,y:6] is now val=0 and [x:7,y:4] is now val=9
+09:44:24.812 INFO  MyLocalController - Switching active player from marc to eric
+09:44:28.938 INFO  MyLocalController - eric clicked on reset. Ending the game!
+09:44:28.939 INFO  MyLocalController - Reset global variables, created new gamefield!
+09:44:43.595 INFO  MyLocalController - Starting the game...
+09:44:43.603 INFO  MyLocalController - The game has started with players 1=[eric], 2=[marc] - 1 starts!
+09:44:52.259 INFO  MyLocalController - User [eric] clicks on Button [19]
+09:44:52.260 INFO  MyLocalController - eric wants to select Button [19]
+09:44:52.260 INFO  MyLocalController - Field selected!
+09:44:53.020 INFO  MyLocalController - User [eric] clicks on Button [34]
+09:44:53.020 INFO  MyLocalController - User [eric] wants to move his selected figure from [3|3] (val=3) to [2|5] (val=0)
+09:44:53.026 INFO  MyLocalController - Valid move, [x:3,y:3] is now val=0 and [x:2,y:5] is now val=3
+09:44:53.026 INFO  MyLocalController - Switching active player from eric to marc
+09:45:00.284 INFO  MyLocalController - User [marc] clicks on Button [51]
+09:45:00.284 INFO  MyLocalController - marc wants to select Button [51]
+09:45:00.284 INFO  MyLocalController - Field selected!
+09:45:00.851 INFO  MyLocalController - User [marc] clicks on Button [43]
+09:45:00.852 INFO  MyLocalController - User [marc] wants to move his selected figure from [3|7] (val=7) to [3|6] (val=0)
+09:45:00.858 INFO  MyLocalController - Valid move, [x:3,y:7] is now val=0 and [x:3,y:6] is now val=7
+09:45:00.858 INFO  MyLocalController - Switching active player from marc to eric
+09:45:02.108 INFO  MyLocalController - User [eric] clicks on Button [30]
+09:45:02.109 INFO  MyLocalController - eric wants to select Button [30]
+09:45:02.109 INFO  MyLocalController - Field selected!
+09:45:02.652 INFO  MyLocalController - User [eric] clicks on Button [38]
+09:45:02.653 INFO  MyLocalController - User [eric] wants to move his selected figure from [6|4] (val=1) to [6|5] (val=0)
+09:45:02.659 INFO  MyLocalController - Valid move, [x:6,y:4] is now val=0 and [x:6,y:5] is now val=1
+09:45:02.659 INFO  MyLocalController - Switching active player from eric to marc
+09:45:03.315 INFO  MyLocalController - User [marc] clicks on Button [43]
+09:45:03.316 INFO  MyLocalController - marc wants to select Button [43]
+09:45:03.316 INFO  MyLocalController - Field selected!
+09:45:04.315 INFO  MyLocalController - User [marc] clicks on Button [34]
+09:45:04.316 INFO  MyLocalController - User [marc] wants to move his selected figure from [3|6] (val=7) to [2|5] (val=3)
+09:45:04.321 INFO  MyLocalController - Valid move, [x:3,y:6] is now val=0 and [x:2,y:5] is now val=7
+09:45:04.321 INFO  MyLocalController - Switching active player from marc to eric
+09:45:08.564 INFO  MyLocalController - Switching active player from eric to marc
+09:45:11.676 INFO  MyLocalController - User [marc] clicks on Button [45]
+09:45:11.676 INFO  MyLocalController - marc wants to select Button [45]
+09:45:11.676 INFO  MyLocalController - Field selected!
+09:45:12.260 INFO  MyLocalController - User [marc] clicks on Button [38]
+09:45:12.260 INFO  MyLocalController - User [marc] wants to move his selected figure from [5|6] (val=7) to [6|5] (val=1)
+09:45:12.265 INFO  MyLocalController - Valid move, [x:5,y:6] is now val=0 and [x:6,y:5] is now val=7
+09:45:12.265 INFO  MyLocalController - Switching active player from marc to eric
+09:45:13.867 INFO  MyLocalController - eric clicked on reset. Ending the game!
+09:45:13.868 INFO  MyLocalController - Reset global variables, created new gamefield!
+09:45:15.684 WARN  MyLocalController - Someone closed the application on exit button.
+09:45:15.685 INFO  MyLocalController - ==============================================
+09:45:15.685 INFO  MyLocalController - =====================END======================
+09:45:15.685 INFO  MyLocalController - ==============================================
+09:50:19.360 INFO  MyLocalController - ==============================================
+09:50:19.364 INFO  MyLocalController - ==============Local Multiplayer===============
+09:50:19.364 INFO  MyLocalController - ==============================================
+09:50:19.364 INFO  MyLocalController - Starting initialization...
+09:50:19.364 INFO  MyLocalController - Asking for players...
+09:50:25.081 INFO  MyLocalController - Building the gamefield...
+09:50:25.101 INFO  MyLocalController - Successfully built the field!
+09:50:25.101 INFO  MyLocalController - Drawing lines...
+09:50:25.147 INFO  MyLocalController - Reset global variables, created new gamefield!
+09:50:25.147 INFO  MyLocalController - Successfully drew lines!
+09:50:25.147 INFO  MyLocalController - Initialization finished!
+09:50:25.148 INFO  MyLocalController - ==============================================
+09:50:27.149 INFO  MyLocalController - Starting the game...
+09:50:27.303 INFO  MyLocalController - The game has started with players 1=[eric], 2=[marce] - 2 starts!
+09:56:51.227 WARN  MyLocalController - Someone closed the application on exit button.
+09:56:51.228 INFO  MyLocalController - ==============================================
+09:56:51.229 INFO  MyLocalController - =====================END======================
+09:56:51.229 INFO  MyLocalController - ==============================================
+11:15:37.413 INFO  MyLocalController - ==============================================
+11:15:37.528 INFO  MyLocalController - ==============Local Multiplayer===============
+11:15:37.529 INFO  MyLocalController - ==============================================
+11:15:37.529 INFO  MyLocalController - Starting initialization...
+11:15:37.530 INFO  MyLocalController - Asking for players...
+11:15:43.122 INFO  MyLocalController - Building the gamefield...
+11:15:43.140 INFO  MyLocalController - Successfully built the field!
+11:15:43.141 INFO  MyLocalController - Drawing lines...
+11:15:43.183 INFO  MyLocalController - Reset global variables, created new gamefield!
+11:15:43.183 INFO  MyLocalController - Successfully drew lines!
+11:15:43.183 INFO  MyLocalController - Initialization finished!
+11:15:43.183 INFO  MyLocalController - ==============================================
+11:15:54.150 WARN  MyLocalController - Someone closed the application on exit button.
+11:15:54.151 INFO  MyLocalController - ==============================================
+11:15:54.151 INFO  MyLocalController - =====================END======================
+11:15:54.151 INFO  MyLocalController - ==============================================
+11:20:54.403 INFO  MyLocalController - ==============================================
+11:20:54.409 INFO  MyLocalController - ==============Local Multiplayer===============
+11:20:54.409 INFO  MyLocalController - ==============================================
+11:20:54.410 INFO  MyLocalController - Starting initialization...
+11:20:54.410 INFO  MyLocalController - Asking for players...
+11:21:00.851 INFO  MyLocalController - Building the gamefield...
+11:21:00.870 INFO  MyLocalController - Successfully built the field!
+11:21:00.870 INFO  MyLocalController - Drawing lines...
+11:21:00.912 INFO  MyLocalController - Reset global variables, created new gamefield!
+11:21:00.913 INFO  MyLocalController - Successfully drew lines!
+11:21:00.913 INFO  MyLocalController - Initialization finished!
+11:21:00.913 INFO  MyLocalController - ==============================================
+11:21:23.759 INFO  MyLocalController - User wants to import a gamefield...
+11:21:29.567 INFO  MyLocalController - Successfully parsed gamefile and updated figure locations!
+11:21:37.984 INFO  MyLocalController - Starting the game...
+11:21:38.118 INFO  MyLocalController - The game has started with players 1=[j], 2=[marc] - 1 starts!
+11:21:40.103 INFO  MyLocalController - User [j] clicks on Button [30]
+11:21:40.104 INFO  MyLocalController - j wants to select Button [30]
+11:21:40.104 INFO  MyLocalController - Field selected!
+11:21:40.583 INFO  MyLocalController - User [j] clicks on Button [38]
+11:21:40.584 INFO  MyLocalController - User [j] wants to move his selected figure from [6|4] (val=1) to [6|5] (val=0)
+11:21:40.597 INFO  MyLocalController - Valid move, [x:6,y:4] is now val=0 and [x:6,y:5] is now val=1
+11:21:40.598 INFO  MyLocalController - Switching active player from j to marc
+11:21:44.975 INFO  MyLocalController - de.ifd.mad.SimpleChess.players.Player@925e2 surrendered! Ending the game!
+11:21:54.630 WARN  MyLocalController - Someone closed the application on exit button.
+11:21:54.631 INFO  MyLocalController - ==============================================
+11:21:54.631 INFO  MyLocalController - =====================END======================
+11:21:54.631 INFO  MyLocalController - ==============================================

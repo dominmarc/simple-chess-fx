@@ -5,6 +5,9 @@ package de.ifd.mad.SimpleChess.helpers;
 
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.ifd.mad.SimpleChess.figures.Bishop;
 import de.ifd.mad.SimpleChess.figures.King;
 import de.ifd.mad.SimpleChess.figures.Knight;
@@ -28,6 +31,8 @@ public class BasicGameFunctionsHelper {
 	private static final Bishop BISHOP = new Bishop();
 	private static final Queen QUEEN = new Queen();
 	private static final King KING = new King();
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(BasicGameFunctionsHelper.class);
 
 	private BasicGameFunctionsHelper() {
 		// we don't need to construct objects of this class
@@ -63,60 +68,43 @@ public class BasicGameFunctionsHelper {
 		/////////////////////////////////////////////////////////////////////////////
 		case 1:
 			// Bauer:
-			if (PAWN.tryMove(oldX, oldY, newX, newY, player, gamefield))
-				return true;
-
-			break;
+			return (PAWN.tryMove(oldX, oldY, newX, newY, player, gamefield));
 
 		/////////////////////////////////////////////////////////////////////////////
 		case 2:
 			// Turm
-			if (ROOK.tryMove(oldX, oldY, newX, newY, player, gamefield))
-				return true;
-
-			break;
+			return (ROOK.tryMove(oldX, oldY, newX, newY, player, gamefield));
 
 		/////////////////////////////////////////////////////////////////////////////
 		case 3:
 			// Pferd
-			if (KNIGHT.tryMove(oldX, oldY, newX, newY, player, gamefield))
-				return true;
-
-			break;
+			return (KNIGHT.tryMove(oldX, oldY, newX, newY, player, gamefield));
 
 		/////////////////////////////////////////////////////////////////////////////
 		case 4:
 			// Springer
-			if (BISHOP.tryMove(oldX, oldY, newX, newY, player, gamefield))
-				return true;
-
-			break;
+			return (BISHOP.tryMove(oldX, oldY, newX, newY, player, gamefield));
 
 		/////////////////////////////////////////////////////////////////////////////
 		case 5:
 			// queen = rook oder bishop
-			if (QUEEN.tryMove(oldX, oldY, newX, newY, player, gamefield, ROOK, BISHOP))
-				return true;
-
-			break;
+			return (QUEEN.tryMove(oldX, oldY, newX, newY, player, gamefield, ROOK, BISHOP));
 
 		/////////////////////////////////////////////////////////////////////////////
 		case 6:
 			// Koenig
-			if (KING.tryMove(oldX, oldY, newX, newY, player, gamefield))
-				return true;
-
-			break;
+			return (KING.tryMove(oldX, oldY, newX, newY, player, gamefield));
 
 		/////////////////////////////////////////////////////////////////////////////
 		default:
+			LOGGER.error("Figure-Selection-Error in function: {}, with variables: gamefield-value={}", "tryMove",
+					gamefield[oldX][oldY]);
 			PopUp info = new PopUp();
 			info.createInfoPopUp("Figure-Selection-Error\nYou may restart the game!");
-			info.showPopUp();
+			info.showNonWaitingPopUp();
 			return false;
 
 		}
-		return false;
 	}
 
 	/**

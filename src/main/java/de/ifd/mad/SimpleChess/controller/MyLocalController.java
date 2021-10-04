@@ -4,8 +4,20 @@
 
 package de.ifd.mad.SimpleChess.controller;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.security.SecureRandom;
 import java.util.List;
 import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.ifd.mad.SimpleChess.figures.Bishop;
 import de.ifd.mad.SimpleChess.figures.King;
@@ -27,6 +39,7 @@ import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 /**
@@ -46,6 +59,8 @@ public class MyLocalController implements IController {
 	Label active1Label, active2Label, infoLabel, topBar;
 	@FXML
 	Button startButton, surrenderButton;
+	@FXML
+	Button switchButton, exportButton, importButton;
 	@FXML
 	Label player1Text, player2Text;
 
@@ -101,6 +116,8 @@ public class MyLocalController implements IController {
 	Player player1;
 	Player player2;
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(MyLocalController.class);
+
 	// constant text
 	private static final String BUTTON_START_TEXT = "START GAME";
 
@@ -113,8 +130,11 @@ public class MyLocalController implements IController {
 	 * Called right before the application opens up
 	 */
 	public void initialize() {
+		LOGGER.info("==============================================");
+		LOGGER.info("==============Local Multiplayer===============");
+		LOGGER.info("==============================================");
+		LOGGER.info("Starting initialization...");
 		askForPlayers();
-
 		setStatusLabelBackgrounds();
 
 		// set start button text
@@ -124,6 +144,7 @@ public class MyLocalController implements IController {
 		buttons = new Button[82];
 
 		// build all buttons (9x9 gamefield)
+		LOGGER.info("Building the gamefield...");
 		int x = 0;
 		int y = 0;
 		int btnIndex = 1;
@@ -136,7 +157,8 @@ public class MyLocalController implements IController {
 			x = 0;
 			y += 45;
 		}
-
+		LOGGER.info("Successfully built the field!");
+		LOGGER.info("Drawing lines...");
 		// draw game field lines
 		for (int l = 0; l <= 360; l += 45) {
 			Line line = new Line(0, 0, 0, 360);
@@ -146,6 +168,10 @@ public class MyLocalController implements IController {
 			buttonPane.getChildren().add(line2);
 			line2.setLayoutY(l);
 		}
+		resetGlobalVars();
+		LOGGER.info("Successfully drew lines!");
+		LOGGER.info("Initialization finished!");
+		LOGGER.info("==============================================");
 	}
 
 	/**
@@ -155,6 +181,7 @@ public class MyLocalController implements IController {
 	 * @param btnIndex identifies the button (game field) the player clicked on
 	 */
 	private void clickOnField(int btnIndex) {
+		LOGGER.info("User [{}] clicks on Button [{}]", getActivePlayer().getName(), btnIndex);
 
 		// player wants to select a figure to make a move
 		if (selectedButton[0] == 0) {
@@ -162,19 +189,24 @@ public class MyLocalController implements IController {
 
 			// player has already selected a figure and now wants to move it
 		} else if (selectedButton[0] > 0 && selectedButton[0] < 65) {
+
 			// save old and new position
 			int oldX = giveXY(selectedButton[0])[0];
 			int newX = giveXY(btnIndex)[0];
 			int oldY = giveXY(selectedButton[0])[1];
 			int newY = giveXY(btnIndex)[1];
 
+			LOGGER.info("User [{}] wants to move his selected figure from [{}|{}] (val={}) to [{}|{}] (val={})",
+					getActivePlayer().getName(), oldX, oldY, getVal(oldX, oldY), newX, newY, getVal(newX, newY));
+
 			// check if the move is invalid
 			if ((!tryMove(oldX, oldY, newX, newY, getActivePlayer()))
 					|| (checkIfFieldBlocked(newX, newY, getActivePlayer()))) {
 				// show information
-				PopUp info = new PopUp();
-				info.createInfoPopUp("Can not move player!\nInvalid move!");
-				info.showPopUp();
+				infoUser("Can not move player!\nInvalid move!");
+
+				LOGGER.warn("Cannot perform move! Invalid action: field blocked or invalid movement.");
+
 				// unselect button
 				unselectButton();
 				return;
@@ -190,21 +222,22 @@ public class MyLocalController implements IController {
 			// check if you made a move that does not block the enemy from checking you
 			// if you did so --> move the last move back and set the correct active player
 			if (isCheck(getActivePlayer())) {
-				PopUp info = new PopUp();
-				info.createInfoPopUp("Wrong move! \nYou are checked!");
-				info.showPopUp();
+				LOGGER.info("User [{}] is checked! Resetting his last move...", getActivePlayer().getName());
+				infoUser("Wrong move! \nYou are checked!");
 				stepBack();
 				return;
 			}
 
 			// check if you checked your enemy
 			if (isCheck(getOppositePlayer(getActivePlayer()))) {
-				PopUp info = new PopUp();
-				info.createInfoPopUp("CHECK!" + "\n\nCan you end the game?");
-				info.showPopUp();
+				infoUser("CHECK!" + "\n\nCan you end the game?");
+				LOGGER.info("User [{}] checked [{}].", getActivePlayer().getName(),
+						getOppositePlayer(getActivePlayer()).getName());
 
 				// check if the game should end
 				if (isCheckmate()) {
+					LOGGER.warn("User [{}] is checkmate, [{}] won! Ending the game!",
+							getOppositePlayer(getActivePlayer()).getName(), getActivePlayer().getName());
 					gameActive = false;
 					PopUp ending = new PopUp();
 					ending.createWinningPopUp("Congratulations, " + getActivePlayer().getName()
@@ -231,34 +264,32 @@ public class MyLocalController implements IController {
 	 * @param btnIdx Index of the button the user clicked on to select.
 	 */
 	private void selectFigure(int btnIdx) {
+		LOGGER.info("{} wants to select Button [{}]", getActivePlayer().getName(), btnIdx);
 		int selectedX = giveXY(btnIdx)[0];
 		int selectedY = giveXY(btnIdx)[1];
 
-		// player 1 clicks on field with one of his figures
-		if (gamefield[selectedX][selectedY] > 0 && gamefield[selectedX][selectedY] < 7
-				&& getActivePlayer() == player1) {
-			buttons[btnIdx].setStyle(player1SelectedButton);
+		if (BasicGameFunctionsHelper.isPlayerField(selectedX, selectedY, gamefield, getActivePlayer())) {
+			if (getActivePlayer().getId() == 1)
+				buttons[btnIdx].setStyle(player1SelectedButton);
+			else
+				buttons[btnIdx].setStyle(player2SelectedButton);
 
-			// player 2 clicks on field with one of his figures
-		} else if (gamefield[selectedX][selectedY] > 6 && getActivePlayer() == player2) {
-			buttons[btnIdx].setStyle(player2SelectedButton);
-
-			// player clicks on field with no figure
-		} else if (gamefield[selectedX][selectedY] == 0) {
+		} else if (getVal(selectedX, selectedY) == 0) {
 			// nothing should happen
+			LOGGER.warn("No figure on field [{}] with field value={}.", btnIdx, getVal(selectedX, selectedY));
 			return;
 
 			// player wants to select field with enemy figure
 		} else {
-			PopUp info = new PopUp();
-			info.createInfoPopUp("Player " + getActivePlayer().getName() + " is active!\nMake your move!");
-			info.showPopUp();
+			LOGGER.warn("Enemy figure on field [{}] with field value={}.", btnIdx, getVal(selectedX, selectedY));
+			infoUser("Player " + getActivePlayer().getName() + " is active!\nMake your move!");
 			return;
 		}
 
 		// set (save) the selected button
 		selectedButton[0] = btnIdx;
 		selectedButton[1] = getActivePlayer().getId();
+		LOGGER.info("Field selected!");
 	}
 
 	/**
@@ -271,6 +302,7 @@ public class MyLocalController implements IController {
 			return;
 
 		unselectButton();
+		LOGGER.info("Removed field selection on [{}].", buttonIndex);
 	}
 
 	/**
@@ -320,11 +352,12 @@ public class MyLocalController implements IController {
 		int newX = lastMove[2];
 		int newY = lastMove[3];
 
-		gamefield[oldX][oldY] = gamefield[newX][newY];
+		gamefield[oldX][oldY] = getVal(newX, newY);
 		gamefield[newX][newY] = 0;
 
 		setPlayers();
-
+		LOGGER.info("Reset last move, [x:{},y:{}] is back to 0 and [x:{},y:{}] is back to {}", newX, newY, oldX, oldY,
+				getVal(oldX, oldY));
 	}
 
 	/**
@@ -342,16 +375,20 @@ public class MyLocalController implements IController {
 		lastMove[2] = newX;
 		lastMove[3] = newY;
 
-		gamefield[newX][newY] = gamefield[oldX][oldY];
+		gamefield[newX][newY] = getVal(oldX, oldY);
 		gamefield[oldX][oldY] = 0;
 
 		setPlayers();
+		LOGGER.info("Valid move, [x:{},y:{}] is now val=0 and [x:{},y:{}] is now val={}", oldX, oldY, newX, newY,
+				getVal(newX, newY));
 	}
 
 	/**
 	 * Switches the active player and the visualization of that
 	 */
 	private void switchPlayer() {
+		LOGGER.info("Switching active player from {} to {}", getActivePlayer().getName(),
+				getOppositePlayer(getActivePlayer()).getName());
 		player1.switchStatus();
 		player2.switchStatus();
 		setStatusLabelBackgrounds();
@@ -410,23 +447,26 @@ public class MyLocalController implements IController {
 	 */
 	public void startButtonClicked() {
 		if (gameActive) {
+			LOGGER.info("{} clicked on reset. Ending the game!", getActivePlayer().getName());
 			startButton.setText(BUTTON_START_TEXT);
 			gameActive = false;
 			player1.setActive(false);
 			player2.setActive(false);
+			resetGlobalVars();
 			setStatusLabelBackgrounds();
 			infoLabel.setText("PRESS START");
 			setPlayers();
 		} else {
+			LOGGER.info("Starting the game...");
 			startButton.setText("RE" + BUTTON_START_TEXT);
 			infoLabel.setText("LET'S PLAY");
-			resetGlobalVars();
 			gameActive = true;
 			setPlayers();
-			player1.setActive(true);
-			player2.setActive(false);
+			setRandomPlayerActive();
 			// activity label
 			setStatusLabelBackgrounds();
+			LOGGER.info("The game has started with players 1=[{}], 2=[{}] - {} starts!", player1.getName(),
+					player2.getName(), getActivePlayer().getId());
 		}
 	}
 
@@ -434,22 +474,164 @@ public class MyLocalController implements IController {
 	 * Ends the game, shows the winner
 	 */
 	public void surrenderButtonClicked() {
+		LOGGER.info("{} surrendered! Ending the game!", getActivePlayer());
 		gameActive = false;
 		PopUp ending = new PopUp();
-		ending.createWinningPopUp(getOppositePlayer(getActivePlayer()).getName());
+		ending.createWinningPopUp("Congratulations, " + getOppositePlayer(getActivePlayer()).getName()
+				+ " won the game!\nThank you for playing!\nHave a nice day :)");
 		ending.showPopUp();
 		startButton.setText(BUTTON_START_TEXT);
 		infoLabel.setText("PRESS START");
 	}
 
 	/**
+	 * Exports the current game field to a file
+	 */
+	public void exportButtonClicked() {
+		LOGGER.info("User wants to export the gamefield...");
+		// create dialog
+		Path gameFile = null;
+		FileChooser fileChooser = new FileChooser();
+		fileChooser.setTitle("Save your file!");
+		Stage mystage = null;
+		fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Gamefield", "*.field"));
+
+		// open dialog
+		File saveFile = fileChooser.showSaveDialog(mystage);
+		// check if dialog returned something
+		if (saveFile == null)
+			return;
+
+		// ensure existence
+		gameFile = saveFile.toPath();
+		if (!Files.exists(gameFile)) {
+			try {
+				Path tmpFile = Files.createFile(gameFile);
+				gameFile = tmpFile;
+			} catch (IOException e) {
+				infoUser("Error on saving file!");
+				LOGGER.error("Error saving file: [{}] = {}: {}", gameFile.getFileName(), e.getClass().getName(),
+						e.getMessage());
+				return;
+			}
+		}
+		// write to created file
+		BufferedWriter buffW = null;
+		try {
+			buffW = Files.newBufferedWriter(gameFile, StandardCharsets.UTF_8, StandardOpenOption.CREATE);
+			buffW.write(buildFieldString());
+			buffW.close();
+			LOGGER.info("Successfully saved file: {}", gameFile);
+			infoUser("Successfully saved file: " + gameFile.getFileName());
+		} catch (IOException e) {
+			// Buffered writer problem
+			infoUser("Error on writing to your specified file!\nYou might try a different location!");
+			LOGGER.error("Error on writing to file: [{}] = {}: {}", gameFile, e.getClass().getName(), e.getMessage());
+		} finally {
+			try {
+				if (buffW != null)
+					buffW.close();
+			} catch (IOException e) {
+				LOGGER.warn("Could not close Buffered Reader! = {}", e.getMessage());
+			}
+		}
+	}
+
+	/**
+	 * Changes the active player
+	 */
+	public void switchButtonClicked() {
+		if (selectedButton[0] != 0)
+			infoUser("Please first unselect a field or make your move!");
+		else
+			switchPlayer();
+	}
+
+	/**
+	 * Imports an extern gamefield and applies it to the game</br>
+	 * This will restart the game!
+	 */
+	public void importButtonClicked() {
+		// ask user for restart
+		if (gameActive) {
+			PopUp decision = new PopUp();
+			decision.createDecisionPopUp("This will restart the current game.\nContinue?");
+			if (decision.showPopUp())
+				startButtonClicked();
+		}
+
+		LOGGER.info("User wants to import a gamefield...");
+
+		// create dialog
+		FileChooser chooser = new FileChooser();
+		chooser.setTitle("Select your gamefield file!");
+		Stage mystage = null;
+		chooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Gamefield", "*.field"));
+
+		// show dialog, get file to open
+		File gameFile = chooser.showOpenDialog(mystage);
+		if (gameFile == null) {
+			// not able to create file
+			infoUser("Error on opening file!");
+			LOGGER.error("Error on opening a file!");
+			return;
+		}
+
+		// read from file
+		BufferedReader buffR = null;
+		try {
+			buffR = Files.newBufferedReader(gameFile.toPath(), StandardCharsets.UTF_8);
+			String myline = "";
+			int line = 0;
+			while ((myline = buffR.readLine()) != null) {
+				String[] parts = myline.split(" ");
+				for (int i = 0; i < parts.length; i++) {
+					try {
+						gamefield[i][line] = Integer.valueOf(parts[i]);
+					} catch (NumberFormatException e) {
+						LOGGER.error("Error on parsing gamefile: {}, tried to convert: {}.", gameFile.getAbsoluteFile(),
+								parts[i]);
+						infoUser("Error on parsing gamefile: " + gameFile.getName() + ".");
+						resetGlobalVars();
+						buffR.close();
+						return;
+					}
+				}
+				line++;
+			}
+			// visually update the gamefield
+			setPlayers();
+			LOGGER.info("Successfully parsed gamefile and updated figure locations!");
+		} catch (IOException e) {
+			LOGGER.warn("Buffered Reader Error! = {}", e.getMessage());
+		} finally {
+			try {
+				if (buffR != null)
+					buffR.close();
+			} catch (IOException e) {
+				LOGGER.warn("Could not close Buffered Reader! = {}", e.getMessage());
+			}
+		}
+	}
+
+	/**
+	 * Shows an information pop up
+	 * 
+	 * @param msg the Message to be shown
+	 */
+	private void infoUser(String msg) {
+		PopUp info = new PopUp();
+		info.createInfoPopUp(msg);
+		info.showPopUp();
+	}
+
+	/**
 	 * Pops up a window that asks for player name input
 	 */
 	private void askForPlayers() {
+		LOGGER.info("Asking for players...");
 		if (gameActive) {
-			PopUp info = new PopUp();
-			info.createInfoPopUp("Game is already active!\nEnd the game!");
-			info.showPopUp();
+			infoUser("Game is already active!\nEnd the game!");
 			return;
 		}
 		PopUp playerSet = new PopUp();
@@ -475,6 +657,22 @@ public class MyLocalController implements IController {
 		lastMove[2] = 0;
 		lastMove[3] = 0;
 		gamefield = BasicGameFunctionsHelper.createGamefield();
+		LOGGER.info("Reset global variables, created new gamefield!");
+	}
+
+	/**
+	 * Sets one of the two players active
+	 */
+	private void setRandomPlayerActive() {
+		SecureRandom rnd = new SecureRandom();
+		if (rnd.nextInt(2) == 0) {
+			player1.setActive(true);
+			player2.setActive(false);
+		} else {
+			player1.setActive(false);
+			player2.setActive(true);
+		}
+
 	}
 
 	/**
@@ -485,11 +683,11 @@ public class MyLocalController implements IController {
 		int z = 1;
 		for (int i = 1; i < 9; i++) {
 			for (int k = 1; k < 9; k++) {
-				if (gamefield[k][i] == 0) {
+				if (getVal(k, i) == 0) {
 					setBackgrounds(i, k, z);
 				}
 				buttons[z].setGraphic(null);
-				switch (gamefield[k][i]) {
+				switch (getVal(k, i)) {
 				case 1:
 					buttons[z].setGraphic(new ImageView(pawn.getBlack()));
 					break;
@@ -594,14 +792,16 @@ public class MyLocalController implements IController {
 			return player1;
 	}
 
-//	public void printField() {
-//		for (int g = 0; g < 10; g++) {
-//			for (int h = 0; h < 10; h++) {
-//				System.out.print(gamefield[h][g] + "\t");
-//			}
-//			System.out.println();
-//		}
-//	}
+	public String buildFieldString() {
+		StringBuilder field = new StringBuilder();
+		for (int g = 0; g < 10; g++) {
+			for (int h = 0; h < 10; h++) {
+				field.append((gamefield[h][g] + " "));
+			}
+			field.append("\n");
+		}
+		return field.toString();
+	}
 
 	/**
 	 * Function to add the buttons themselves and their functionality
@@ -646,9 +846,7 @@ public class MyLocalController implements IController {
 		buttons[btnIndex].setOnMouseClicked(e -> {
 			// check if game is running
 			if (!gameActive) {
-				PopUp info = new PopUp();
-				info.createInfoPopUp("Please start the game!");
-				info.showPopUp();
+				infoUser("Please start the game!");
 				return;
 			}
 
@@ -675,6 +873,21 @@ public class MyLocalController implements IController {
 	}
 
 	/**
+	 * Function to return the field value of a game-field
+	 * 
+	 * @param x position x in gamefield array
+	 * @param y position y in gamefield array
+	 * 
+	 * @return -1 if out of bound, or gamefield[][] value
+	 */
+	private int getVal(int x, int y) {
+		if (x < 1 || x > 8 || y < 1 || y > 8)
+			return -1;
+		else
+			return gamefield[x][y];
+	}
+
+	/**
 	 * Button to minimize the application
 	 */
 	public void minButtonClicked() {
@@ -686,6 +899,10 @@ public class MyLocalController implements IController {
 	 * Button to close the application
 	 */
 	public void closeButtonClicked() {
+		LOGGER.warn("Someone closed the application on exit button.");
+		LOGGER.info("==============================================");
+		LOGGER.info("=====================END======================");
+		LOGGER.info("==============================================");
 		Stage temp = (Stage) mainPane.getScene().getWindow();
 		temp.close();
 		System.exit(0);
