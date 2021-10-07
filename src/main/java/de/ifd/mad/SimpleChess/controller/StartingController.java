@@ -8,6 +8,9 @@ import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.security.SecureRandom;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.ifd.mad.SimpleChess.main.FxmlOpener;
 import de.ifd.mad.SimpleChess.main.PopUp;
 import javafx.fxml.FXML;
@@ -27,19 +30,38 @@ import javafx.stage.Stage;
  * @author iFD
  */
 public class StartingController implements IController {
+	/** start ln multiplayer as server button */
 	@FXML
-	Button startServerButton, loMuButton, connectButton;
+	Button startServerButton;
+	/** start local multiplayer */
 	@FXML
-	Button closeButton, minButton, helpButton;
+	Button loMuButton;
+	/** start ln multiplayer as client button */
 	@FXML
-	Label topBar, chessLabel;
+	Button connectButton;
+	/** close application button */
+	@FXML
+	Button closeButton;
+	/** minimize application button */
+	@FXML
+	Button minButton;
+	/** open the help instructions button */
+	@FXML
+	Button helpButton;
+	/** dragable top of application */
+	@FXML
+	Label topBar;
+	/** Container for all our visible elements */
 	@FXML
 	AnchorPane backPane;
+	/** stores the available adresses in the local network */
 	@FXML
 	ListView<String> adressView = new ListView<>();
 
 	/* PopUp-Object */
 	PopUp info;
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(StartingController.class);
 
 	/** Text to be displayed if the user presses the help button */
 	static final String INFO_MSG = "Local Multiplayer\n" + "Play against your friends just on that pc!\n\n"
@@ -59,9 +81,11 @@ public class StartingController implements IController {
 
 	@Override
 	public void initialize() {
+		LOGGER.info("Initializing starting page...");
 		info = new PopUp();
 		info.createInfoPopUp(INFO_MSG);
 		fillAdressList();
+		LOGGER.info("Initialized starting page!");
 	}
 
 	@Override
@@ -73,6 +97,7 @@ public class StartingController implements IController {
 	 * Help button click event
 	 */
 	public void helpButtonClicked() {
+		LOGGER.info("Showing help information pop up...");
 		info.showNonWaitingPopUp();
 	}
 
@@ -80,14 +105,17 @@ public class StartingController implements IController {
 	 * Connect button click event
 	 */
 	public void connectButtonClicked() {
+		LOGGER.info("Trying to start local network multiplayer as client...");
 		int port = 0;
 
 		// check if user selected an adress
 		if (adressView.getSelectionModel().getSelectedItem() != null)
 			port = givePort(adressView.getSelectionModel().getSelectedItem());
-		else
+		else {
+			LOGGER.warn("User did not select any server!");
 			popUp("Please select a server!");
-
+			return;
+		}
 		// in case givePort() somehow returns 0
 		if (port == 0) {
 			popUp("Something went wrong!");
@@ -102,6 +130,7 @@ public class StartingController implements IController {
 	 * Local multiplayer button click event
 	 */
 	public void loMuButtonClicked() {
+		LOGGER.info("Trying to start local multiplayer...");
 		open(L_CHESS, null, L_CHESS_STYLE, "");
 	}
 
@@ -110,6 +139,7 @@ public class StartingController implements IController {
 	 * Start local network multiplayer with a random port
 	 */
 	public void startServerButtonClicked() {
+		LOGGER.info("Trying to start local network multiplayer as server...");
 		// random
 		SecureRandom rand = new SecureRandom();
 
@@ -136,7 +166,9 @@ public class StartingController implements IController {
 	 * Returns the selected port
 	 * 
 	 * @param input the port to be checked as String
+	 * 
 	 * @return the Port as int
+	 * 
 	 * @author MAD
 	 * @author iFD
 	 */
@@ -148,6 +180,7 @@ public class StartingController implements IController {
 		try {
 			return Integer.valueOf(input);
 		} catch (NumberFormatException e) {
+			LOGGER.info("Error on parsing port: {} - ", input, e);
 			return 0;
 		}
 	}
@@ -164,9 +197,7 @@ public class StartingController implements IController {
 	 * @param fxmlFile to open
 	 */
 	private void open(String fxmlFile, Image icon, String style, String initialValue) {
-		// close current window
-		Stage current = (Stage) backPane.getScene().getWindow();
-		current.close();
+		LOGGER.info("Trying to open fxml: [{}] with initialValue: {}...", fxmlFile, initialValue);
 
 		FxmlOpener newFXML = new FxmlOpener(getClass().getResource("/de/ifd/mad/SimpleChess/main/" + fxmlFile), 0, icon,
 				getClass().getResource("/de/ifd/mad/SimpleChess/main/" + style).toString());
@@ -175,9 +206,14 @@ public class StartingController implements IController {
 		newFXML.setInitialValue(initialValue);
 
 		// open
-		if (!newFXML.open())
-			System.out.println("IOException on opening " + fxmlFile + "...");
-
+		if (!newFXML.open()) {
+			LOGGER.error("Error on opening file!");
+		} else {
+			LOGGER.info("Success... closing start window...");
+			// close current window
+			Stage current = (Stage) backPane.getScene().getWindow();
+			current.close();
+		}
 	}
 
 	/**
@@ -186,10 +222,6 @@ public class StartingController implements IController {
 	 * @param port the port to check for availability
 	 */
 	public static boolean available(int port) {
-		if (port < MIN_PORT || port > MAX_PORT) {
-			throw new IllegalArgumentException("Invalid start port: " + port);
-		}
-
 		ServerSocket ss = null;
 		DatagramSocket ds = null;
 		try {
@@ -232,7 +264,16 @@ public class StartingController implements IController {
 	 */
 	public void closeButtonClicked() {
 		Stage temp = (Stage) backPane.getScene().getWindow();
-		temp.close();
-		System.exit(0);
+
+		if (temp != null) {
+			LOGGER.warn("Someone closed the application on exit button.");
+			LOGGER.info("==============================================");
+			LOGGER.info("=====================END======================");
+			LOGGER.info("==============================================");
+
+			temp.close();
+			System.exit(0);
+		} else
+			LOGGER.error("Could not close application on by exit button!");
 	}
 }

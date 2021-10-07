@@ -18,6 +18,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.ifd.mad.SimpleChess.figures.Bishop;
 import de.ifd.mad.SimpleChess.figures.King;
 import de.ifd.mad.SimpleChess.figures.Knight;
@@ -49,18 +52,51 @@ import javafx.stage.Stage;
  * @author iFD
  */
 public class MyLocalNetworkController implements IController {
+	/** Container for all our visible elements */
 	@FXML
-	AnchorPane mainPane, buttonPane;
+	AnchorPane mainPane;
+	/** Container for the game fields (buttons) */
+	@FXML
+	AnchorPane buttonPane;
+	/** Array to store all the game fields (buttons) */
 	@FXML
 	Button[] buttons;
+	/** minimize application button */
 	@FXML
-	Button minButton, closeButton, backButton;
+	Button minButton;
+	/** close application button */
 	@FXML
-	Label active1Label, active2Label, infoLabel, topBar;
+	Button closeButton;
+	/** return back button */
 	@FXML
-	Button startButton, surrenderButton;
+	Button backButton;
+	/** information on if player 1 is active */
 	@FXML
-	Label player1Text, player2Text;
+	Label active1Label;
+	/** information on if player 2 is active */
+	@FXML
+	Label active2Label;
+	/** display some game state information */
+	@FXML
+	Label infoLabel;
+	/** dragable top of application */
+	@FXML
+	Label topBar;
+	/** (re-)start the game button */
+	@FXML
+	Button startButton;
+	/** surrender the game button */
+	@FXML
+	Button surrenderButton;
+	/** export the gamefield button */
+	@FXML
+	Button exportButton;
+	/** display name of player 1 */
+	@FXML
+	Label player1Text;
+	/** display name of player 2 */
+	@FXML
+	Label player2Text;
 
 	/**
 	 * Player1: 1 - pawn, 2 - rook, 3 - knight, 4 - bishop, 5 - queen, 6 - king
@@ -125,6 +161,8 @@ public class MyLocalNetworkController implements IController {
 	private Iterator<SelectionKey> iterator = null;
 	/** Indicates if there is an established, active connection or not */
 	private boolean connected = false;
+	/** Indicated if the game is startable or not */
+	private boolean startable = false;
 	/** Main char-set for encoding and decoding */
 	static final Charset charset = StandardCharsets.UTF_8;
 	/** The port to connect to/ to bind the server to */
@@ -132,25 +170,71 @@ public class MyLocalNetworkController implements IController {
 	/** manages the connection while the connection is stable */
 	private Thread workerThread;
 
-	//Logger LOGGER = LoggerFactory.get;
-	
+	private static final Logger LOGGER = LoggerFactory.getLogger(MyLocalNetworkController.class);
+
 	/**
 	 * specifies whether this plays server or client </br>
 	 * 1 means client, 2 means server
 	 */
 	private int clientState = 0;
 
+//====================================================================================================
+//==																								==	
+//==Initialization:														                 	        ==
+//==																								==	
+//====================================================================================================		
+
+	/**
+	 * The initial value here is used for:</br>
+	 * -indicating wheter this is a client or server</br>
+	 * -setting up the port</br>
+	 * </br>
+	 * Structure:</br>
+	 * |mode|port|</br>
+	 * |xx|xxxx|</br>
+	 * Mode: 01 - Client; 02 - Server
+	 */
 	@Override
 	public void initVariable(String value) {
+		String passedPort = "";
+		String passedMode = "";
+		passedMode = value.substring(0, 2);
+		passedPort = value.substring(2);
 
-		try {
-			this.port = Integer.valueOf(value);
-		} catch (NumberFormatException e) {
-			// PORT stays at 8000
+		// check structure
+		if (passedPort.length() != 4 || passedMode.length() != 2) {
+			LOGGER.error("Failure on incorrect structure of variables port(={}) or mode(={})!", passedPort, passedMode);
+			startable = false;
+			return;
 		}
+
+		// parse mode
+		if (passedMode.contentEquals("01")) {
+			clientState = 1;
+		} else if (passedMode.contentEquals("02")) {
+			clientState = 2;
+		} else {
+			LOGGER.error("Failure on parsing passed mode = {}", passedMode);
+			startable = false;
+			return;
+		}
+
+		// parse port
+		try {
+			this.port = Integer.valueOf(passedPort);
+		} catch (NumberFormatException e) {
+			LOGGER.error("Failure on converting port: {} to integer!", passedPort);
+			startable = false;
+			return;
+		}
+		startable = true;
 	}
 
 	public void initialize() {
+		LOGGER.info(BasicGameFunctionsHelper.getPrintBar());
+		LOGGER.info("==========Local Network Multiplayer===========");
+		LOGGER.info(BasicGameFunctionsHelper.getPrintBar());
+		LOGGER.info("Starting initialization...");
 		infoUser("Please press START GAME!");
 
 		workerThread = null;
@@ -162,6 +246,7 @@ public class MyLocalNetworkController implements IController {
 		buttons = new Button[82];
 
 		// build all buttons (9x9 gamefield)
+		LOGGER.info("Building the gamefield...");
 		int x = 0;
 		int y = 0;
 		int btnIndex = 1;
@@ -174,7 +259,8 @@ public class MyLocalNetworkController implements IController {
 			x = 0;
 			y += 45;
 		}
-
+		LOGGER.info("Successfully built the field!");
+		LOGGER.info("Drawing lines...");
 		// draw game field lines
 		for (int l = 0; l <= 360; l += 45) {
 			Line line = new Line(0, 0, 0, 360);
@@ -184,7 +270,72 @@ public class MyLocalNetworkController implements IController {
 			buttonPane.getChildren().add(line2);
 			line2.setLayoutY(l);
 		}
+		LOGGER.info("Successfully drew lines!");
+		LOGGER.info("Initialization finished!");
+		LOGGER.info(BasicGameFunctionsHelper.getPrintBar());
 	}
+
+	/**
+	 * Function to add the buttons themselves and their functionality
+	 * 
+	 * @param x        Layout of the button
+	 * @param y        Layout of the button
+	 * @param i        gamefield field y coordinate
+	 * @param t        gamefield field x coordinate
+	 * @param btnIndex Index of the buttons (1...81)
+	 */
+	private void buildButtons(int x, int y, int i, int t, int btnIndex) {
+		// Instantiate the buttons and add them to the button container
+		buttons[btnIndex] = new Button();
+		buttonPane.getChildren().add(buttons[btnIndex]);
+
+		// configure the buttons
+		buttons[btnIndex].setLayoutX(x);
+		buttons[btnIndex].setLayoutY(y);
+		buttons[btnIndex].setPrefWidth(45);
+		buttons[btnIndex].setPrefHeight(45);
+		buttons[btnIndex].setPadding(new Insets(0));
+		white = new Background(new BackgroundFill(Color.rgb(224, 201, 160), null, null));
+		black = new Background(new BackgroundFill(Color.rgb(164, 120, 91), null, null));
+
+		// chess-like color switching on game fields
+		if (i % 2 == 0) {
+			if (t % 2 == 0)
+				buttons[btnIndex].setBackground(white);
+			else
+				buttons[btnIndex].setBackground(black);
+		} else {
+			if (t % 2 == 0)
+				buttons[btnIndex].setBackground(black);
+			else
+				buttons[btnIndex].setBackground(white);
+		}
+
+		// finalize variable in order to use in enclosing scope (mouse event)
+		final int btnIdx = btnIndex;
+
+		// set event if user clicks on game field (button)
+		buttons[btnIndex].setOnMouseClicked(e -> {
+			// check if game is running & if opponent is ready
+			if ((!gameActive) || (!getOpponent(null).isReady())) {
+				infoUser("Please start the game or wait for your opponent!").showPopUp();
+				return;
+			}
+			if (e.getButton().equals(MouseButton.PRIMARY))
+				// click on field function
+				clickOnField(btnIdx);
+			else if (e.getButton().equals(MouseButton.SECONDARY))
+				// remove players selection on right click
+				removeClickOnField(btnIdx);
+
+		});
+	}
+
+//====================================================================================================
+//==																								==	
+//==Click on field actions:															                ==
+//==																								==	
+//====================================================================================================		
 
 	/**
 	 * Function that starts if a player clicks on a certain (btnIndex related)
@@ -193,7 +344,9 @@ public class MyLocalNetworkController implements IController {
 	 * @param btnIndex identifies the button (game field) the player clicked on
 	 */
 	private void clickOnField(int btnIndex) {
+		LOGGER.info("User [{}] clicks on Button [{}]", getActivePlayer().getName(), btnIndex);
 		if (moveLock()) {
+			LOGGER.warn("User [{}] is locked!", getActivePlayer().getName());
 			infoUser("Wait for your opponent!").showPopUp();
 			return;
 		}
@@ -210,11 +363,15 @@ public class MyLocalNetworkController implements IController {
 			int oldY = giveXY(selectedButton[0])[1];
 			int newY = giveXY(btnIndex)[1];
 
+			LOGGER.info("User [{}] wants to move his selected figure from [{}|{}] (val={}) to [{}|{}] (val={})",
+					getActivePlayer().getName(), oldX, oldY, getVal(oldX, oldY), newX, newY, getVal(newX, newY));
+
 			// check if the move is invalid
 			if ((!tryMove(oldX, oldY, newX, newY, getActivePlayer()))
 					|| (checkIfFieldBlocked(newX, newY, getActivePlayer()))) {
 				// show information
 				infoUser("Can not move player!\nInvalid move!").showPopUp();
+				LOGGER.warn("Cannot perform move! Invalid action: field blocked or invalid movement.");
 				// unselect button
 				unselectButton();
 				return;
@@ -230,6 +387,7 @@ public class MyLocalNetworkController implements IController {
 			// check if you made a move that does not block the enemy from checking you
 			// if you did so --> move the last move back and set the correct active player
 			if (isChecked(getActivePlayer())) {
+				LOGGER.info("User [{}] is checked! Resetting his last move...", getActivePlayer().getName());
 				infoUser("Wrong move! \nYou are checked!").showPopUp();
 				stepBack();
 				return;
@@ -238,9 +396,12 @@ public class MyLocalNetworkController implements IController {
 			// check if you checked your enemy
 			if (isChecked(getInActivePlayer())) {
 				infoUser("CHECK!" + "\n\nCan you end the game?").showPopUp();
+				LOGGER.info("User [{}] checked [{}].", getActivePlayer().getName(), getInActivePlayer().getName());
 
 				// check if the game should end
 				if (isCheckmate()) {
+					LOGGER.warn("User [{}] is checkmate, [{}] won! Ending the game!", getInActivePlayer().getName(),
+							getActivePlayer().getName());
 					endGameWithWinner("Congratulations, you won the game!\nThank you for playing!\nHave a nice day :)");
 					sendTelegram(getChannel(), getPrefix(2)
 							+ generateMoveMsg(lastMove[0], lastMove[1], lastMove[2], lastMove[3], false, true));
@@ -265,6 +426,45 @@ public class MyLocalNetworkController implements IController {
 	}
 
 	/**
+	 * Selects the field of a figure.</br>
+	 * -visually (setStyle)</br>
+	 * -internally (@selectedButton)</br>
+	 * 
+	 * @param btnIdx Index of the button the user clicked on to select.
+	 */
+	private void selectFigure(int btnIdx) {
+		LOGGER.info("{} wants to select Button [{}]", getActivePlayer().getName(), btnIdx);
+		int selectedX = giveXY(btnIdx)[0];
+		int selectedY = giveXY(btnIdx)[1];
+		int fieldVal = getVal(selectedX, selectedY);
+
+		// player clicks on field with his figure
+		if (BasicGameFunctionsHelper.isPlayerField(selectedX, selectedY, gamefield, getActivePlayer())) {
+			if (getActivePlayer().getId() == 1)
+				buttons[btnIdx].setStyle(player1SelectedButton);
+			else
+				buttons[btnIdx].setStyle(player2SelectedButton);
+
+			// player clicks on field with no figure
+		} else if (fieldVal == 0) {
+			// nothing should happen
+			LOGGER.warn("No figure on field [{}] with field value={}.", btnIdx, fieldVal);
+			return;
+
+			// player wants to select field with enemy figure
+		} else {
+			LOGGER.warn("Enemy figure on field [{}] with field value={}.", btnIdx, fieldVal);
+			infoUser("It is your turn!\nMake your move!").showPopUp();
+			return;
+		}
+
+		// set (save) the selected button
+		selectedButton[0] = btnIdx;
+		selectedButton[1] = getActivePlayer().getId();
+		LOGGER.info("Field selected!");
+	}
+
+	/**
 	 * Click event for right mouse button on game field
 	 * 
 	 * @param buttonIndex identifies the button (game field) the player clicked on
@@ -274,41 +474,60 @@ public class MyLocalNetworkController implements IController {
 			return;
 
 		unselectButton();
+		LOGGER.info("Removed field selection on [{}].", buttonIndex);
 	}
+
+//====================================================================================================
+//==																								==	
+//==Click on game relevant button functions:												        ==
+//==																								==	
+//====================================================================================================		
 
 	/**
 	 * Starts the game
 	 */
 	public void startButtonClicked() {
+		LOGGER.info("Click on start button...");
+		if (!startable) {
+			infoUser("Some error occured, please restart the game!");
+			LOGGER.warn("User tried to start, but game is not startable!");
+		}
+
 		if (gameActive) {
+			LOGGER.info("A game is active!");
 			PopUp decision = new PopUp();
 			decision.createDecisionPopUp("Are you sure you want to request a restart of the game?");
 			if (decision.showPopUp()) {
+				LOGGER.info("User wants to restart the game...");
 				sendTelegram(getChannel(), getPrefix(3) + "00");
 				infoUser("Sending request...").showNonWaitingPopUp();
 			}
 
 		} else {
 			// network
-			if (workerThread != null && connected)
-				if (workerThread.isAlive()) {
-					// still connected --> reset game and start new round without opponent being
-					// ready because we have to wait for him
-					startGame();
-					// send to opponent this client is ready
-					sendTelegram(getChannel(), getPrefix(5) + "00");
+			if (workerThread != null && connected && workerThread.isAlive()) {
+				// still connected --> reset game and start new round without opponent being
+				// ready because we have to wait for him
+				startGame();
+				// send to opponent this client is ready
+				sendTelegram(getChannel(), getPrefix(5) + "00");
 
-					// notify the user
-					if (!getOpponent(null).isReady())
-						infoUser("The game will start as soon as your opponent also restarted his game!").showPopUp();
-					else
-						infoUser(getOpponent(null).getName() + " is ready!\n The game can start!").showPopUp();
-					return;
-				}
+				// notify the user
+				if (!getOpponent(null).isReady())
+					infoUser("The game will start as soon as your opponent also restarted his game!").showPopUp();
+				else
+					infoUser(getOpponent(null).getName() + " is ready!\n The game can start!").showPopUp();
+				return;
+			}
 
 			// no connection --> start server or client
 			if (workerThread == null) {
-				tryConnect();
+				LOGGER.info("No active connection!");
+				if (clientState == 1)
+					tryConnect();
+				else
+					startServer();
+
 				askForPlayers();
 				return;
 			}
@@ -316,7 +535,6 @@ public class MyLocalNetworkController implements IController {
 			// workerThread already active)
 			infoUser("Please wait for a client to connect!\nThe game will start automatically. :)")
 					.showNonWaitingPopUp();
-
 		}
 	}
 
@@ -324,17 +542,43 @@ public class MyLocalNetworkController implements IController {
 	 * Ends the game, shows the winner
 	 */
 	public void surrenderButtonClicked() {
+		LOGGER.info("Surrender button clicked...");
 		if ((!gameActive) || (!connected)) {
 			infoUser("Please start the game!").showPopUp();
+			LOGGER.warn("Game not active!");
 			return;
 		}
+
+		Player opponent = getOpponent(null);
+		Player me = getOpponent(opponent);
+
+		if (me == null || opponent == null) {
+			LOGGER.error("Failed to get players!");
+			return;
+		}
+		LOGGER.info("{} surrendered! Ending the game!", me.getName());
+
 		// send surrender message to opponent
 		sendTelegram(getChannel(), getPrefix(4));
 
 		// end the game
-		endGameWithWinner("You surrendered!\n" + getInActivePlayer().getName()
-				+ " won!\nThank you for playing! Have a nice day!");
+		endGameWithWinner("You surrendered!\n" + opponent.getName() + " won!\nThank you for playing! Have a nice day!");
 	}
+
+	/**
+	 * Exports the current game field to a file
+	 */
+	public void exportButtonClicked() {
+		String response = BasicGameFunctionsHelper.tryExport(gamefield);
+		if (!response.isBlank())
+			infoUser(response);
+	}
+
+//====================================================================================================
+//==																								==	
+//==Connection functions:															                ==
+//==																								==	
+//====================================================================================================		
 
 	/**
 	 * Tries to connect to an already started server, establish the connection if
@@ -343,7 +587,7 @@ public class MyLocalNetworkController implements IController {
 	 * @return false if the connect has failed, true if the connect was successful
 	 */
 	private void tryConnect() {
-		// System.out.println("Trying to connect...");
+		LOGGER.info("Trying to connect... to port: {}", this.port);
 		workerThread = new Thread(() -> {
 			try {
 				selector = Selector.open();
@@ -373,23 +617,9 @@ public class MyLocalNetworkController implements IController {
 						if (key.isConnectable()) {
 							if (clientChannel.isConnectionPending()) {
 								// connect Client
-								// System.out.println("Finishing connection...");
-								try {
-									clientChannel.finishConnect();
-									clientState = 1;
-									connected = true;
-									System.out.println("Client connection made!");
-									Platform.runLater(() -> infoUser("You successfully connected to a host!")
-											.showNonWaitingPopUp());
-
-								} catch (Exception e) {
-									// start server instead
-									clientState = 2;
-									selector = null;
-									iterator = null;
-									startServer();
+								LOGGER.info("Finishing connection...");
+								if (!finishConnection())
 									return;
-								}
 							}
 							// watch out for incoming strings
 							clientChannel.register(selector, SelectionKey.OP_READ);
@@ -400,30 +630,45 @@ public class MyLocalNetworkController implements IController {
 
 						if (key.isReadable()) {
 							clientChannel = (SocketChannel) key.channel();
-							Platform.runLater(() -> receiveString(clientChannel));
-
-							// jump to next iterator part (next key)
-							// continue;
+							Platform.runLater(() -> receiveTelegram(clientChannel));
 						}
 
 					}
 					Thread.sleep(1500);
 				} while (connected);
-			} catch (IOException | InterruptedException e) {
-				e.printStackTrace();
-				// System.out.println("!Error: " + e.getMessage());
-
+			} catch (IOException e) {
+				LOGGER.warn("Exception!: ", e);
+			} catch (InterruptedException e1) {
+				LOGGER.warn("Interrupted!: ", e1);
+				Thread.currentThread().interrupt();
 			}
 
 		});
 		workerThread.start();
 	}
 
+	private boolean finishConnection() {
+		try {
+			clientChannel.finishConnect();
+			connected = true;
+			LOGGER.info("Successfully connected!");
+			Platform.runLater(() -> infoUser("You successfully connected to a host!").showNonWaitingPopUp());
+			return true;
+		} catch (Exception e) {
+			// start server instead
+			LOGGER.error("Could not connect to server! --> ", e);
+			Platform.runLater(() -> infoUser("Could not connect to a host!").showNonWaitingPopUp());
+			selector = null;
+			iterator = null;
+			return false;
+		}
+	}
+
 	/**
 	 * Starts a server and waits for an incoming connection
 	 */
 	private void startServer() {
-		// System.out.println("Trying to start server");
+		LOGGER.info("Trying to start server...");
 		workerThread = new Thread(() -> {
 			try {
 				selector = Selector.open();
@@ -441,7 +686,7 @@ public class MyLocalNetworkController implements IController {
 
 				// register the channel, add key "ACCEPT KEY" (isAcceptable will be true)
 				serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
-
+				LOGGER.info("Server started with port: {}", this.port);
 				do {
 					// save all keys in an iterator set
 					selector.select();
@@ -457,7 +702,7 @@ public class MyLocalNetworkController implements IController {
 							serverChannel.configureBlocking(false);
 
 							connected = true;
-							// System.out.println("a client connected");
+							LOGGER.info("Client connected!");
 
 							serverChannel.register(selector, SelectionKey.OP_READ);
 							// jump to next iterator part (next key)
@@ -467,65 +712,46 @@ public class MyLocalNetworkController implements IController {
 						// receive a string
 						if (key.isReadable()) {
 							serverChannel = (SocketChannel) key.channel();
-							Platform.runLater(() -> receiveString(serverChannel));
+							Platform.runLater(() -> receiveTelegram(serverChannel));
 						}
 					}
 					Thread.sleep(1500);
 				} while (connected);
-			} catch (IOException | InterruptedException e) {
-				e.printStackTrace();
+			} catch (IOException e) {
+				LOGGER.warn("Exception!: ", e);
+			} catch (InterruptedException e1) {
+				LOGGER.warn("Interrupted!: ", e1);
+				Thread.currentThread().interrupt();
 			} finally {
 				try {
 					serverSocketChannel.close();
 					selector.close();
-				} catch (IOException | NullPointerException e) {
-					e.printStackTrace();
-					System.out.println("Error on closing server socket channel!");
+				} catch (IOException e) {
+					LOGGER.warn("Error on closing server socket channel/ selector! ", e);
 				}
 			}
 		});
 		workerThread.start();
-		// System.out.println("Server thread started");
 		Platform.runLater(() -> infoLabel.setText("Please wait..."));
 	}
 
-	private String generateMoveMsg(int oldX, int oldY, int newX, int newY, boolean check, boolean checkmate) {
-		return BasicGameFunctionsHelper.generateMoveMsg(oldX, oldY, newX, newY, check, checkmate);
-	}
-
 	/**
-	 * Function used to receive a message from opponent</br>
-	 * -calls: encodeMessage()</br>
-	 * -called after key.isReadable</br>
 	 * 
-	 * @param channel that receives the message
+	 * @return the clientState related SocketChannel
 	 */
-	private void receiveString(final SocketChannel channel) {
-		// Size of the File Buffer
-		int bufferSize = 8192;
-
-		// allocate memory for the Bytes to be send
-		ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
-
-		// read from given socketChannel
-		try {
-			channel.read(buffer);
-		} catch (IOException e) {
-			e.printStackTrace();
-			return;
-		}
-
-		// read -> flip ->write ->clear
-		buffer.flip();
-
-		// save buffer in new CharBuffer & decode
-		CharBuffer charBuffer = charset.decode(buffer);
-
-		if (!charBuffer.toString().isBlank() || !charBuffer.toString().isEmpty()) {
-			// System.out.println("received: " + charBuffer.toString());
-			encodeMessage(charBuffer.toString());
-		}
+	private SocketChannel getChannel() {
+		if (clientState == 1)
+			return clientChannel;
+		if (clientState == 2)
+			return serverChannel;
+		return null;
 	}
+
+//====================================================================================================
+//==																								==	
+//==Communication functions:																        ==
+//==																								==	
+//====================================================================================================	
 
 	/**
 	 * Function used to send a message to the opponent</br>
@@ -533,10 +759,17 @@ public class MyLocalNetworkController implements IController {
 	 * @param channel to write the message to
 	 * @param message the message to be written
 	 */
-	private void sendTelegram(final SocketChannel channel, String message) {
-		if (message == null || channel == null)
-			return;
-
+	private boolean sendTelegram(final SocketChannel channel, String message) {
+		LOGGER.info("Trying to send telegram...");
+		if (message == null) {
+			LOGGER.error("...Failed: message=null");
+			return false;
+		}
+		if (channel == null) {
+			LOGGER.error("...Failed no channel to write to!");
+			return false;
+		}
+		LOGGER.info("Sending: [{}]...", message);
 		CharBuffer charBuffer = CharBuffer.wrap(message);
 		// allocate memory for the Bytes to be send
 		ByteBuffer buff = charset.encode(charBuffer);
@@ -547,17 +780,109 @@ public class MyLocalNetworkController implements IController {
 		try {
 			channel.write(buff);
 		} catch (IOException e) {
-			e.printStackTrace();
+			LOGGER.error("Error (IOException) on writing to channel: {}", e.getMessage());
+			return false;
 		}
 
 		buff.clear();
 		charBuffer.clear();
+		LOGGER.info("Telegram successfully sent!");
 
 		try {
 			channel.register(selector, SelectionKey.OP_READ);
 		} catch (ClosedChannelException e) {
-			e.printStackTrace();
+			LOGGER.warn("Failed to register channel for reading...");
 		}
+		return true;
+	}
+
+	/**
+	 * Function used to receive a message from opponent</br>
+	 * -calls: encodeMessage()</br>
+	 * -called after key.isReadable</br>
+	 * 
+	 * @param channel that receives the message
+	 */
+	private boolean receiveTelegram(final SocketChannel channel) {
+		LOGGER.info("Trying to receive telegram...");
+		if (channel == null) {
+			LOGGER.warn("...Failed: no channel to receive telegram from!");
+			return false;
+		}
+
+		// Size of the File Buffer
+		int bufferSize = 8192;
+
+		// allocate memory for the Bytes to be send
+		ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
+
+		// read from given socketChannel
+		try {
+			channel.read(buffer);
+		} catch (IOException e) {
+			LOGGER.error("Error (IOException) on receiving from channel: {}", e.getMessage());
+			return false;
+		}
+
+		// read -> flip ->write ->clear
+		buffer.flip();
+
+		// save buffer in new CharBuffer & decode
+		CharBuffer charBuffer = charset.decode(buffer);
+
+		if (!charBuffer.toString().isBlank() || !charBuffer.toString().isEmpty()) {
+			LOGGER.info("Successfully received: [{}]", charBuffer);
+			if (encodeMessage(charBuffer.toString()))
+				return true;
+			else {
+				LOGGER.error("Failed to encode message: [{}]", charBuffer);
+				return false;
+			}
+		}
+		LOGGER.warn("Nothing to encode... message: [{}]", charBuffer);
+		return true;
+	}
+
+//====================================================================================================
+//==																								==	
+//==Processing telegram functions:															        ==
+//==																								==	
+//====================================================================================================	
+
+	/**
+	 * This function is used to generate a movement message.</br>
+	 * This movement message is needed for a movement update telegram.
+	 * 
+	 * @param oldX      old position x of figure
+	 * @param oldY      old position y of figure
+	 * @param newX      new position x of figure
+	 * @param newY      new position y of figure
+	 * @param check     indicates if there is a check or not
+	 * @param checkmate indicates if there is a checkmate or not
+	 * 
+	 * @return Movement message string
+	 */
+	private String generateMoveMsg(int oldX, int oldY, int newX, int newY, boolean check, boolean checkmate) {
+		return BasicGameFunctionsHelper.generateMoveMsg(oldX, oldY, newX, newY, check, checkmate);
+	}
+
+	/**
+	 * Methods: </br>
+	 * 1 - exchange player names</br>
+	 * 2 - exchange figure moves</br>
+	 * 3 - exchange restart request/response</br>
+	 * 4 - exchange surrender </br>
+	 * 5 - exchange start game information (game start and client left) </br>
+	 * 
+	 * @param method the method to be used in telegram
+	 * @return correct (clientState related) telegram prefix
+	 */
+	private String getPrefix(int method) {
+		if (clientState == 1)
+			return ("0" + method);
+		if (clientState == 2)
+			return (method + "0");
+		return "";
 	}
 
 	/**
@@ -572,163 +897,172 @@ public class MyLocalNetworkController implements IController {
 	 * @param message Telegram message as string containing game relevant
 	 *                information
 	 */
-	private void encodeMessage(String message) {
+	private boolean encodeMessage(String message) {
+		if (message == null)
+			return false;
+
+		LOGGER.info("Starting encoding: [{}]", message);
 		String method = message.substring(0, 2);
 		message = message.substring(2, message.length());
-//		System.out.println("processing: " + method + " : " + message);
+		LOGGER.info("Processing: [{}] with message: [{}]...", BasicGameFunctionsHelper.getMethodDescription(method),
+				message);
+
 		switch (method) {
 
 		// Client -> Server
 		case "01":
 			// Server replies with his player name and starts the game on his application
 			player2 = new Player(2, Optional.of(message));
+			LOGGER.info("Reply from Server with name: {}, starting game...", player2.getName());
 			setPlayerNames();
 			Platform.runLater(() -> sendTelegram(getChannel(), getPrefix(1) + player1.getName()));
 			// Game starts here for server
 			startGame();
 			getOpponent(null).setReady(true);
-			break;
+			return true;
 
 		// Server -> Client
 		case "10":
 			// Client receives servers player name and starts the game on his application
 			player1 = new Player(1, Optional.of(message));
+			LOGGER.info("Reply from Server with name: {}, starting game...", player1.getName());
 			setPlayerNames();
 			// Game starts here for client
 			startGame();
 			getOpponent(null).setReady(true);
-			break;
+			return true;
 
 		// Client --> Server
 		case "02":
 			// Server receives a move --> has to update its gamefield
-			updateGamefieldFromTelMesg(message);
-			break;
+			return updateGamefieldFromTelMesg(message);
 
 		// Server --> Client
 		case "20":
 			// Client receives a move --> has to update its gamefield
-			updateGamefieldFromTelMesg(message);
-			break;
+			return updateGamefieldFromTelMesg(message);
 
 		case "03":
 			// client receives a restart message from server
-			if (Integer.valueOf(message) == 0) {
-				// client receives a restart request from server
-				PopUp decision = new PopUp();
-				decision.createDecisionPopUp(getOpponent(null).getName() + " asks for a restart!\nDo you accept that?");
-				if (!decision.showPopUp())
-					sendTelegram(getChannel(), getPrefix(3) + "02");
-				else {
-					sendTelegram(getChannel(), getPrefix(3) + "01");
-					restartGame();
-					getOpponent(null).setReady(true);
-				}
-
-			} else if (Integer.valueOf(message) == 1) {
-				// server receives a positive restart response from client
-				infoUser(getOpponent(null).getName() + " accepted the restart request!\nRestarting game...")
-						.showNonWaitingPopUp();
-				restartGame();
-				getOpponent(null).setReady(true);
-
-			} else if (Integer.valueOf(message) == 2) {
-				// server receives a negative restart response from client
-				infoUser(getOpponent(null).getName() + " rejected the restart request!").showNonWaitingPopUp();
-			}
-
-			break;
+			return actOnRestartMessage(method, message, "Server");
 
 		case "30":
 			// server receives a restart message from client
-			if (Integer.valueOf(message) == 0) {
-				// server receives a restart request from client
-				PopUp decision = new PopUp();
-				decision.createDecisionPopUp(getOpponent(null).getName() + " asks for a restart!\nDo you accept that?");
-				if (!decision.showPopUp())
-					sendTelegram(getChannel(), getPrefix(3) + "02");
-				else {
-					sendTelegram(getChannel(), getPrefix(3) + "01");
-					restartGame();
-					getOpponent(null).setReady(true);
-				}
-
-			} else if (Integer.valueOf(message) == 1) {
-				// server receives a positive restart response from client
-				infoUser(getOpponent(null).getName() + " accepted the restart request!\nRestarting game...")
-						.showNonWaitingPopUp();
-				restartGame();
-				getOpponent(null).setReady(true);
-
-			} else if (Integer.valueOf(message) == 2) {
-				// server receives a negative restart response from client
-				infoUser(getOpponent(null).getName() + " rejected the restart request!").showNonWaitingPopUp();
-			}
-
-			break;
+			return actOnRestartMessage(method, message, "Client");
 
 		case "04":
 			// Server receives surrender message --> server won
-			endGameWithWinner(getOpponent(null).getName()
-					+ " surrendered!\nCongratulations, you won the game!\nThank you for playing! Have a nice day!");
-			break;
-
+			// this is empty because it will call "40", which has the same code
 		case "40":
 			// Client receives surrender message --> client won
 			endGameWithWinner(getOpponent(null).getName()
 					+ " surrendered!\nCongratulations, you won the game!\nThank you for playing! Have a nice day!");
-			break;
+			return true;
 
-		// 00 - opponent is ready to play, 01 - opponent left
 		case "05":
-			if (Integer.valueOf(message) == 0) {
-				// client receives start game (after restart) message
-				getOpponent(null).setReady(true);
-				infoUser(getOpponent(null).getName() + " is ready!\nYou can now start playing!").showPopUp();
-
-			} else if (Integer.valueOf(message) == 1) {
-				// Client receives server left message
-				connected = false;
-				gameActive = false;
-				infoUser("Player " + getOpponent(null).getName() + " left the game!").showNonWaitingPopUp();
-
-			}
-			break;
+			return actOnGameMessage(message, "Server");
 
 		case "50":
-			if (Integer.valueOf(message) == 0) {
-				// server receives start game (after restart) message
-				getOpponent(null).setReady(true);
-				infoUser(getOpponent(null).getName() + " is ready!\nYou can now start playing!").showPopUp();
-
-			} else if (Integer.valueOf(message) == 1) {
-				// server receives server left message
-				connected = false;
-				gameActive = false;
-				infoUser("Player " + getOpponent(null).getName() + " left the game!").showNonWaitingPopUp();
-
-			}
-			break;
+			return actOnGameMessage(message, "Client");
 
 		default:
-//			System.out.println("Telegram error: Parsing failure on prefix: " + method);
-			break;
+			LOGGER.error("Telegram error: Parsing failure on prefix: {}, {}", method,
+					BasicGameFunctionsHelper.getMethodDescription(method));
+			return false;
 		}
 	}
 
 	/**
-	 * Ends the game with a winner
+	 * This function gets called whenever the player receives a telegram containing
+	 * information on game restart.</br>
+	 * This can be information on accepting, declining or requesting a restart.
 	 * 
-	 * @param player the winner
+	 * @param prefix  Prefix, identifying which method the telegram belongs to and
+	 *                who sent it
+	 * @param message Telegram message
+	 * @param sender  "Client" or "Server", depending on who sent the telegram
+	 * 
+	 * @return true or false, depending on success of action
 	 */
-	private void endGameWithWinner(String message) {
-		gameActive = false;
-		getOpponent(null).setReady(false);
-		PopUp ending = new PopUp();
-		ending.createWinningPopUp(message);
-		ending.showPopUp();
-		startButton.setText("START GAME");
-		infoLabel.setText("PRESS START");
+	private boolean actOnRestartMessage(String prefix, String message, String sender) {
+		LOGGER.info("Reacting on restart telegram...");
+		if (prefix == null) {
+			LOGGER.error("Failure, method-prefix=null!");
+			return false;
+		}
+		if (prefix.isBlank() || prefix.length() > 2 || prefix.contentEquals("00")) {
+			LOGGER.error("Failure on method-prefix: [{}]", prefix);
+			return false;
+		}
+
+		String first = prefix.substring(0, 0);
+		String second = prefix.substring(1);
+
+		if (first.contentEquals("0") || second.contentEquals("0")) {
+			LOGGER.info("Received a restart message from {}.", sender);
+			if (Integer.valueOf(message) == 0) {
+				LOGGER.info("Received a restart request ({}) from {}.", message, sender);
+				PopUp decision = new PopUp();
+				decision.createDecisionPopUp(getOpponent(null).getName() + " asks for a restart!\nDo you accept that?");
+				if (!decision.showPopUp()) {
+					LOGGER.info("Declined the restart request!");
+					sendTelegram(getChannel(), getPrefix(3) + "02");
+				} else {
+					LOGGER.info("Accepted the restart request!");
+					sendTelegram(getChannel(), getPrefix(3) + "01");
+					restartGame();
+					getOpponent(null).setReady(true);
+				}
+
+			} else if (Integer.valueOf(message) == 1) {
+				LOGGER.info("Received a positive restart response ({}) from {}.", message, sender);
+				infoUser(getOpponent(null).getName() + " accepted the restart request!\nRestarting game...")
+						.showNonWaitingPopUp();
+				restartGame();
+				getOpponent(null).setReady(true);
+
+			} else if (Integer.valueOf(message) == 2) {
+				LOGGER.info("Received a negative restart response ({}) from {}.", message, sender);
+				infoUser(getOpponent(null).getName() + " rejected the restart request!").showNonWaitingPopUp();
+			} else {
+				LOGGER.error("Failure on encoding message: [{}] for {}", message, "Restart");
+				return false;
+			}
+			return true;
+		} else
+			LOGGER.error("Failure on method-prefix: [{}]", prefix);
+		return false;
+	}
+
+	/**
+	 * This function gets called whenever the player receives a message on basic
+	 * game information.</br>
+	 * This information can be: </br>
+	 * -information on opponent left the game</br>
+	 * -information on start game after a game is over and a restart was requested
+	 * 
+	 * @param message Telegram message
+	 * @param sender  "Client" or "Server", depending on who sent the telegram
+	 * 
+	 * @return true or false, depending on success of action
+	 */
+	private boolean actOnGameMessage(String message, String sender) {
+		if (Integer.valueOf(message) == 0) {
+			// client receives start game (after restart) message
+			LOGGER.info("Received game start message from {}.", sender);
+			getOpponent(null).setReady(true);
+			infoUser(getOpponent(null).getName() + " is ready!\nYou can now start playing!").showPopUp();
+			return true;
+		} else if (Integer.valueOf(message) == 1) {
+			// Client receives server left message
+			LOGGER.info("{} left the game!", sender);
+			connected = false;
+			gameActive = false;
+			infoUser("Player " + getOpponent(null).getName() + " left the game!").showNonWaitingPopUp();
+			return true;
+		}
+		LOGGER.error("Failure on encoding message: {} from {}.", message, sender);
+		return false;
 	}
 
 	/**
@@ -741,7 +1075,8 @@ public class MyLocalNetworkController implements IController {
 	 * 
 	 * @param telegramMsg provides information about the enemies move
 	 */
-	private void updateGamefieldFromTelMesg(String telegramMsg) {
+	private boolean updateGamefieldFromTelMesg(String telegramMsg) {
+		LOGGER.info("Updating gamefield from telegram...");
 		int oldX = 0;
 		int oldY = 0;
 		int newX = 0;
@@ -757,33 +1092,43 @@ public class MyLocalNetworkController implements IController {
 			checkmate = Integer.valueOf(telegramMsg.substring(10, telegramMsg.length()));
 		} catch (NumberFormatException e) {
 			infoUser("Parsing error!\nYour partner made a move that was not able to get to you!\nYou may restart!");
-			return;
+			LOGGER.error("Parsing error on telegram message: [{}] with {}", telegramMsg, e.getMessage());
+			return false;
 		}
 
 		gamefield[newX][newY] = gamefield[oldX][oldY];
 		gamefield[oldX][oldY] = 0;
 
-		if (check == 1)
-			infoUser("CHECK!" + "\n\nOh no, will he end the game?").showPopUp();
+		LOGGER.info("Valid move, [x:{},y:{}] is now val=0 and [x:{},y:{}] is now val={}", oldX, oldY, newX, newY,
+				getVal(newX, newY));
 
 		if (checkmate == 1) {
-			// printField();
+			LOGGER.info("Checkmate!");
 			setPlayers();
 			endGameWithWinner(
 					getActivePlayer().getName() + " won the game!\nThank you for playing!\nHave a nice day :)");
-			return;
+			return true;
 		}
 
-		// printField();
+		if (check == 1)
+			infoUser("CHECK!" + "\n\nOh no, will he end the game?").showPopUp();
+
 		setPlayers();
 		switchPlayer();
+		return true;
 	}
+
+//====================================================================================================
+//==																								==	
+//==Initial game functions:															                ==
+//==																								==	
+//====================================================================================================		
 
 	/**
 	 * Starts the game
 	 */
 	private void startGame() {
-		System.out.println("clientState: " + clientState);
+		LOGGER.info("Starting game with client state: {}!", clientState);
 		startButton.setText("RESTART GAME");
 		infoLabel.setText("LET'S PLAY");
 		resetGlobalVars();
@@ -802,6 +1147,7 @@ public class MyLocalNetworkController implements IController {
 	 * Restarts the game
 	 */
 	private void restartGame() {
+		LOGGER.info("Restarting the game!");
 		gameActive = false;
 		player1.setReady(false);
 		player2.setReady(false);
@@ -813,27 +1159,26 @@ public class MyLocalNetworkController implements IController {
 	}
 
 	/**
-	 * Checks weather the enemy's king is in a problematic game situation and has to
-	 * move or not, checks if any of the activePlayers' figures sets the opponents
-	 * king to "check" </br>
-	 * This is called after a player made his move to check if "you" set your enemy
-	 * to "check"
+	 * Ends the game with a winner
 	 * 
-	 * @param player object to identify whose king should be checked (probably the
-	 *               inActivePlayer)
-	 * @return true, if king is in problematic situation and false, if he is not
+	 * @param player the winner
 	 */
-	private boolean isChecked(Player player) {
-		int[] kingXY = BasicGameFunctionsHelper.isChecked(player, gamefield, player1, player2);
-
-		if (kingXY[0] == 0 && kingXY[1] == 0)
-			return false;
-		else {
-			problemKing[0] = kingXY[0];
-			problemKing[1] = kingXY[1];
-			return true;
-		}
+	private void endGameWithWinner(String message) {
+		LOGGER.info("Ending the game!");
+		gameActive = false;
+		getOpponent(null).setReady(false);
+		PopUp ending = new PopUp();
+		ending.createWinningPopUp(message);
+		ending.showPopUp();
+		startButton.setText("START GAME");
+		infoLabel.setText("PRESS START");
 	}
+
+//====================================================================================================
+//==																								==	
+//==Game intervening functions:															            ==
+//==																								==	
+//====================================================================================================		
 
 	/**
 	 * Resets the last move
@@ -847,8 +1192,9 @@ public class MyLocalNetworkController implements IController {
 		gamefield[oldX][oldY] = gamefield[newX][newY];
 		gamefield[newX][newY] = 0;
 
-		// printField();
 		setPlayers();
+		LOGGER.info("Reset last move, [x:{},y:{}] is back to 0 and [x:{},y:{}] is back to {}", newX, newY, oldX, oldY,
+				getVal(oldX, oldY));
 	}
 
 	/**
@@ -869,46 +1215,9 @@ public class MyLocalNetworkController implements IController {
 		gamefield[newX][newY] = gamefield[oldX][oldY];
 		gamefield[oldX][oldY] = 0;
 
-		// printField();
 		setPlayers();
-	}
-
-	/**
-	 * Checks if the move to the new field is valid (does not check the field,
-	 * actually moves nothing)
-	 * 
-	 * @param oldX figures old x position
-	 * @param oldY figures old y position
-	 * @param newX figures new x position
-	 * @param newY figures new y position
-	 * @return true or false, depending on if the move is valid or not (depends not
-	 *         on if the position is blocked)
-	 */
-	private boolean tryMove(int oldX, int oldY, int newX, int newY, Player player) {
-		return BasicGameFunctionsHelper.tryMove(oldX, oldY, newX, newY, gamefield, player);
-	}
-
-	/**
-	 * Checks weather the enemies king is able to get out of a problematic game
-	 * situation or not</br>
-	 * this is called after a player was checked</br>
-	 * 
-	 * @return true, if he is not able and false, if he is
-	 */
-	private boolean isCheckmate() {
-		return BasicGameFunctionsHelper.isCheckmate(problemKing[0], problemKing[1], gamefield, player1, player2);
-	}
-
-	/**
-	 * Checks if the new position is free to move to (just this field)
-	 * 
-	 * @param newX   figures new x position
-	 * @param newY   figures new y position
-	 * @param player object to identify the related player
-	 * @return true if the field is blocked, false if it is not blocked
-	 */
-	private boolean checkIfFieldBlocked(int x, int y, Player player) {
-		return BasicGameFunctionsHelper.checkIfFieldBlocked(x, y, gamefield, player);
+		LOGGER.info("Valid move, [x:{},y:{}] is now val=0 and [x:{},y:{}] is now val={}", oldX, oldY, newX, newY,
+				getVal(newX, newY));
 	}
 
 	/**
@@ -963,42 +1272,6 @@ public class MyLocalNetworkController implements IController {
 		// activity label
 		active1Label.setBackground(player1.getStatusBackground());
 		active2Label.setBackground(player2.getStatusBackground());
-	}
-
-	/**
-	 * Selects the field of a figure.</br>
-	 * -visually (setStyle)</br>
-	 * -internally (@selectedButton)</br>
-	 * 
-	 * @param btnIdx Index of the button the user clicked on to select.
-	 */
-	private void selectFigure(int btnIdx) {
-		int selectedX = giveXY(btnIdx)[0];
-		int selectedY = giveXY(btnIdx)[1];
-
-		// player 1 clicks on field with one of his figures
-		if (gamefield[selectedX][selectedY] > 0 && gamefield[selectedX][selectedY] < 7
-				&& getActivePlayer() == player1) {
-			buttons[btnIdx].setStyle(player1SelectedButton);
-
-			// player 2 clicks on field with one of his figures
-		} else if (gamefield[selectedX][selectedY] > 6 && getActivePlayer() == player2) {
-			buttons[btnIdx].setStyle(player2SelectedButton);
-
-			// player clicks on field with no figure
-		} else if (gamefield[selectedX][selectedY] == 0) {
-			// nothing should happen
-			return;
-
-			// player wants to select field with enemy figure
-		} else {
-			infoUser("It is your turn!\nMake your move!").showPopUp();
-			return;
-		}
-
-		// set (save) the selected button
-		selectedButton[0] = btnIdx;
-		selectedButton[1] = getActivePlayer().getId();
 	}
 
 	/**
@@ -1093,15 +1366,115 @@ public class MyLocalNetworkController implements IController {
 	}
 
 	/**
+	 * Creates a new infoPopUp
+	 * 
+	 * @param message you want to display to the user
+	 * @return the created PopUp
+	 */
+	private PopUp infoUser(String message) {
+		PopUp info = new PopUp();
+		info.createInfoPopUp(message);
+		return info;
+	}
+
+	/**
+	 * Switches the active player and the visualization of that
+	 */
+	private void switchPlayer() {
+		Player opponent = getOpponent(getActivePlayer());
+		if (opponent != null)
+			LOGGER.info("Switching active player from {} to {}", getActivePlayer().getName(), opponent.getName());
+		else
+			LOGGER.info("Switching active player {}", getActivePlayer().getName());
+		player1.switchStatus();
+		player2.switchStatus();
+		setStatusLabelBackgrounds();
+	}
+
+	/**
+	 * Unselects the currently selected button (globally specified)
+	 */
+	private void unselectButton() {
+		LOGGER.info("Removing field selection...");
+		buttons[selectedButton[0]].setStyle(playerNonSelectedButton);
+		selectedButton[0] = 0;
+		selectedButton[1] = 0;
+	}
+
+//====================================================================================================
+//==																								==	
+//==Game helper functions:        															        ==
+//==																								==	
+//====================================================================================================	
+
+	/**
+	 * Checks weather the enemy's king is in a problematic game situation and has to
+	 * move or not, checks if any of the activePlayers' figures sets the opponents
+	 * king to "check" </br>
+	 * This is called after a player made his move to check if "you" set your enemy
+	 * to "check"
+	 * 
+	 * @param player object to identify whose king should be checked (probably the
+	 *               inActivePlayer)
+	 * @return true, if king is in problematic situation and false, if he is not
+	 */
+	private boolean isChecked(Player player) {
+		int[] kingXY = BasicGameFunctionsHelper.isChecked(player, gamefield, player1, player2);
+
+		if (kingXY[0] == 0 && kingXY[1] == 0)
+			return false;
+		else {
+			problemKing[0] = kingXY[0];
+			problemKing[1] = kingXY[1];
+			return true;
+		}
+	}
+
+	/**
+	 * Checks if the move to the new field is valid (does not check the field,
+	 * actually moves nothing)
+	 * 
+	 * @param oldX figures old x position
+	 * @param oldY figures old y position
+	 * @param newX figures new x position
+	 * @param newY figures new y position
+	 * @return true or false, depending on if the move is valid or not (depends not
+	 *         on if the position is blocked)
+	 */
+	private boolean tryMove(int oldX, int oldY, int newX, int newY, Player player) {
+		return BasicGameFunctionsHelper.tryMove(oldX, oldY, newX, newY, gamefield, player);
+	}
+
+	/**
+	 * Checks weather the enemies king is able to get out of a problematic game
+	 * situation or not</br>
+	 * this is called after a player was checked</br>
+	 * 
+	 * @return true, if he is not able and false, if he is
+	 */
+	private boolean isCheckmate() {
+		return BasicGameFunctionsHelper.isCheckmate(problemKing[0], problemKing[1], gamefield, player1, player2);
+	}
+
+	/**
+	 * Checks if the new position is free to move to (just this field)
+	 * 
+	 * @param newX   figures new x position
+	 * @param newY   figures new y position
+	 * @param player object to identify the related player
+	 * @return true if the field is blocked, false if it is not blocked
+	 */
+	private boolean checkIfFieldBlocked(int x, int y, Player player) {
+		return BasicGameFunctionsHelper.checkIfFieldBlocked(x, y, gamefield, player);
+	}
+
+	/**
 	 * Checks if your move is locked because the opponent player is active or not
 	 * 
 	 * @return true if your move should be locked and false if not
 	 */
 	private boolean moveLock() {
-		if (clientState == 1 && getActivePlayer() == player2 || (clientState == 2 && getActivePlayer() == player1))
-			return false;
-
-		return true;
+		return (clientState == 2 && getActivePlayer() == player2 || (clientState == 1 && getActivePlayer() == player1));
 	}
 
 	/**
@@ -1131,58 +1504,6 @@ public class MyLocalNetworkController implements IController {
 	}
 
 	/**
-	 * Creates a new infoPopUp
-	 * 
-	 * @param message you want to display to the user
-	 * @return the created PopUp
-	 */
-	private PopUp infoUser(String message) {
-		PopUp info = new PopUp();
-		info.createInfoPopUp(message);
-		return info;
-	}
-
-	/**
-	 * Methods: </br>
-	 * 1 - exchange player names</br>
-	 * 2 - exchange figure moves</br>
-	 * 3 - exchange restart request/response</br>
-	 * 4 - exchange surrender </br>
-	 * 5 - exchange start game information (game start and client left) </br>
-	 * 
-	 * @param method the method to be used in telegram
-	 * @return correct (clientState related) telegram prefix
-	 */
-	private String getPrefix(int method) {
-		if (clientState == 1)
-			return ("0" + method);
-		if (clientState == 2)
-			return (method + "0");
-		return "";
-	}
-
-	/**
-	 * 
-	 * @return the clientState related SocketChannel
-	 */
-	private SocketChannel getChannel() {
-		if (clientState == 1)
-			return clientChannel;
-		if (clientState == 2)
-			return serverChannel;
-		return null;
-	}
-
-	/**
-	 * Switches the active player and the visualization of that
-	 */
-	private void switchPlayer() {
-		player1.switchStatus();
-		player2.switchStatus();
-		setStatusLabelBackgrounds();
-	}
-
-	/**
 	 * Returns the opponent player object of given player.</br>
 	 * Returns opponent of the current instance if null is inserted in this method!
 	 * 
@@ -1207,24 +1528,6 @@ public class MyLocalNetworkController implements IController {
 	}
 
 	/**
-	 * Unselects the currently selected button (globally specified)
-	 */
-	private void unselectButton() {
-		buttons[selectedButton[0]].setStyle(playerNonSelectedButton);
-		selectedButton[0] = 0;
-		selectedButton[1] = 0;
-	}
-
-//	public void printField() {
-//		for (int g = 0; g < 10; g++) {
-//			for (int h = 0; h < 10; h++) {
-//				System.out.print(gamefield[h][g] + "\t");
-//			}
-//			System.out.println();
-//		}
-//	}
-
-	/**
 	 * Function to return the coordinates from game_field, according to given button
 	 * index </br>
 	 * [0]= x value </br>
@@ -1238,9 +1541,31 @@ public class MyLocalNetworkController implements IController {
 	}
 
 	/**
+	 * Function to return the field value of a game-field
+	 * 
+	 * @param x position x in gamefield array
+	 * @param y position y in gamefield array
+	 * 
+	 * @return -1 if out of bound, or gamefield[x][y] value
+	 */
+	private int getVal(int x, int y) {
+		if (x < 1 || x > 8 || y < 1 || y > 8)
+			return -1;
+		else
+			return gamefield[x][y];
+	}
+
+//====================================================================================================
+//==																								==	
+//==Exiting game functions:        															        ==
+//==																								==	
+//====================================================================================================		
+
+	/**
 	 * Button to go back to menu
 	 */
 	public void backButtonClicked() {
+		LOGGER.info("User clicked on button: back...");
 		// send info
 		if (connected)
 			sendTelegram(getChannel(), getPrefix(5) + "01");
@@ -1253,7 +1578,7 @@ public class MyLocalNetworkController implements IController {
 			if (selector != null)
 				selector.close();
 		} catch (IOException e) {
-			e.printStackTrace();
+			LOGGER.warn("Error on closing server socket channel/ selector! - ", e);
 		}
 
 		serverSocketChannel = null;
@@ -1262,74 +1587,20 @@ public class MyLocalNetworkController implements IController {
 		selector = null;
 		iterator = null;
 
-		// close current window
-		Stage current = (Stage) mainPane.getScene().getWindow();
-		current.close();
-
 		// load FXML
 		FxmlOpener newFXML = new FxmlOpener(getClass().getResource("/de/ifd/mad/SimpleChess/main/StartingForm.fxml"), 0,
 				null, getClass().getResource("/de/ifd/mad/SimpleChess/main/StartingFileStyle.css").toString());
 
 		// open FXML
-		if (!newFXML.open())
-			System.out.println("IOException on opening StartingForm.fxml...");
-
-	}
-
-	/**
-	 * Function to add the buttons themselves and their functionality
-	 * 
-	 * @param x        Layout of the button
-	 * @param y        Layout of the button
-	 * @param i        gamefield field y coordinate
-	 * @param t        gamefield field x coordinate
-	 * @param btnIndex Index of the buttons (1...81)
-	 */
-	private void buildButtons(int x, int y, int i, int t, int btnIndex) {
-		// Instantiate the buttons and add them to the button container
-		buttons[btnIndex] = new Button();
-		buttonPane.getChildren().add(buttons[btnIndex]);
-
-		// configure the buttons
-		buttons[btnIndex].setLayoutX(x);
-		buttons[btnIndex].setLayoutY(y);
-		buttons[btnIndex].setPrefWidth(45);
-		buttons[btnIndex].setPrefHeight(45);
-		buttons[btnIndex].setPadding(new Insets(0));
-		white = new Background(new BackgroundFill(Color.rgb(224, 201, 160), null, null));
-		black = new Background(new BackgroundFill(Color.rgb(164, 120, 91), null, null));
-
-		// chess-like color switching on game fields
-		if (i % 2 == 0) {
-			if (t % 2 == 0)
-				buttons[btnIndex].setBackground(white);
-			else
-				buttons[btnIndex].setBackground(black);
+		if (!newFXML.open()) {
+			LOGGER.error("Error on opening file!");
 		} else {
-			if (t % 2 == 0)
-				buttons[btnIndex].setBackground(black);
-			else
-				buttons[btnIndex].setBackground(white);
+			LOGGER.info("Success... closing start window...");
+			// close current window
+			Stage current = (Stage) mainPane.getScene().getWindow();
+			current.close();
 		}
 
-		// finalize variable in order to use in enclosing scope (mouse event)
-		final int btnIdx = btnIndex;
-
-		// set event if user clicks on game field (button)
-		buttons[btnIndex].setOnMouseClicked(e -> {
-			// check if game is running & if opponent is ready
-			if ((!gameActive) || (!getOpponent(null).isReady())) {
-				infoUser("Please start the game or wait for your opponent!").showPopUp();
-				return;
-			}
-			if (e.getButton().equals(MouseButton.PRIMARY))
-				// click on field function
-				clickOnField(btnIdx);
-			else if (e.getButton().equals(MouseButton.SECONDARY))
-				// remove players selection on right click
-				removeClickOnField(btnIdx);
-
-		});
 	}
 
 	/**
@@ -1346,11 +1617,19 @@ public class MyLocalNetworkController implements IController {
 	public void closeButtonClicked() {
 		Stage temp = (Stage) mainPane.getScene().getWindow();
 
-		// send info
-		if (connected)
-			sendTelegram(getChannel(), getPrefix(5) + "01");
+		if (temp != null) {
+			LOGGER.warn("Someone closed the application on exit button.");
+			LOGGER.info(BasicGameFunctionsHelper.getPrintBar());
+			LOGGER.info("=====================END======================");
+			LOGGER.info(BasicGameFunctionsHelper.getPrintBar());
 
-		temp.close();
-		System.exit(0);
+			// send info
+			if (connected)
+				sendTelegram(getChannel(), getPrefix(5) + "01");
+
+			temp.close();
+			System.exit(0);
+		} else
+			LOGGER.error("Could not close application on by exit button!");
 	}
 }

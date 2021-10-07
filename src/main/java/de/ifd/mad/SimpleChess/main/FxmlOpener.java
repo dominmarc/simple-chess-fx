@@ -6,6 +6,9 @@ package de.ifd.mad.SimpleChess.main;
 import java.io.IOException;
 import java.net.URL;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.ifd.mad.SimpleChess.controller.IController;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -41,6 +44,8 @@ public class FxmlOpener {
 	// window location
 	private double xOffset = 0;
 	private double yOffset = 0;
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(FxmlOpener.class);
 
 	/**
 	 * Constructor for a fxml file to open
@@ -118,7 +123,7 @@ public class FxmlOpener {
 				this.stage.getScene().getStylesheets().add(style);
 
 		} catch (IOException e) {
-			e.printStackTrace();
+			LOGGER.error("IOException on building fxml opener on file [{}] with: {}", fxmlFile, e.getMessage());
 			return false;
 		}
 		return true;
@@ -130,6 +135,7 @@ public class FxmlOpener {
 	 * @return true or false, depending on stage ready status
 	 */
 	public boolean open() {
+		LOGGER.info("Trying to open fxml file...");
 		// try to build the stage
 		if (buildStage(topHeight, icon, style)) {
 			this.stage.show();

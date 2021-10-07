@@ -3,6 +3,13 @@
  */
 package de.ifd.mad.SimpleChess.helpers;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -16,6 +23,8 @@ import de.ifd.mad.SimpleChess.figures.Queen;
 import de.ifd.mad.SimpleChess.figures.Rook;
 import de.ifd.mad.SimpleChess.main.PopUp;
 import de.ifd.mad.SimpleChess.players.Player;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 
 /**
  * Helper Class for chess game by MAD
@@ -34,6 +43,8 @@ public class BasicGameFunctionsHelper {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(BasicGameFunctionsHelper.class);
 
+	private static final String BAR = "==============================================";
+
 	private BasicGameFunctionsHelper() {
 		// we don't need to construct objects of this class
 	}
@@ -43,6 +54,86 @@ public class BasicGameFunctionsHelper {
 //==General Helper Functions:																		==
 //==																								==	
 //====================================================================================================
+
+	/**
+	 * Exports the current game field to a file
+	 * 
+	 * @param gamefield
+	 * @return
+	 */
+	public static String tryExport(int[][] gamefield) {
+		LOGGER.info("User wants to export the gamefield...");
+		String returnStr = "";
+		// create dialog
+		Path gameFile = null;
+		FileChooser fileChooser = new FileChooser();
+		fileChooser.setTitle("Save your file!");
+		Stage mystage = null;
+		fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Gamefield", "*.field"));
+
+		// open dialog
+		File saveFile = fileChooser.showSaveDialog(mystage);
+		// check if dialog returned something
+		if (saveFile == null) {
+			LOGGER.warn("User selected no file!");
+			return "No file selected!";
+		}
+		// ensure existence
+		gameFile = saveFile.toPath();
+		if (!Files.exists(gameFile)) {
+			try {
+				Path tmpFile = Files.createFile(gameFile);
+				gameFile = tmpFile;
+			} catch (IOException e) {
+				LOGGER.error("Error saving file: [{}] = {}: {}", gameFile.getFileName(), e.getClass().getName(),
+						e.getMessage());
+				return "Error on saving file!";
+			}
+		}
+		// write to created file
+		BufferedWriter buffW = null;
+		try {
+			buffW = Files.newBufferedWriter(gameFile, StandardCharsets.UTF_8, StandardOpenOption.CREATE);
+			buffW.write(buildFieldString(gamefield));
+			buffW.close();
+			LOGGER.info("Successfully saved file: {}", gameFile);
+			return ("Successfully saved file: " + gameFile.getFileName());
+		} catch (IOException e) {
+			// Buffered writer problem
+			returnStr = ("Error on writing to your specified file!\nYou might try a different location!");
+			LOGGER.error("Error on writing to file: [{}] = {}: {}", gameFile, e.getClass().getName(), e.getMessage());
+		} finally {
+			try {
+				if (buffW != null)
+					buffW.close();
+			} catch (IOException e) {
+				LOGGER.warn("Could not close Buffered Reader! = {}", e.getMessage());
+			}
+		}
+		return returnStr;
+	}
+
+	/**
+	 * 
+	 * @param gamefield
+	 * @return
+	 */
+	public static String buildFieldString(int[][] gamefield) {
+		if (gamefield == null)
+			return "null";
+
+		if (gamefield.length == 0)
+			return "0";
+
+		StringBuilder field = new StringBuilder();
+		for (int g = 0; g < 10; g++) {
+			for (int h = 0; h < 10; h++) {
+				field.append((gamefield[h][g] + " "));
+			}
+			field.append("\n");
+		}
+		return field.toString();
+	}
 
 	/**
 	 * Checks if the move to the new field is valid (does not check the field,
@@ -581,13 +672,30 @@ public class BasicGameFunctionsHelper {
 		}
 	}
 
+	public static String getPrintBar() {
+		return BAR;
+	}
+
 //====================================================================================================
 //==																								==	
 //==Helper Functions for Local Network:																==
 //==																								==	
 //====================================================================================================
 
-	public static String generateMoveMsg(int oldX, int oldY, int newX, int newY, boolean schach, boolean matt) {
+	/**
+	 * This function is used to generate a movement message.</br>
+	 * This movement message is needed for a movement update telegram.
+	 * 
+	 * @param oldX      old position x of figure
+	 * @param oldY      old position y of figure
+	 * @param newX      new position x of figure
+	 * @param newY      new position y of figure
+	 * @param check     indicates if there is a check or not
+	 * @param checkmate indicates if there is a checkmate or not
+	 * 
+	 * @return Movement message string
+	 */
+	public static String generateMoveMsg(int oldX, int oldY, int newX, int newY, boolean check, boolean checkmate) {
 		String message = "";
 		if (oldX < 10)
 			message += "0";
@@ -602,15 +710,68 @@ public class BasicGameFunctionsHelper {
 			message += "0";
 		message += newY;
 
-		if (schach)
+		if (check)
 			message += "01";
 		else
 			message += "00";
-		if (matt)
+		if (checkmate)
 			message += "01";
 		else
 			message += "00";
+		LOGGER.info("Generated move-message: [{}] ({})", message, "|oldX|oldY|newX|newY|check|checkmate|");
 		return message;
+	}
+
+	/**
+	 * Methods: </br>
+	 * 1 - exchange player names</br>
+	 * 2 - exchange figure moves</br>
+	 * 3 - exchange restart request/response</br>
+	 * 4 - exchange surrender </br>
+	 * 5 - exchange start game information (game start and client left) </br>
+	 * 
+	 * @param method 01 or 10
+	 * 
+	 * @return Description for Method
+	 */
+	public static String getMethodDescription(String method) {
+		if (method == null)
+			return "";
+		if (method.isBlank() || method.length() > 2)
+			return "";
+
+		String first = method.substring(0, 0);
+		String second = method.substring(1);
+		String returnStr = "";
+
+		if (first.contentEquals("0")) {
+			returnStr = "From server:";
+			first = second;
+		} else if (second.contentEquals("0"))
+			returnStr = "From client:";
+		else
+			return "";
+
+		switch (first) {
+		case "1":
+			returnStr += " sharing player name, initial game start";
+			break;
+		case "2":
+			returnStr += " incoming move on gamefield";
+			break;
+		case "3":
+			returnStr += " restart request/ response";
+			break;
+		case "4":
+			returnStr += " incoming surrender message";
+			break;
+		case "5":
+			returnStr += " player left/ game start (after restart) information";
+			break;
+		default:
+			return "no information on method prefix";
+		}
+		return returnStr;
 	}
 
 }
