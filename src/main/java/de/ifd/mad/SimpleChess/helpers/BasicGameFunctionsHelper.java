@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -612,6 +613,69 @@ public class BasicGameFunctionsHelper {
 
 		// return
 		return gamefield;
+	}
+
+	public static boolean checkGamefieldValidity(int[][] gamefield) {
+		ArrayList<Integer> player1 = new ArrayList<>();
+		ArrayList<Integer> player2 = new ArrayList<>();
+
+		// get figures
+		for (int y = 1; y < 9; y++) {
+			for (int x = 1; x < 9; x++) {
+				if (gamefield[x][y] != 0) {
+					if (gamefield[x][y] > 6)
+						player2.add((gamefield[x][y] - 6));
+					else
+						player1.add(gamefield[x][y]);
+				}
+			}
+		}
+
+		// all figures or just king, anything else aint valid
+		if (player1.size() > 8 || player2.size() > 8 || player1.isEmpty() || player2.isEmpty())
+			return false;
+
+		if (verifyQuantity(player1))
+			return verifyQuantity(player2);
+
+		return false;
+	}
+
+	private static boolean verifyQuantity(ArrayList<Integer> list) {
+		int pawns = 0;
+		int king = 0;
+		int queen = 0;
+		int bishops = 0;
+		int rooks = 0;
+		int knights = 0;
+
+		for (Integer i : list) {
+			switch (i) {
+			case 1:
+				pawns++;
+				break;
+			case 2:
+				rooks++;
+				break;
+			case 3:
+				knights++;
+				break;
+			case 4:
+				bishops++;
+				break;
+			case 5:
+				queen++;
+				break;
+			case 6:
+				king++;
+				break;
+			default:
+				return false;
+			}
+		}
+
+		return Boolean.FALSE
+				.equals((king > 1 || king == 0 || queen > 1 || bishops > 2 || knights > 2 || rooks > 2 || pawns > 8));
 	}
 
 	/**

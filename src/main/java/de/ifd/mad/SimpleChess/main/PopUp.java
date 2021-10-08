@@ -12,12 +12,15 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ToolBar;
 import javafx.scene.image.Image;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 /**
  * Class for popUp's
@@ -74,10 +77,11 @@ public class PopUp {
 	}
 
 	/**
-	 * Construction method for player name input popUp
+	 * Construction method for player name input popUp.</br>
+	 * In order to just ask for 1 player insert a blank string for player2!
 	 * 
 	 * @param player1 promptName for Player1
-	 * @param player2 promptName for Player2
+	 * @param player2 promptName for Player2 or "" (blank)
 	 */
 	public void createInputPopUp(String player1, String player2) {
 		players = new String[2];
@@ -117,7 +121,7 @@ public class PopUp {
 
 	public List<Optional<String>> showInputPopUp() {
 		popUp.showAndWait();
-		List<Optional<String>> list = new ArrayList<Optional<String>>();
+		List<Optional<String>> list = new ArrayList<>();
 		list.add(Optional.ofNullable(players[0]));
 		list.add(Optional.ofNullable(players[1]));
 		return list;
@@ -137,12 +141,31 @@ public class PopUp {
 	 * @param win   popUp displays the winner
 	 * @param input popUp asks for player names
 	 * @param yesno popUp asks for decision (yes-no)
-	 * @param info  info to be displayed in popUp
-	 * @param info2
+	 * @param info  info to be displayed in popUp or player1 name in input popUp
+	 * @param info2 player2 name in input popUp and indicator if input even asks for
+	 *              2 players (or just for one)
 	 */
 	private void createPopUp(boolean win, boolean input, boolean yesno, String info, String info2) {
 		popUp = new Stage();
+		popUp.initStyle(StageStyle.UNDECORATED);
+		BorderPane borderPane = new BorderPane();
+		borderPane.setStyle(
+				"-fx-background-color: radial-gradient(center 50.0% 50.0%, radius 100.0%, #242424, #434343, #898989);");
 		popUp.initModality(Modality.APPLICATION_MODAL);
+
+		ToolBar toolBar = new ToolBar();
+		toolBar.setPrefHeight(25);
+		toolBar.setMinHeight(25);
+		toolBar.setMaxHeight(25);
+		TitleBarButtons titleButtons = new TitleBarButtons();
+		titleButtons.setMinimizeAction(popUp);
+		titleButtons.setCloseAction(popUp);
+		toolBar.getItems().add(titleButtons);
+
+		borderPane.setTop(toolBar);
+		borderPane.setMinHeight(250);
+		borderPane.setMinWidth(300);
+
 		popUp.setMinHeight(250);
 		popUp.setMinWidth(300);
 		popUp.getIcons().add(new Image(getClass().getResource("/de/ifd/mad/SimpleChess/images/king1.png").toString()));
@@ -160,11 +183,13 @@ public class PopUp {
 
 			// popUp asks for player names
 		} else if (input) {
+			popUp.setTitle("Please insert!");
 			label.setText("Enter Name:");
 			TextField text1 = new TextField();
 			text1.setPromptText(info);
-			text1.setFont(label.getFont());
+			text1.setFont(new Font("Arial", 20));
 
+			// asking for 2 players?
 			TextField text2 = new TextField();
 			if (!info2.isBlank()) {
 				Label label2 = new Label("Enter Name:");
@@ -172,7 +197,7 @@ public class PopUp {
 				label2.setFont(label.getFont());
 
 				text2.setPromptText(info2);
-				text2.setFont(label.getFont());
+				text2.setFont(text1.getFont());
 				vBox.getChildren().addAll(label2, text2);
 			}
 
@@ -189,19 +214,8 @@ public class PopUp {
 			});
 
 			// click event
-			button.setOnMouseClicked(e -> {
-				players[0] = text1.getText().trim();
-				if (text1.getText().isBlank())
-					players[0] = text1.getPromptText().trim();
-				if (!info2.isBlank()) {
-					players[1] = text2.getText().trim();
-					if (text2.getText().isBlank())
-						players[1] = text2.getPromptText().trim();
-				}
+			setClickEvent(button, text1, text2, info2);
 
-				popUp.close();
-
-			});
 			vBox.getChildren().addAll(label, text1, button);
 
 			// popUp asks for decision (yes-no)
@@ -257,8 +271,35 @@ public class PopUp {
 				"-fx-background-color: radial-gradient(center 50.0% 50.0%, radius 100.0%, #242424, #434343, #898989);");
 		vBox.setAlignment(Pos.CENTER);
 		vBox.setSpacing(5);
-		Scene scene = new Scene(vBox);
+		borderPane.getChildren().add(vBox);
+		Scene scene = new Scene(borderPane);
 		popUp.setScene(scene);
+	}
+
+	/**
+	 * Sets the click event for input user names pop up
+	 * 
+	 * @param button the button to confirm user name input
+	 * @param text1  text field containing the name of player1
+	 * @param text2  text field containing the name of player2
+	 * @param info2  contains the name of player2 and indicates whether the input
+	 *               should ask for 2 players or not (isBlank())
+	 */
+	private void setClickEvent(Button button, TextField text1, TextField text2, String info2) {
+		button.setOnMouseClicked(e -> {
+			players[0] = text1.getText().trim();
+			if (text1.getText().isBlank())
+				players[0] = text1.getPromptText().trim();
+
+			// is there an input for second player?
+			if (!info2.isBlank()) {
+				players[1] = text2.getText().trim();
+				if (text2.getText().isBlank())
+					players[1] = text2.getPromptText().trim();
+			}
+
+			popUp.close();
+		});
 	}
 
 	public boolean isActive() {

@@ -536,6 +536,13 @@ public class MyLocalController implements IController {
 				}
 				line++;
 			}
+			if (!BasicGameFunctionsHelper.checkGamefieldValidity(gamefield)) {
+				LOGGER.warn("Invalid import of gamefield file! Building standard gamefield...");
+				infoUser("Import was not successful.\nTried to import invalid gamefield!");
+				resetGlobalVars();
+				buffR.close();
+				return;
+			}
 			// visually update the gamefield
 			setPlayers();
 			LOGGER.info("Successfully parsed gamefile and updated figure locations!");
