@@ -4,7 +4,6 @@
 package de.ifd.mad.SimpleChess.figures;
 
 import de.ifd.mad.SimpleChess.players.Player;
-import javafx.scene.image.Image;
 
 /**
  * Knight (Pferd) class for simple chess
@@ -13,11 +12,8 @@ import javafx.scene.image.Image;
  * @author iFD
  */
 public class Knight {
-	private Image white = new Image(getClass().getResource("/de/ifd/mad/SimpleChess/images/pferd2.png").toString());
-	private Image black = new Image(getClass().getResource("/de/ifd/mad/SimpleChess/images/pferd1.png").toString());
-
 	// Constructors
-	public Knight() {
+	private Knight() {
 
 	}
 
@@ -33,7 +29,7 @@ public class Knight {
 	 * @param gamefield int[][] array representing the field of the game
 	 * @return
 	 */
-	public boolean tryMove(int oldX, int oldY, int newX, int newY, Player player, int[][] gamefield) {
+	public static boolean tryMove(int oldX, int oldY, int newX, int newY, Player player, int[][] gamefield) {
 		if ((oldY + 1 == newY && oldX + 2 == newX) || (oldY + 2 == newY && oldX + 1 == newX)) {
 			// down, right, right && down, down, right
 			return true;
@@ -52,14 +48,5 @@ public class Knight {
 
 		}
 		return false;
-	}
-
-	// Getters and Setters
-	public Image getWhite() {
-		return white;
-	}
-
-	public Image getBlack() {
-		return black;
 	}
 }

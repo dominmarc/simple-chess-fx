@@ -6,7 +6,6 @@ package de.ifd.mad.SimpleChess.figures;
 import java.util.Map;
 
 import de.ifd.mad.SimpleChess.players.Player;
-import javafx.scene.image.Image;
 
 /**
  * Queen (Dame) class for simple chess
@@ -15,9 +14,6 @@ import javafx.scene.image.Image;
  * @author iFD
  */
 public class Queen {
-	private Image white = new Image(getClass().getResource("/de/ifd/mad/SimpleChess/images/dame2.png").toString());
-	private Image black = new Image(getClass().getResource("/de/ifd/mad/SimpleChess/images/dame1.png").toString());
-
 	// Constructor
 	public Queen() {
 
@@ -39,17 +35,16 @@ public class Queen {
 	 *                  moves like that)
 	 * @return
 	 */
-	public boolean tryMove(int oldX, int oldY, int newX, int newY, Player player, int[][] gamefield, Rook rook,
-			Bishop bishop) {
+	public static boolean tryMove(int oldX, int oldY, int newX, int newY, Player player, int[][] gamefield) {
 
 		// rook movement
 		if (newX == oldX || newY == oldY) {
-			if (rook.tryMove(oldX, oldY, newX, newY, player, gamefield))
+			if (Rook.tryMove(oldX, oldY, newX, newY, player, gamefield))
 				return true;
 
 			// bishop movement
 		} else {
-			if (bishop.tryMove(oldX, oldY, newX, newY, player, gamefield))
+			if (Bishop.tryMove(oldX, oldY, newX, newY, player, gamefield))
 				return true;
 		}
 
@@ -73,25 +68,16 @@ public class Queen {
 	 * @param bishop
 	 * @return Map<x,y> representing each field the figure has to pass
 	 */
-	public Map<Integer, Integer> fieldsOfMovement(int oldX, int oldY, int newX, int newY, Player player,
-			int[][] gamefield, Rook rook, Bishop bishop) {
+	public static Map<Integer, Integer> fieldsOfMovement(int oldX, int oldY, int newX, int newY, Player player,
+			int[][] gamefield) {
 
 		// rook movement
 		if (newX == oldX || newY == oldY) {
-			return rook.fieldsOfMovement(oldX, oldY, newX, newY, player, gamefield);
+			return Rook.fieldsOfMovement(oldX, oldY, newX, newY, player, gamefield);
 
 			// bishop movement
 		} else {
-			return bishop.fieldsOfMovement(oldX, oldY, newX, newY, gamefield);
+			return Bishop.fieldsOfMovement(oldX, oldY, newX, newY, gamefield);
 		}
-	}
-
-	// Getters and Setters
-	public Image getWhite() {
-		return white;
-	}
-
-	public Image getBlack() {
-		return black;
 	}
 }

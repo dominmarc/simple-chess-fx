@@ -4,6 +4,8 @@
 
 package de.ifd.mad.SimpleChess.main;
 
+import java.net.URISyntaxException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,9 +20,6 @@ import javafx.stage.Stage;
  * @author iFD
  */
 public class SimpleChessMain extends Application {
-	// file name constants
-	static final String STARTFORM = "StartingForm.fxml";
-	static final String STARTSTYLE = "StartingFileStyle.css";
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(SimpleChessMain.class);
 
@@ -32,6 +31,15 @@ public class SimpleChessMain extends Application {
 	public static void main(String[] args) {
 		for (int i = 1; i < 5; i++)
 			LOGGER.info(BasicGameFunctionsHelper.getPrintBar());
+
+		try {
+			FileProvider.loadFiles();
+			ImageProvider.loadFiles();
+		} catch (FileLoadingException | URISyntaxException e) {
+			LOGGER.error("", e);
+			return;
+		}
+
 		launch(args);
 	}
 
@@ -41,8 +49,8 @@ public class SimpleChessMain extends Application {
 	 */
 	@Override
 	public void start(Stage primaryStage) throws Exception {
-		FxmlOpener newFXML = new FxmlOpener(getClass().getResource("/de/ifd/mad/SimpleChess/main/" + STARTFORM), 0,
-				null, getClass().getResource("/de/ifd/mad/SimpleChess/main/" + STARTSTYLE).toString());
+		FxmlOpener newFXML = new FxmlOpener(FileProvider.getGameMenuURL(), 0, null,
+				FileProvider.getGameMenuStyleURL().toString());
 
 		// open
 		if (!newFXML.open()) {

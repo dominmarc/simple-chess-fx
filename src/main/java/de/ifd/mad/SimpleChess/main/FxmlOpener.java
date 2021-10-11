@@ -9,7 +9,7 @@ import java.net.URL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.ifd.mad.SimpleChess.controller.IController;
+import de.ifd.mad.SimpleChess.interfaces.IController;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -25,7 +25,6 @@ import javafx.stage.StageStyle;
  * @author iFD
  */
 public class FxmlOpener {
-
 	/** Window stage */
 	Stage stage;
 	/** Location of the FXML file */
@@ -54,18 +53,22 @@ public class FxmlOpener {
 	 * @param topHeight the height if the draggable area, if you pass 0 it will
 	 *                  standardly set 29
 	 * @param icon      the displayed app icon (insert null for standard)
+	 * @throws Exception
 	 */
-	public FxmlOpener(URL fxmlFile, int topHeight, Image icon, String style) {
+	public FxmlOpener(URL fxmlFile, int topHeight, Image icon, String style) throws Exception {
 		if (topHeight == 0 || topHeight < 0)
 			topHeight = 29;
 
 		if (icon == null)
-			icon = new Image(getClass().getResource("/de/ifd/mad/SimpleChess/images/king1.png").toString());
+			icon = ImageProvider.getKingBlack();
 
 		this.topHeight = topHeight;
 		this.icon = icon;
 		this.style = style;
-		this.loader = new FXMLLoader(fxmlFile);
+		if (FileProvider.isLoaded())
+			this.loader = new FXMLLoader(fxmlFile);
+		else
+			throw new Exception("FileProvider is not loaded!");
 	}
 
 	public void setInitialValue(String value) {

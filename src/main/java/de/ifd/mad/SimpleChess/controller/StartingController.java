@@ -6,11 +6,14 @@ package de.ifd.mad.SimpleChess.controller;
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
+import java.net.URL;
 import java.security.SecureRandom;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.ifd.mad.SimpleChess.interfaces.IController;
+import de.ifd.mad.SimpleChess.main.FileProvider;
 import de.ifd.mad.SimpleChess.main.FxmlOpener;
 import de.ifd.mad.SimpleChess.main.PopUp;
 import javafx.fxml.FXML;
@@ -68,12 +71,6 @@ public class StartingController implements IController {
 			+ "NetworkMultiplayer\n" + "Connect to your friend with his given port!\n"
 			+ "Or simply start your own server and let him connect! :)";
 
-	// constant file names
-	static final String LN_CHESS = "LocalNetworkChess.fxml";
-	static final String L_CHESS = "LocalChess.fxml";
-	static final String LN_CHESS_STYLE = "LocalStyleFile.css";
-	static final String L_CHESS_STYLE = "LocalStyleFile.css";
-
 	/* max. port */
 	private static final int MAX_PORT = 9999;
 	/* min. port */
@@ -123,7 +120,7 @@ public class StartingController implements IController {
 		}
 
 		// start
-		open(LN_CHESS, null, LN_CHESS_STYLE, String.valueOf(port));
+		open(FileProvider.getNetworkGameURL(), null, FileProvider.getGameStyleURL(), String.valueOf(port));
 	}
 
 	/**
@@ -131,7 +128,7 @@ public class StartingController implements IController {
 	 */
 	public void loMuButtonClicked() {
 		LOGGER.info("Trying to start local multiplayer...");
-		open(L_CHESS, null, L_CHESS_STYLE, "");
+		open(FileProvider.getLocalGameURL(), null, FileProvider.getGameStyleURL(), "");
 	}
 
 	/**
@@ -151,7 +148,7 @@ public class StartingController implements IController {
 		} while (Boolean.FALSE.equals(available(randomPort)));
 
 		// start
-		open(LN_CHESS, null, LN_CHESS_STYLE, String.valueOf(randomPort));
+		open(FileProvider.getNetworkGameURL(), null, FileProvider.getGameStyleURL(), String.valueOf(randomPort));
 	}
 
 	// fills the ip/ adress list view with active servers
@@ -196,11 +193,18 @@ public class StartingController implements IController {
 	 * 
 	 * @param fxmlFile to open
 	 */
-	private void open(String fxmlFile, Image icon, String style, String initialValue) {
+	private void open(URL fxmlFile, Image icon, URL style, String initialValue) {
 		LOGGER.info("Trying to open fxml: [{}] with initialValue: {}...", fxmlFile, initialValue);
+		FxmlOpener newFXML;
 
-		FxmlOpener newFXML = new FxmlOpener(getClass().getResource("/de/ifd/mad/SimpleChess/main/" + fxmlFile), 0, icon,
-				getClass().getResource("/de/ifd/mad/SimpleChess/main/" + style).toString());
+		// construct opener
+		try {
+			newFXML = new FxmlOpener(fxmlFile, 0, icon, style.toString());
+		} catch (Exception e) {
+			// FileProvider not loaded
+			LOGGER.error("", e);
+			return;
+		}
 
 		// pass a value (port)
 		newFXML.setInitialValue(initialValue);

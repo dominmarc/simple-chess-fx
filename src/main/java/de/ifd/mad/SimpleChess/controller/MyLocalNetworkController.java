@@ -21,14 +21,11 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.ifd.mad.SimpleChess.figures.Bishop;
-import de.ifd.mad.SimpleChess.figures.King;
-import de.ifd.mad.SimpleChess.figures.Knight;
-import de.ifd.mad.SimpleChess.figures.Pawn;
-import de.ifd.mad.SimpleChess.figures.Queen;
-import de.ifd.mad.SimpleChess.figures.Rook;
 import de.ifd.mad.SimpleChess.helpers.BasicGameFunctionsHelper;
+import de.ifd.mad.SimpleChess.interfaces.IController;
+import de.ifd.mad.SimpleChess.main.FileProvider;
 import de.ifd.mad.SimpleChess.main.FxmlOpener;
+import de.ifd.mad.SimpleChess.main.ImageProvider;
 import de.ifd.mad.SimpleChess.main.PopUp;
 import de.ifd.mad.SimpleChess.players.Player;
 import javafx.application.Platform;
@@ -137,14 +134,6 @@ public class MyLocalNetworkController implements IController {
 
 	// check if the game is active
 	private boolean gameActive = false;
-
-	// initialize figure objects
-	Pawn pawn = new Pawn();
-	Rook rook = new Rook();
-	Knight knight = new Knight();
-	Bishop bishop = new Bishop();
-	Queen queen = new Queen();
-	King king = new King();
 
 	// initialize player objects
 	/** played by the server application */
@@ -1308,51 +1297,51 @@ public class MyLocalNetworkController implements IController {
 				buttons[z].setGraphic(null);
 				switch (gamefield[k][i]) {
 				case 1:
-					buttons[z].setGraphic(new ImageView(pawn.getBlack()));
+					buttons[z].setGraphic(new ImageView(ImageProvider.getPawnBlack()));
 					break;
 
 				case 2:
-					buttons[z].setGraphic(new ImageView(rook.getBlack()));
+					buttons[z].setGraphic(new ImageView(ImageProvider.getRookBlack()));
 					break;
 
 				case 3:
-					buttons[z].setGraphic(new ImageView(knight.getBlack()));
+					buttons[z].setGraphic(new ImageView(ImageProvider.getKnightBlack()));
 					break;
 
 				case 4:
-					buttons[z].setGraphic(new ImageView(bishop.getBlack()));
+					buttons[z].setGraphic(new ImageView(ImageProvider.getBishopBlack()));
 					break;
 
 				case 5:
-					buttons[z].setGraphic(new ImageView(queen.getBlack()));
+					buttons[z].setGraphic(new ImageView(ImageProvider.getQueenBlack()));
 					break;
 
 				case 6:
-					buttons[z].setGraphic(new ImageView(king.getBlack()));
+					buttons[z].setGraphic(new ImageView(ImageProvider.getKingBlack()));
 					break;
 
 				case 7:
-					buttons[z].setGraphic(new ImageView(pawn.getWhite()));
+					buttons[z].setGraphic(new ImageView(ImageProvider.getPawnWhite()));
 					break;
 
 				case 8:
-					buttons[z].setGraphic(new ImageView(rook.getWhite()));
+					buttons[z].setGraphic(new ImageView(ImageProvider.getRookWhite()));
 					break;
 
 				case 9:
-					buttons[z].setGraphic(new ImageView(knight.getWhite()));
+					buttons[z].setGraphic(new ImageView(ImageProvider.getKnightWhite()));
 					break;
 
 				case 10:
-					buttons[z].setGraphic(new ImageView(bishop.getWhite()));
+					buttons[z].setGraphic(new ImageView(ImageProvider.getBishopWhite()));
 					break;
 
 				case 11:
-					buttons[z].setGraphic(new ImageView(queen.getWhite()));
+					buttons[z].setGraphic(new ImageView(ImageProvider.getQueenWhite()));
 					break;
 
 				case 12:
-					buttons[z].setGraphic(new ImageView(king.getWhite()));
+					buttons[z].setGraphic(new ImageView(ImageProvider.getKingWhite()));
 					break;
 
 				default:
@@ -1588,9 +1577,15 @@ public class MyLocalNetworkController implements IController {
 		iterator = null;
 
 		// load FXML
-		FxmlOpener newFXML = new FxmlOpener(getClass().getResource("/de/ifd/mad/SimpleChess/main/StartingForm.fxml"), 0,
-				null, getClass().getResource("/de/ifd/mad/SimpleChess/main/StartingFileStyle.css").toString());
-
+		FxmlOpener newFXML;
+		try {
+			newFXML = new FxmlOpener(FileProvider.getGameMenuURL(), 0, null,
+					FileProvider.getGameMenuStyleURL().toString());
+		} catch (Exception e) {
+			// FileProvider not loaded
+			LOGGER.error("", e);
+			return;
+		}
 		// open FXML
 		if (!newFXML.open()) {
 			LOGGER.error("Error on opening file!");

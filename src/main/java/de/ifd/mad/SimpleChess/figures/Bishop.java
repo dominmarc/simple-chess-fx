@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.ifd.mad.SimpleChess.players.Player;
-import javafx.scene.image.Image;
 
 /**
  * Bishop (Springer) class for simple chess
@@ -16,11 +15,9 @@ import javafx.scene.image.Image;
  * @author iFD
  */
 public class Bishop {
-	private Image white = new Image(getClass().getResource("/de/ifd/mad/SimpleChess/images/springer2.png").toString());
-	private Image black = new Image(getClass().getResource("/de/ifd/mad/SimpleChess/images/springer1.png").toString());
 
 	// Constructor
-	public Bishop() {
+	private Bishop() {
 
 	}
 
@@ -36,7 +33,7 @@ public class Bishop {
 	 * @param gamefield int[][] array representing the field of the game
 	 * @return
 	 */
-	public boolean tryMove(int oldX, int oldY, int newX, int newY, Player player, int[][] gamefield) {
+	public static boolean tryMove(int oldX, int oldY, int newX, int newY, Player player, int[][] gamefield) {
 		int temp1 = oldX - newX;
 		int temp2 = oldY - newY;
 		if (temp1 < 0)
@@ -97,7 +94,7 @@ public class Bishop {
 	 * 
 	 * @return Map<x,y> representing each field the figure has to pass
 	 */
-	public Map<Integer, Integer> fieldsOfMovement(int oldX, int oldY, int newX, int newY, int[][] gamefield) {
+	public static Map<Integer, Integer> fieldsOfMovement(int oldX, int oldY, int newX, int newY, int[][] gamefield) {
 		Map<Integer, Integer> fields = new HashMap<>();
 
 		int temp1 = oldX - newX;
@@ -152,14 +149,5 @@ public class Bishop {
 		}
 
 		return null;
-	}
-
-	// Getters and Setters
-	public Image getWhite() {
-		return white;
-	}
-
-	public Image getBlack() {
-		return black;
 	}
 }

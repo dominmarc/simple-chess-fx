@@ -12,15 +12,11 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.scene.control.ToolBar;
-import javafx.scene.image.Image;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 
 /**
  * Class for popUp's
@@ -147,28 +143,10 @@ public class PopUp {
 	 */
 	private void createPopUp(boolean win, boolean input, boolean yesno, String info, String info2) {
 		popUp = new Stage();
-		popUp.initStyle(StageStyle.UNDECORATED);
-		BorderPane borderPane = new BorderPane();
-		borderPane.setStyle(
-				"-fx-background-color: radial-gradient(center 50.0% 50.0%, radius 100.0%, #242424, #434343, #898989);");
 		popUp.initModality(Modality.APPLICATION_MODAL);
-
-		ToolBar toolBar = new ToolBar();
-		toolBar.setPrefHeight(25);
-		toolBar.setMinHeight(25);
-		toolBar.setMaxHeight(25);
-		TitleBarButtons titleButtons = new TitleBarButtons();
-		titleButtons.setMinimizeAction(popUp);
-		titleButtons.setCloseAction(popUp);
-		toolBar.getItems().add(titleButtons);
-
-		borderPane.setTop(toolBar);
-		borderPane.setMinHeight(250);
-		borderPane.setMinWidth(300);
-
 		popUp.setMinHeight(250);
 		popUp.setMinWidth(300);
-		popUp.getIcons().add(new Image(getClass().getResource("/de/ifd/mad/SimpleChess/images/king1.png").toString()));
+		popUp.getIcons().add(ImageProvider.getKingBlack());
 		Label label = new Label();
 		label.setFont(new Font("Berlin Sans FB", 20));
 		label.setTextAlignment(TextAlignment.CENTER);
@@ -271,8 +249,7 @@ public class PopUp {
 				"-fx-background-color: radial-gradient(center 50.0% 50.0%, radius 100.0%, #242424, #434343, #898989);");
 		vBox.setAlignment(Pos.CENTER);
 		vBox.setSpacing(5);
-		borderPane.getChildren().add(vBox);
-		Scene scene = new Scene(borderPane);
+		Scene scene = new Scene(vBox);
 		popUp.setScene(scene);
 	}
 

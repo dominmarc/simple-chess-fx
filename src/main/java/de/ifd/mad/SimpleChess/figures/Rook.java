@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.ifd.mad.SimpleChess.players.Player;
-import javafx.scene.image.Image;
 
 /**
  * Rook (Turm) class for simple chess
@@ -16,11 +15,8 @@ import javafx.scene.image.Image;
  * @author iFD
  */
 public class Rook {
-	private Image white = new Image(getClass().getResource("/de/ifd/mad/SimpleChess/images/turm2.png").toString());
-	private Image black = new Image(getClass().getResource("/de/ifd/mad/SimpleChess/images/turm1.png").toString());
-
 	// Constructor
-	public Rook() {
+	private Rook() {
 
 	}
 
@@ -36,7 +32,7 @@ public class Rook {
 	 * @param gamefield int[][] array representing the field of the game
 	 * @return
 	 */
-	public boolean tryMove(int oldX, int oldY, int newX, int newY, Player player, int[][] gamefield) {
+	public static boolean tryMove(int oldX, int oldY, int newX, int newY, Player player, int[][] gamefield) {
 		int counter = 0;
 		// vertical (y) movement
 		if (newX == oldX) {
@@ -101,7 +97,7 @@ public class Rook {
 	 * @author MAD
 	 * @author iFD
 	 */
-	public Map<Integer, Integer> fieldsOfMovement(int oldX, int oldY, int newX, int newY, Player player,
+	public static Map<Integer, Integer> fieldsOfMovement(int oldX, int oldY, int newX, int newY, Player player,
 			int[][] gamefield) {
 		Map<Integer, Integer> fields = new HashMap<>();
 
@@ -152,14 +148,5 @@ public class Rook {
 
 		// neither horizontal nor vertical or move violation
 		return null;
-	}
-
-	// Getters and Setters
-	public Image getWhite() {
-		return white;
-	}
-
-	public Image getBlack() {
-		return black;
 	}
 }

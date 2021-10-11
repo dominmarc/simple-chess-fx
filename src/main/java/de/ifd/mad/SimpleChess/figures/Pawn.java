@@ -4,7 +4,6 @@
 package de.ifd.mad.SimpleChess.figures;
 
 import de.ifd.mad.SimpleChess.players.Player;
-import javafx.scene.image.Image;
 
 /**
  * Pawn (Bauer) class for simple chess
@@ -13,12 +12,8 @@ import javafx.scene.image.Image;
  * @author iFD
  */
 public class Pawn {
-
-	private Image white = new Image(getClass().getResource("/de/ifd/mad/SimpleChess/images/bauer2.png").toString());
-	private Image black = new Image(getClass().getResource("/de/ifd/mad/SimpleChess/images/bauer1.png").toString());
-
 	// Constructor
-	public Pawn() {
+	private Pawn() {
 
 	}
 
@@ -34,7 +29,7 @@ public class Pawn {
 	 * @param gamefield int[][] array representing the field of the game
 	 * @return
 	 */
-	public boolean tryMove(int oldX, int oldY, int newX, int newY, Player player, int[][] gamefield) {
+	public static boolean tryMove(int oldX, int oldY, int newX, int newY, Player player, int[][] gamefield) {
 		if (oldX == newX) {
 			// zu weit?
 			int temp = oldY - newY;
@@ -73,14 +68,4 @@ public class Pawn {
 		}
 		return false;
 	}
-
-	// Getters and Setters
-	public Image getWhite() {
-		return white;
-	}
-
-	public Image getBlack() {
-		return black;
-	}
-
 }

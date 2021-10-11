@@ -4,7 +4,6 @@
 package de.ifd.mad.SimpleChess.figures;
 
 import de.ifd.mad.SimpleChess.players.Player;
-import javafx.scene.image.Image;
 
 /**
  * King (Koenig) class for simple chess
@@ -13,11 +12,8 @@ import javafx.scene.image.Image;
  * @author iFD
  */
 public class King {
-	private Image white = new Image(getClass().getResource("/de/ifd/mad/SimpleChess/images/king2.png").toString());
-	private Image black = new Image(getClass().getResource("/de/ifd/mad/SimpleChess/images/king1.png").toString());
-
 	// Constructor
-	public King() {
+	private King() {
 
 	}
 
@@ -33,7 +29,7 @@ public class King {
 	 * @param gamefield int[][] array representing the field of the game
 	 * @return
 	 */
-	public boolean tryMove(int oldX, int oldY, int newX, int newY, Player player, int[][] gamefield) {
+	public static boolean tryMove(int oldX, int oldY, int newX, int newY, Player player, int[][] gamefield) {
 		// zu weit?
 		int temp = oldY - newY;
 		int temp2 = oldX - newX;
@@ -47,14 +43,5 @@ public class King {
 		}
 
 		return true;
-	}
-
-	// Getters and Setters
-	public Image getWhite() {
-		return white;
-	}
-
-	public Image getBlack() {
-		return black;
 	}
 }

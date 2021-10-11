@@ -34,13 +34,6 @@ import javafx.stage.Stage;
  * @author iFD
  */
 public class BasicGameFunctionsHelper {
-	// initialize figure objects
-	private static final Pawn PAWN = new Pawn();
-	private static final Rook ROOK = new Rook();
-	private static final Knight KNIGHT = new Knight();
-	private static final Bishop BISHOP = new Bishop();
-	private static final Queen QUEEN = new Queen();
-	private static final King KING = new King();
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(BasicGameFunctionsHelper.class);
 
@@ -160,32 +153,32 @@ public class BasicGameFunctionsHelper {
 		/////////////////////////////////////////////////////////////////////////////
 		case 1:
 			// Bauer:
-			return (PAWN.tryMove(oldX, oldY, newX, newY, player, gamefield));
+			return (Pawn.tryMove(oldX, oldY, newX, newY, player, gamefield));
 
 		/////////////////////////////////////////////////////////////////////////////
 		case 2:
 			// Turm
-			return (ROOK.tryMove(oldX, oldY, newX, newY, player, gamefield));
+			return (Rook.tryMove(oldX, oldY, newX, newY, player, gamefield));
 
 		/////////////////////////////////////////////////////////////////////////////
 		case 3:
 			// Pferd
-			return (KNIGHT.tryMove(oldX, oldY, newX, newY, player, gamefield));
+			return (Knight.tryMove(oldX, oldY, newX, newY, player, gamefield));
 
 		/////////////////////////////////////////////////////////////////////////////
 		case 4:
 			// Springer
-			return (BISHOP.tryMove(oldX, oldY, newX, newY, player, gamefield));
+			return (Bishop.tryMove(oldX, oldY, newX, newY, player, gamefield));
 
 		/////////////////////////////////////////////////////////////////////////////
 		case 5:
 			// queen = rook oder bishop
-			return (QUEEN.tryMove(oldX, oldY, newX, newY, player, gamefield, ROOK, BISHOP));
+			return (Queen.tryMove(oldX, oldY, newX, newY, player, gamefield));
 
 		/////////////////////////////////////////////////////////////////////////////
 		case 6:
 			// Koenig
-			return (KING.tryMove(oldX, oldY, newX, newY, player, gamefield));
+			return (King.tryMove(oldX, oldY, newX, newY, player, gamefield));
 
 		/////////////////////////////////////////////////////////////////////////////
 		default:
@@ -552,13 +545,13 @@ public class BasicGameFunctionsHelper {
 		switch (gamefield[x][y]) {
 		case 2:
 		case 8:
-			return ROOK.fieldsOfMovement(x, y, kingX, kingY, player, gamefield);
+			return Rook.fieldsOfMovement(x, y, kingX, kingY, player, gamefield);
 		case 4:
 		case 10:
-			return BISHOP.fieldsOfMovement(x, y, kingX, kingY, gamefield);
+			return Bishop.fieldsOfMovement(x, y, kingX, kingY, gamefield);
 		case 5:
 		case 11:
-			return QUEEN.fieldsOfMovement(x, y, kingX, kingY, player, gamefield, ROOK, BISHOP);
+			return Queen.fieldsOfMovement(x, y, kingX, kingY, player, gamefield);
 		default:
 			return null;
 		}
