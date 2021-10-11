@@ -37,19 +37,18 @@ public class PopUp {
 
 	/* Style for our buttons */
 	private final String buttonStyle = "-fx-background-color: #090a0c,\r\n"
-			+ "		linear-gradient(#38424b 0.0%, #1f2429 20.0%, #191d22 100.0%),\r\n"
-			+ "		linear-gradient(#20262b, #191d22),\r\n"
-			+ "		radial-gradient(center 50.0% 0.0%, radius 100.0%, rgba(114.0, 131.0, 148.0, 0.9),\r\n"
-			+ "		rgba(255.0, 255.0, 255.0, 0.0));\r\n" + "	-fx-background-radius: 5.0, 4.0, 3.0, 5.0;\r\n"
-			+ "	-fx-background-insets: 0.0, 1.0, 2.0, 0.0;\r\n" + "	-fx-text-fill: white;\r\n"
-			+ "	-fx-effect: dropshadow(three-pass-box, rgba(0.0, 0.0, 0.0, 0.6), 5.0, 0.0, 0.0, 1.0);\r\n"
-			+ "	-fx-font-family: \"Berlin Sans FB\";\r\n" + "	-fx-text-fill: linear-gradient(white, #d0d0d0);\r\n"
-			+ "	-fx-font-size: 13.0px;\r\n" + "	-fx-padding: 1.0 1.0 1.0 1.0;\r\n"
-			+ "	-fx-text-effect: dropshadow(one-pass-box, rgba(0.0, 0.0, 0.0, 0.9), 1.0, 0.0, 0.0,\r\n" + "		1.0);";
+			+ "linear-gradient(#38424b 0.0%, #1f2429 20.0%, #191d22 100.0%),\r\n"
+			+ "linear-gradient(#20262b, #191d22),\r\n"
+			+ "radial-gradient(center 50.0% 0.0%, radius 100.0%, rgba(114.0, 131.0, 148.0, 0.9),\r\n"
+			+ "rgba(255.0, 255.0, 255.0, 0.0));\r\n" + "-fx-background-radius: 5.0, 4.0, 3.0, 5.0;\r\n"
+			+ "-fx-background-insets: 0.0, 1.0, 2.0, 0.0;\r\n" + "-fx-text-fill: white;\r\n"
+			+ "-fx-effect: dropshadow(three-pass-box, rgba(0.0, 0.0, 0.0, 0.6), 5.0, 0.0, 0.0, 1.0);\r\n"
+			+ "-fx-font-family: \"Berlin Sans FB\";\r\n" + "-fx-text-fill: linear-gradient(white, #d0d0d0);\r\n"
+			+ "-fx-font-size: 13.0px;\r\n" + "-fx-padding: 1.0 1.0 1.0 1.0;\r\n"
+			+ "-fx-text-effect: dropshadow(one-pass-box, rgba(0.0, 0.0, 0.0, 0.9), 1.0, 0.0, 0.0, 1.0);";
 
 	private final String buttonHoverStyle = "-fx-background-color: #323743,\r\n"
-			+ "		radial-gradient(center 50.0% 0.0%, radius 100.0%, rgba(114.0, 131.0, 148.0, 0.9),\r\n"
-			+ "		rgba(255.0, 255.0, 255.0, 0.0));";
+			+ "radial-gradient(center 50.0% 0.0%, radius 100.0%, rgba(114.0, 131.0, 148.0, 0.9),rgba(255.0, 255.0, 255.0, 0.0));";
 
 	/**
 	 * Constructor
