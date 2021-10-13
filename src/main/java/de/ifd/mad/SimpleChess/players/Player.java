@@ -10,7 +10,7 @@ import javafx.scene.layout.BackgroundFill;
 import javafx.scene.paint.Color;
 
 /**
- * Player1 class for simple chess
+ * Player class for simple chess
  * 
  * @author MAD
  * @author iFD
@@ -23,8 +23,15 @@ public class Player {
 	private boolean active;
 	private boolean ready;
 	private int id;
+	private String selection;
+	static final String nonSelection = "-fx-border-color: #000000; -fx-border-width: 0px;";
 
-	// Constructor
+	/**
+	 * Constructor
+	 * 
+	 * @param id   can be 1 or to depending on the player
+	 * @param name is optional, in case there is no name --> use player + id
+	 */
 	public Player(int id, Optional<String> name) {
 		this.id = id;
 		if (id <= 0 || id > 2)
@@ -34,6 +41,11 @@ public class Player {
 			this.name = name.get();
 		else
 			this.name = "Player" + id;
+
+		if (id == 1)
+			this.selection = "-fx-border-color: #2AB4FF; -fx-border-width: 4px;";
+		else
+			this.selection = "-fx-border-color: #FE2B2B; -fx-border-width: 4px;";
 
 		this.active = false;
 		this.ready = false;
@@ -89,5 +101,13 @@ public class Player {
 
 	public int getId() {
 		return id;
+	}
+
+	public String getSelection() {
+		return selection;
+	}
+
+	public static String getNonSelection() {
+		return nonSelection;
 	}
 }

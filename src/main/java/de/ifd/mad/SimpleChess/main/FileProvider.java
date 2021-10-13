@@ -12,6 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Class for loading all the necessary game files, such as fxml documents or css
+ * stylesheets.</br>
+ * Please make use of the class' getters in order to use the files.
  * 
  * @author MAD
  */

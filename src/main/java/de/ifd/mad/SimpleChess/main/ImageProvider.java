@@ -1,3 +1,6 @@
+/* 
+ * Copyright (c) 2021 iFD  Chemnitz http://www.ifd-.com
+ */
 package de.ifd.mad.SimpleChess.main;
 
 import java.net.MalformedURLException;
@@ -12,6 +15,12 @@ import org.slf4j.LoggerFactory;
 
 import javafx.scene.image.Image;
 
+/**
+ * Class for loading all the necessary images.</br>
+ * Please make use of the class' getters in order to use the images.
+ * 
+ * @author MAD
+ */
 public class ImageProvider {
 	/** player 1, pawn image */
 	private static Path pawn1;

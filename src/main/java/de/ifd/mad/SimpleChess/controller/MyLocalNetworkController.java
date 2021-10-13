@@ -123,11 +123,6 @@ public class MyLocalNetworkController implements IController {
 	 */
 	private int[] problemKing = { 0, 0 };
 
-	// selectedButtonStyles
-	String player1SelectedButton = "-fx-border-color: #2AB4FF; -fx-border-width: 4px; ";
-	String player2SelectedButton = "-fx-border-color: #FE2B2B; -fx-border-width: 4px; ";
-	String playerNonSelectedButton = "-fx-border-color: #000000; -fx-border-width: 0px;";
-
 	// gamefield button backgrounds representing the game fields
 	Background white;
 	Background black;
@@ -429,10 +424,7 @@ public class MyLocalNetworkController implements IController {
 
 		// player clicks on field with his figure
 		if (BasicGameFunctionsHelper.isPlayerField(selectedX, selectedY, gamefield, getActivePlayer())) {
-			if (getActivePlayer().getId() == 1)
-				buttons[btnIdx].setStyle(player1SelectedButton);
-			else
-				buttons[btnIdx].setStyle(player2SelectedButton);
+			buttons[btnIdx].setStyle(getActivePlayer().getSelection());
 
 			// player clicks on field with no figure
 		} else if (fieldVal == 0) {
@@ -1348,7 +1340,7 @@ public class MyLocalNetworkController implements IController {
 					break;
 
 				}
-				buttons[z].setStyle(playerNonSelectedButton);
+				buttons[z].setStyle(Player.getNonSelection());
 				z++;
 			}
 		}
@@ -1385,7 +1377,7 @@ public class MyLocalNetworkController implements IController {
 	 */
 	private void unselectButton() {
 		LOGGER.info("Removing field selection...");
-		buttons[selectedButton[0]].setStyle(playerNonSelectedButton);
+		buttons[selectedButton[0]].setStyle(Player.getNonSelection());
 		selectedButton[0] = 0;
 		selectedButton[1] = 0;
 	}

@@ -500,6 +500,7 @@ public class BasicGameFunctionsHelper {
 	}
 
 	/**
+	 * Function to indicate weather this is the referred players field or not.
 	 * 
 	 * @param posX      the position x to be checked
 	 * @param posY      the position y to be checked
