@@ -348,7 +348,7 @@ public class MyLocalController implements IController {
 	 * @param btnIdx Index of the button the user clicked on to select.
 	 */
 	private void selectFigure(int btnIdx) {
-		LOGGER.info("{} wants to select Button [{}]", getActivePlayer().getName(), btnIdx);
+		LOGGER.info("{} wants to select field [{}]", getActivePlayer().getName(), btnIdx);
 		int selectedX = giveXY(btnIdx)[0];
 		int selectedY = giveXY(btnIdx)[1];
 
@@ -387,7 +387,9 @@ public class MyLocalController implements IController {
 	}
 
 	/**
-	 * Unselects the currently selected button (globally specified)
+	 * Unselects the currently selected button (globally specified).</br>
+	 * -visually through button style</br>
+	 * -internally through global variable</br>
 	 */
 	private void unselectButton() {
 		LOGGER.info("Removed field selection on [{}].", selectedButton[0]);
@@ -680,9 +682,9 @@ public class MyLocalController implements IController {
 		int z = 1;
 		for (int i = 1; i < 9; i++) {
 			for (int k = 1; k < 9; k++) {
-				if (getVal(k, i) == 0) {
+				if (getVal(k, i) == 0)
 					setBackgrounds(i, k, z);
-				}
+
 				buttons[z].setGraphic(null);
 				switch (getVal(k, i)) {
 				case 1:
@@ -746,16 +748,20 @@ public class MyLocalController implements IController {
 	/**
 	 * Sets the backgrounds on the game field (arranges the rights colors to the
 	 * right buttons)
+	 * 
+	 * @param y Position y in gamefield
+	 * @param x Position x in gamefield
+	 * @param z Button Index
 	 */
-	private void setBackgrounds(int i, int k, int z) {
-		if (i % 2 == 0) {
-			if (k % 2 == 0) {
+	private void setBackgrounds(int y, int x, int z) {
+		if (y % 2 == 0) {
+			if (x % 2 == 0) {
 				buttons[z].setBackground(white);
 			} else {
 				buttons[z].setBackground(black);
 			}
 		} else {
-			if (k % 2 == 0) {
+			if (x % 2 == 0) {
 				buttons[z].setBackground(black);
 			} else {
 				buttons[z].setBackground(white);
