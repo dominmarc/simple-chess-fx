@@ -13,10 +13,8 @@ import java.security.SecureRandom;
 import java.util.List;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import de.ifd.mad.SimpleChess.helpers.BasicGameFunctionsHelper;
+import de.ifd.mad.SimpleChess.helpers.ChessLogger;
 import de.ifd.mad.SimpleChess.interfaces.IController;
 import de.ifd.mad.SimpleChess.main.ImageProvider;
 import de.ifd.mad.SimpleChess.main.PopUp;
@@ -133,7 +131,7 @@ public class MyLocalController implements IController {
 	Player player1;
 	Player player2;
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(MyLocalController.class);
+	private static final ChessLogger LOGGER = ChessLogger.getLogger(MyLocalController.class);
 
 	// constant text
 	private static final String BUTTON_START_TEXT = "START GAME";
@@ -507,7 +505,7 @@ public class MyLocalController implements IController {
 					try {
 						gamefield[i][line] = Integer.valueOf(parts[i]);
 					} catch (NumberFormatException e) {
-						LOGGER.error("Error on parsing gamefile: {}, tried to convert: {}.", gameFile.getAbsoluteFile(),
+						LOGGER.error("Error on parsing gamefile: {}, tried to convert: {}.", gameFile.getName(),
 								parts[i]);
 						infoUser("Error on parsing gamefile: " + gameFile.getName() + ".");
 						resetGlobalVars();

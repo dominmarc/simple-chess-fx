@@ -8,8 +8,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import de.ifd.mad.SimpleChess.helpers.ChessLogger;
 
 /**
  * Class for loading all the necessary game files, such as fxml documents or css
@@ -33,7 +32,7 @@ public final class FileProvider {
 	/** represents the status of the file provider */
 	private static boolean loaded;
 
-	static final Logger LOGGER = LoggerFactory.getLogger(FileProvider.class);
+	static final ChessLogger LOGGER = ChessLogger.getLogger(FileProvider.class);
 
 	/**
 	 * Constructor</br>

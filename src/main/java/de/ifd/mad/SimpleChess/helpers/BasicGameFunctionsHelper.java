@@ -13,9 +13,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import de.ifd.mad.SimpleChess.figures.Bishop;
 import de.ifd.mad.SimpleChess.figures.King;
 import de.ifd.mad.SimpleChess.figures.Knight;
@@ -35,7 +32,7 @@ import javafx.stage.Stage;
  */
 public class BasicGameFunctionsHelper {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(BasicGameFunctionsHelper.class);
+	private static final ChessLogger LOGGER = ChessLogger.getLogger(BasicGameFunctionsHelper.class);
 
 	private static final String BAR = "==============================================";
 

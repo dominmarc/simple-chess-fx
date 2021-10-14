@@ -6,9 +6,7 @@ package de.ifd.mad.SimpleChess.main;
 import java.io.IOException;
 import java.net.URL;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import de.ifd.mad.SimpleChess.helpers.ChessLogger;
 import de.ifd.mad.SimpleChess.interfaces.IController;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -44,7 +42,7 @@ public class FxmlOpener {
 	private double xOffset = 0;
 	private double yOffset = 0;
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(FxmlOpener.class);
+	private static final ChessLogger LOGGER = ChessLogger.getLogger(FxmlOpener.class);
 
 	/**
 	 * Constructor for a fxml file to open

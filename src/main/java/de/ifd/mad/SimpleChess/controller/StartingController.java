@@ -9,21 +9,17 @@ import java.net.ServerSocket;
 import java.net.URL;
 import java.security.SecureRandom;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import de.ifd.mad.SimpleChess.helpers.ChessLogger;
 import de.ifd.mad.SimpleChess.interfaces.IController;
 import de.ifd.mad.SimpleChess.main.FileProvider;
 import de.ifd.mad.SimpleChess.main.FxmlOpener;
 import de.ifd.mad.SimpleChess.main.PopUp;
 import javafx.fxml.FXML;
-
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
-
 import javafx.stage.Stage;
 
 /**
@@ -64,7 +60,7 @@ public class StartingController implements IController {
 	/* PopUp-Object */
 	PopUp info;
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(StartingController.class);
+	private static final ChessLogger LOGGER = ChessLogger.getLogger(StartingController.class);
 
 	/** Text to be displayed if the user presses the help button */
 	static final String INFO_MSG = "Local Multiplayer\n" + "Play against your friends just on that pc!\n\n"
@@ -177,7 +173,7 @@ public class StartingController implements IController {
 		try {
 			return Integer.valueOf(input);
 		} catch (NumberFormatException e) {
-			LOGGER.info("Error on parsing port: {} - ", input, e);
+			LOGGER.info("Error on parsing port: " + input, e);
 			return 0;
 		}
 	}
@@ -194,7 +190,7 @@ public class StartingController implements IController {
 	 * @param fxmlFile to open
 	 */
 	private void open(URL fxmlFile, Image icon, URL style, String initialValue) {
-		LOGGER.info("Trying to open fxml: [{}] with initialValue: {}...", fxmlFile, initialValue);
+		LOGGER.info("Trying to open fxml: [" + fxmlFile + "] with initialValue: " + initialValue + "...");
 		FxmlOpener newFXML;
 
 		// construct opener

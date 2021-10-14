@@ -6,10 +6,8 @@ package de.ifd.mad.SimpleChess.main;
 
 import java.net.URISyntaxException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import de.ifd.mad.SimpleChess.helpers.BasicGameFunctionsHelper;
+import de.ifd.mad.SimpleChess.helpers.ChessLogger;
 import javafx.application.Application;
 import javafx.stage.Stage;
 
@@ -21,7 +19,7 @@ import javafx.stage.Stage;
  */
 public class SimpleChessMain extends Application {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(SimpleChessMain.class);
+	private static final ChessLogger LOGGER = ChessLogger.getLogger(SimpleChessMain.class);
 
 	/**
 	 * Application start point
@@ -29,6 +27,12 @@ public class SimpleChessMain extends Application {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		try {
+			ChessLogger.load();
+		} catch (FileLoadingException e) {
+			return;
+		}
+
 		for (int i = 1; i < 5; i++)
 			LOGGER.info(BasicGameFunctionsHelper.getPrintBar());
 
@@ -36,7 +40,7 @@ public class SimpleChessMain extends Application {
 			FileProvider.loadFiles();
 			ImageProvider.loadFiles();
 		} catch (FileLoadingException | URISyntaxException e) {
-			LOGGER.error("", e);
+			LOGGER.error("", e.getMessage());
 			return;
 		}
 

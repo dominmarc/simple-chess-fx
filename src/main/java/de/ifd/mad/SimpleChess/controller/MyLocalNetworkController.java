@@ -18,10 +18,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import de.ifd.mad.SimpleChess.helpers.BasicGameFunctionsHelper;
+import de.ifd.mad.SimpleChess.helpers.ChessLogger;
 import de.ifd.mad.SimpleChess.interfaces.IController;
 import de.ifd.mad.SimpleChess.main.FileProvider;
 import de.ifd.mad.SimpleChess.main.FxmlOpener;
@@ -154,7 +152,7 @@ public class MyLocalNetworkController implements IController {
 	/** manages the connection while the connection is stable */
 	private Thread workerThread;
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(MyLocalNetworkController.class);
+	private static final ChessLogger LOGGER = ChessLogger.getLogger(MyLocalNetworkController.class);
 
 	/**
 	 * specifies whether this plays server or client </br>
@@ -187,7 +185,8 @@ public class MyLocalNetworkController implements IController {
 
 		// check structure
 		if (passedPort.length() != 4 || passedMode.length() != 2) {
-			LOGGER.error("Failure on incorrect structure of variables port(={}) or mode(={})!", passedPort, passedMode);
+			LOGGER.error("Failure on incorrect structure of variables port(=" + passedPort + ") or mode(=" + passedMode
+					+ ")!");
 			startable = false;
 			return;
 		}
@@ -198,7 +197,7 @@ public class MyLocalNetworkController implements IController {
 		} else if (passedMode.contentEquals("02")) {
 			clientState = 2;
 		} else {
-			LOGGER.error("Failure on parsing passed mode = {}", passedMode);
+			LOGGER.error("Failure on parsing passed mode = " + passedMode);
 			startable = false;
 			return;
 		}
@@ -207,7 +206,7 @@ public class MyLocalNetworkController implements IController {
 		try {
 			this.port = Integer.valueOf(passedPort);
 		} catch (NumberFormatException e) {
-			LOGGER.error("Failure on converting port: {} to integer!", passedPort);
+			LOGGER.error("Failure on converting port: " + passedPort + " to integer!");
 			startable = false;
 			return;
 		}
@@ -417,7 +416,7 @@ public class MyLocalNetworkController implements IController {
 	 * @param btnIdx Index of the button the user clicked on to select.
 	 */
 	private void selectFigure(int btnIdx) {
-		LOGGER.info("{} wants to select Button [{}]", getActivePlayer().getName(), btnIdx);
+		LOGGER.info(getActivePlayer().getName() + " wants to select Button [" + btnIdx + "]");
 		int selectedX = giveXY(btnIdx)[0];
 		int selectedY = giveXY(btnIdx)[1];
 		int fieldVal = getVal(selectedX, selectedY);
@@ -429,12 +428,12 @@ public class MyLocalNetworkController implements IController {
 			// player clicks on field with no figure
 		} else if (fieldVal == 0) {
 			// nothing should happen
-			LOGGER.warn("No figure on field [{}] with field value={}.", btnIdx, fieldVal);
+			LOGGER.warn("No figure on field [" + btnIdx + "] with field value=" + fieldVal);
 			return;
 
 			// player wants to select field with enemy figure
 		} else {
-			LOGGER.warn("Enemy figure on field [{}] with field value={}.", btnIdx, fieldVal);
+			LOGGER.warn("Enemy figure on field [" + btnIdx + "] with field value=" + fieldVal);
 			infoUser("It is your turn!\nMake your move!").showPopUp();
 			return;
 		}
@@ -455,7 +454,7 @@ public class MyLocalNetworkController implements IController {
 			return;
 
 		unselectButton();
-		LOGGER.info("Removed field selection on [{}].", buttonIndex);
+		LOGGER.info("Removed field selection on [" + buttonIndex + "].");
 	}
 
 //====================================================================================================
@@ -537,7 +536,7 @@ public class MyLocalNetworkController implements IController {
 			LOGGER.error("Failed to get players!");
 			return;
 		}
-		LOGGER.info("{} surrendered! Ending the game!", me.getName());
+		LOGGER.info(me.getName() + " surrendered! Ending the game!");
 
 		// send surrender message to opponent
 		sendTelegram(getChannel(), getPrefix(4));
@@ -568,7 +567,7 @@ public class MyLocalNetworkController implements IController {
 	 * @return false if the connect has failed, true if the connect was successful
 	 */
 	private void tryConnect() {
-		LOGGER.info("Trying to connect... to port: {}", this.port);
+		LOGGER.info("Trying to connect... to port: " + this.port);
 		workerThread = new Thread(() -> {
 			try {
 				selector = Selector.open();
@@ -618,9 +617,9 @@ public class MyLocalNetworkController implements IController {
 					Thread.sleep(1500);
 				} while (connected);
 			} catch (IOException e) {
-				LOGGER.warn("Exception!: ", e);
+				LOGGER.warn("Exception!: {}", e.getMessage());
 			} catch (InterruptedException e1) {
-				LOGGER.warn("Interrupted!: ", e1);
+				LOGGER.warn("Interrupted!: {}", e1.getMessage());
 				Thread.currentThread().interrupt();
 			}
 
@@ -637,7 +636,7 @@ public class MyLocalNetworkController implements IController {
 			return true;
 		} catch (Exception e) {
 			// start server instead
-			LOGGER.error("Could not connect to server! --> ", e);
+			LOGGER.error("Could not connect to server! --> {}", e.getMessage());
 			Platform.runLater(() -> infoUser("Could not connect to a host!").showNonWaitingPopUp());
 			selector = null;
 			iterator = null;
@@ -667,7 +666,7 @@ public class MyLocalNetworkController implements IController {
 
 				// register the channel, add key "ACCEPT KEY" (isAcceptable will be true)
 				serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
-				LOGGER.info("Server started with port: {}", this.port);
+				LOGGER.info("Server started with port: " + this.port);
 				do {
 					// save all keys in an iterator set
 					selector.select();
@@ -699,16 +698,16 @@ public class MyLocalNetworkController implements IController {
 					Thread.sleep(1500);
 				} while (connected);
 			} catch (IOException e) {
-				LOGGER.warn("Exception!: ", e);
+				LOGGER.warn("Exception!: {}", e.getMessage());
 			} catch (InterruptedException e1) {
-				LOGGER.warn("Interrupted!: ", e1);
+				LOGGER.warn("Interrupted!: {}", e1.getMessage());
 				Thread.currentThread().interrupt();
 			} finally {
 				try {
 					serverSocketChannel.close();
 					selector.close();
 				} catch (IOException e) {
-					LOGGER.warn("Error on closing server socket channel/ selector! ", e);
+					LOGGER.warn("Error on closing server socket channel/ selector! - {}", e.getMessage());
 				}
 			}
 		});
@@ -750,7 +749,7 @@ public class MyLocalNetworkController implements IController {
 			LOGGER.error("...Failed no channel to write to!");
 			return false;
 		}
-		LOGGER.info("Sending: [{}]...", message);
+		LOGGER.info("Sending: [" + message + "]...");
 		CharBuffer charBuffer = CharBuffer.wrap(message);
 		// allocate memory for the Bytes to be send
 		ByteBuffer buff = charset.encode(charBuffer);
@@ -761,7 +760,7 @@ public class MyLocalNetworkController implements IController {
 		try {
 			channel.write(buff);
 		} catch (IOException e) {
-			LOGGER.error("Error (IOException) on writing to channel: {}", e.getMessage());
+			LOGGER.error("Error (IOException) on writing to channel: {}" + e.getMessage());
 			return false;
 		}
 
@@ -801,7 +800,7 @@ public class MyLocalNetworkController implements IController {
 		try {
 			channel.read(buffer);
 		} catch (IOException e) {
-			LOGGER.error("Error (IOException) on receiving from channel: {}", e.getMessage());
+			LOGGER.error("Error (IOException) on receiving from channel: {}" + e.getMessage());
 			return false;
 		}
 
@@ -812,15 +811,15 @@ public class MyLocalNetworkController implements IController {
 		CharBuffer charBuffer = charset.decode(buffer);
 
 		if (!charBuffer.toString().isBlank() || !charBuffer.toString().isEmpty()) {
-			LOGGER.info("Successfully received: [{}]", charBuffer);
+			LOGGER.info("Successfully received: [" + charBuffer + "]");
 			if (encodeMessage(charBuffer.toString()))
 				return true;
 			else {
-				LOGGER.error("Failed to encode message: [{}]", charBuffer);
+				LOGGER.error("Failed to encode message: [" + charBuffer + "]");
 				return false;
 			}
 		}
-		LOGGER.warn("Nothing to encode... message: [{}]", charBuffer);
+		LOGGER.warn("Nothing to encode... message: [" + charBuffer + "]");
 		return true;
 	}
 
@@ -882,11 +881,11 @@ public class MyLocalNetworkController implements IController {
 		if (message == null)
 			return false;
 
-		LOGGER.info("Starting encoding: [{}]", message);
+		LOGGER.info("Starting encoding: [" + message + "]");
 		String method = message.substring(0, 2);
 		message = message.substring(2, message.length());
-		LOGGER.info("Processing: [{}] with message: [{}]...", BasicGameFunctionsHelper.getMethodDescription(method),
-				message);
+		LOGGER.info("Processing: [" + BasicGameFunctionsHelper.getMethodDescription(method) + "] with message: ["
+				+ message + "]...");
 
 		switch (method) {
 
@@ -894,7 +893,7 @@ public class MyLocalNetworkController implements IController {
 		case "01":
 			// Server replies with his player name and starts the game on his application
 			player2 = new Player(2, Optional.of(message));
-			LOGGER.info("Reply from Server with name: {}, starting game...", player2.getName());
+			LOGGER.info("Reply from Server with name: " + player2.getName() + ", starting game...");
 			setPlayerNames();
 			Platform.runLater(() -> sendTelegram(getChannel(), getPrefix(1) + player1.getName()));
 			// Game starts here for server
@@ -906,7 +905,7 @@ public class MyLocalNetworkController implements IController {
 		case "10":
 			// Client receives servers player name and starts the game on his application
 			player1 = new Player(1, Optional.of(message));
-			LOGGER.info("Reply from Server with name: {}, starting game...", player1.getName());
+			LOGGER.info("Reply from Server with name: " + player1.getName() + ", starting game...");
 			setPlayerNames();
 			// Game starts here for client
 			startGame();
@@ -947,8 +946,8 @@ public class MyLocalNetworkController implements IController {
 			return actOnGameMessage(message, "Client");
 
 		default:
-			LOGGER.error("Telegram error: Parsing failure on prefix: {}, {}", method,
-					BasicGameFunctionsHelper.getMethodDescription(method));
+			LOGGER.error("Telegram error: Parsing failure on prefix: " + method + ", "
+					+ BasicGameFunctionsHelper.getMethodDescription(method));
 			return false;
 		}
 	}
@@ -1174,8 +1173,8 @@ public class MyLocalNetworkController implements IController {
 		gamefield[newX][newY] = 0;
 
 		setPlayers();
-		LOGGER.info("Reset last move, [x:{},y:{}] is back to 0 and [x:{},y:{}] is back to {}", newX, newY, oldX, oldY,
-				getVal(oldX, oldY));
+		LOGGER.info("Reset last move, [x:" + newX + ",y:" + newY + "] is back to 0 and [x:" + oldX + ",y:" + oldY
+				+ "] is back to {}" + getVal(oldX, oldY));
 	}
 
 	/**
@@ -1197,8 +1196,8 @@ public class MyLocalNetworkController implements IController {
 		gamefield[oldX][oldY] = 0;
 
 		setPlayers();
-		LOGGER.info("Valid move, [x:{},y:{}] is now val=0 and [x:{},y:{}] is now val={}", oldX, oldY, newX, newY,
-				getVal(newX, newY));
+		LOGGER.info("Valid move, [x:" + oldX + ",y:" + oldY + "] is now val=0 and [x:" + newX + ",y:" + newY
+				+ "] is now val={}" + getVal(newX, newY));
 	}
 
 	/**
@@ -1364,9 +1363,9 @@ public class MyLocalNetworkController implements IController {
 	private void switchPlayer() {
 		Player opponent = getOpponent(getActivePlayer());
 		if (opponent != null)
-			LOGGER.info("Switching active player from {} to {}", getActivePlayer().getName(), opponent.getName());
+			LOGGER.info("Switching active player from " + getActivePlayer().getName() + " to " + opponent.getName());
 		else
-			LOGGER.info("Switching active player {}", getActivePlayer().getName());
+			LOGGER.info("Switching active player " + getActivePlayer().getName());
 		player1.switchStatus();
 		player2.switchStatus();
 		setStatusLabelBackgrounds();
@@ -1559,7 +1558,7 @@ public class MyLocalNetworkController implements IController {
 			if (selector != null)
 				selector.close();
 		} catch (IOException e) {
-			LOGGER.warn("Error on closing server socket channel/ selector! - ", e);
+			LOGGER.warn("Error on closing server socket channel/ selector! - {}", e.getMessage());
 		}
 
 		serverSocketChannel = null;
@@ -1575,7 +1574,7 @@ public class MyLocalNetworkController implements IController {
 					FileProvider.getGameMenuStyleURL().toString());
 		} catch (Exception e) {
 			// FileProvider not loaded
-			LOGGER.error("", e);
+			LOGGER.error("{}", e.getMessage());
 			return;
 		}
 		// open FXML

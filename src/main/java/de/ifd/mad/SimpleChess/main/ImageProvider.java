@@ -10,9 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import de.ifd.mad.SimpleChess.helpers.ChessLogger;
 import javafx.scene.image.Image;
 
 /**
@@ -50,7 +48,7 @@ public class ImageProvider {
 	/** represents the status of the image provider */
 	private static boolean loaded;
 
-	static final Logger LOGGER = LoggerFactory.getLogger(ImageProvider.class);
+	static final ChessLogger LOGGER = ChessLogger.getLogger(ImageProvider.class);
 
 	/**
 	 * Constructor</br>
