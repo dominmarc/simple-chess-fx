@@ -63,8 +63,10 @@ public class FxmlOpener {
 		this.topHeight = topHeight;
 		this.icon = icon;
 		this.style = style;
+		this.fxmlFile = fxmlFile;
+
 		if (FileProvider.isLoaded())
-			this.loader = new FXMLLoader(fxmlFile);
+			this.loader = new FXMLLoader(this.fxmlFile);
 		else
 			throw new Exception("FileProvider is not loaded!");
 	}

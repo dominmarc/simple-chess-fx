@@ -109,7 +109,7 @@ public class ChessLogger {
 
 	public void info(String s, Object... strings) {
 		for (int i = 0; i < strings.length; i++)
-			s = s.replaceFirst("{}", strings[i].toString());
+			s = s.replaceFirst("\\{\\}", strings[i].toString());
 
 		log(LEVEL.INFO, className, s);
 	}
@@ -125,7 +125,7 @@ public class ChessLogger {
 
 	public void warn(String s, Object... strings) {
 		for (int i = 0; i < strings.length; i++)
-			s = s.replaceFirst("{}", strings[i].toString());
+			s = s.replaceFirst("\\{\\}", strings[i].toString());
 
 		log(LEVEL.WARN, className, s);
 	}
@@ -141,7 +141,7 @@ public class ChessLogger {
 
 	public void error(String s, Object... strings) {
 		for (int i = 0; i < strings.length; i++)
-			s = s.replaceFirst("{}", strings[i].toString());
+			s = s.replaceFirst("\\{\\}", strings[i].toString());
 
 		log(LEVEL.ERROR, className, s);
 	}
