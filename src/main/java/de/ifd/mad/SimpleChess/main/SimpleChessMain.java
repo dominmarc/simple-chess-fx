@@ -40,7 +40,7 @@ public class SimpleChessMain extends Application {
 			FileProvider.loadFiles();
 			ImageProvider.loadFiles();
 		} catch (FileLoadingException | URISyntaxException e) {
-			LOGGER.error("", e.getMessage());
+			LOGGER.error("{}", e.getMessage());
 			return;
 		}
 
@@ -52,15 +52,19 @@ public class SimpleChessMain extends Application {
 	 * about to open
 	 */
 	@Override
-	public void start(Stage primaryStage) throws Exception {
-		FxmlOpener newFXML = new FxmlOpener(FileProvider.getGameMenuURL(), 0, null,
-				FileProvider.getGameMenuStyleURL().toString());
+	public void start(Stage primaryStage) {
+		try {
+			FxmlOpener newFXML = new FxmlOpener(FileProvider.getGameMenuURL(), 0, null,
+					FileProvider.getGameMenuStyleURL().toString());
 
-		// open
-		if (!newFXML.open()) {
-			LOGGER.error("Error on opening file!");
-		} else {
-			LOGGER.info("Success...");
+			// open
+			if (!newFXML.open())
+				LOGGER.error("Error on opening file!");
+			else
+				LOGGER.info("Success...");
+
+		} catch (Exception e) {
+			LOGGER.error("Failed to build FxmlOpener - {}", e.getMessage());
 		}
 	}
 }
