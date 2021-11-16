@@ -795,7 +795,7 @@ public class BasicGameFunctionsHelper {
 		if (method.isBlank() || method.length() > 2)
 			return "";
 
-		String first = method.substring(0, 0);
+		String first = method.substring(0, 1);
 		String second = method.substring(1);
 		String returnStr = "";
 

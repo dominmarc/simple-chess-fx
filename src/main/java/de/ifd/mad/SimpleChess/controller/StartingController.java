@@ -115,8 +115,11 @@ public class StartingController implements IController {
 			return;
 		}
 
+		// 01 means client
+		String message = "01" + String.valueOf(port);
+
 		// start
-		open(FileProvider.getNetworkGameURL(), null, FileProvider.getGameStyleURL(), String.valueOf(port));
+		open(FileProvider.getNetworkGameURL(), null, FileProvider.getGameStyleURL(), message);
 	}
 
 	/**
@@ -143,8 +146,11 @@ public class StartingController implements IController {
 			randomPort = rand.nextInt(MAX_PORT - MIN_PORT + 1) + MIN_PORT;
 		} while (Boolean.FALSE.equals(available(randomPort)));
 
+		// 02 means server
+		String message = "02" + String.valueOf(randomPort);
+
 		// start
-		open(FileProvider.getNetworkGameURL(), null, FileProvider.getGameStyleURL(), String.valueOf(randomPort));
+		open(FileProvider.getNetworkGameURL(), null, FileProvider.getGameStyleURL(), message);
 	}
 
 	// fills the ip/ adress list view with active servers
