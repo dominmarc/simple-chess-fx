@@ -12,4 +12,6 @@ module SimpleChess {
 	
 	opens de.ifd.mad.SimpleChess.controller;
 	opens de.ifd.mad.SimpleChess.main;
+    exports de.ifd.mad.SimpleChess.helpers;
+    opens de.ifd.mad.SimpleChess.helpers;
 }

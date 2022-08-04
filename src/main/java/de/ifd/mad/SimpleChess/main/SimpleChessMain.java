@@ -6,8 +6,7 @@ package de.ifd.mad.SimpleChess.main;
 
 import java.net.URISyntaxException;
 
-import de.ifd.mad.SimpleChess.helpers.BasicGameFunctionsHelper;
-import de.ifd.mad.SimpleChess.helpers.ChessLogger;
+import de.ifd.mad.SimpleChess.helpers.*;
 import javafx.application.Application;
 import javafx.stage.Stage;
 
@@ -19,7 +18,7 @@ import javafx.stage.Stage;
  */
 public class SimpleChessMain extends Application {
 
-	private static final ChessLogger LOGGER = ChessLogger.getLogger(SimpleChessMain.class);
+	private static final ChessLogger LOGGER = ChessLogger.createLogger(SimpleChessMain.class);
 
 	/**
 	 * Application start point

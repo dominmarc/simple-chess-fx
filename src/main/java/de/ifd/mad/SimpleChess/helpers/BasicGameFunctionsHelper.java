@@ -19,7 +19,6 @@ import de.ifd.mad.SimpleChess.figures.Knight;
 import de.ifd.mad.SimpleChess.figures.Pawn;
 import de.ifd.mad.SimpleChess.figures.Queen;
 import de.ifd.mad.SimpleChess.figures.Rook;
-import de.ifd.mad.SimpleChess.main.PopUp;
 import de.ifd.mad.SimpleChess.players.Player;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -32,7 +31,7 @@ import javafx.stage.Stage;
  */
 public class BasicGameFunctionsHelper {
 
-	private static final ChessLogger LOGGER = ChessLogger.getLogger(BasicGameFunctionsHelper.class);
+	private static final ChessLogger LOGGER = ChessLogger.createLogger(BasicGameFunctionsHelper.class);
 
 	private static final String BAR = "==============================================";
 

@@ -22,8 +22,8 @@ public class Player {
 	private String name;
 	private boolean active;
 	private boolean ready;
-	private int id;
-	private String selection;
+	private final int id;
+	private final String selection;
 	static final String nonSelection = "-fx-border-color: #000000; -fx-border-width: 0px;";
 
 	/**
@@ -32,15 +32,12 @@ public class Player {
 	 * @param id   can be 1 or to depending on the player
 	 * @param name is optional, in case there is no name --> use player + id
 	 */
-	public Player(int id, Optional<String> name) {
+	public Player(int id, final String name) {
 		this.id = id;
 		if (id <= 0 || id > 2)
 			id = 1;
 
-		if (name.isPresent())
-			this.name = name.get();
-		else
-			this.name = "Player" + id;
+		this.name = name;
 
 		if (id == 1)
 			this.selection = "-fx-border-color: #2AB4FF; -fx-border-width: 4px;";
@@ -55,10 +52,7 @@ public class Player {
 	 * Switches the player to active or non-active
 	 */
 	public void switchStatus() {
-		if (this.active)
-			this.active = false;
-		else
-			this.active = true;
+		this.active = !this.active;
 	}
 
 	/**

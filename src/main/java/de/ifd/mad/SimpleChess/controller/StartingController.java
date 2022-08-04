@@ -11,9 +11,9 @@ import java.security.SecureRandom;
 
 import de.ifd.mad.SimpleChess.helpers.ChessLogger;
 import de.ifd.mad.SimpleChess.interfaces.IController;
-import de.ifd.mad.SimpleChess.main.FileProvider;
-import de.ifd.mad.SimpleChess.main.FxmlOpener;
-import de.ifd.mad.SimpleChess.main.PopUp;
+import de.ifd.mad.SimpleChess.helpers.FileProvider;
+import de.ifd.mad.SimpleChess.helpers.FxmlOpener;
+import de.ifd.mad.SimpleChess.helpers.PopUp;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -60,7 +60,7 @@ public class StartingController implements IController {
 	/* PopUp-Object */
 	PopUp info;
 
-	private static final ChessLogger LOGGER = ChessLogger.getLogger(StartingController.class);
+	private static final ChessLogger LOGGER = ChessLogger.createLogger(StartingController.class);
 
 	/** Text to be displayed if the user presses the help button */
 	static final String INFO_MSG = "Local Multiplayer\n" + "Play against your friends just on that pc!\n\n"
@@ -177,7 +177,7 @@ public class StartingController implements IController {
 
 		// just return a number in order to check port
 		try {
-			return Integer.valueOf(input);
+			return Integer.parseInt(input);
 		} catch (NumberFormatException e) {
 			LOGGER.info("Error on parsing port: " + input, e);
 			return 0;
