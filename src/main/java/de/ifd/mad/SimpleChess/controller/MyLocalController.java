@@ -131,7 +131,7 @@ public class MyLocalController implements IController {
      * </br>
      * -1 - Frame, 0 - no figure
      */
-    private int[][] gamefield;
+    private int[][] game_field;
 
     /**
      * 0 = oldX, 1 = oldY, 2 = newX, 3 = newY</br>
@@ -161,9 +161,6 @@ public class MyLocalController implements IController {
 
     private static final ChessLogger LOGGER = ChessLogger.createLogger(MyLocalController.class);
 
-    // constant text
-    private static final String BUTTON_START_TEXT = "START GAME";
-
 //====================================================================================================
 //==																								==	
 //==Initialization:														                 	        ==
@@ -187,7 +184,7 @@ public class MyLocalController implements IController {
         setStatusLabelBackgrounds();
 
         // set start button text
-        startButton.setText(BUTTON_START_TEXT);
+        startButton.setText(Settings.BUTTON_START_TEXT);
 
         // initialize button storage
         buttons = new Button[82];
@@ -197,8 +194,8 @@ public class MyLocalController implements IController {
         int x = 0;
         int y = 0;
         int btnIndex = 1;
-        for (int i = 1; i < 9; i++) {
-            for (int t = 1; t < 9; t++) {
+        for (int i = 1; i < Settings.GAME_FIELD_HEIGHT - 1; i++) {
+            for (int t = 1; t < Settings.GAME_FIELD_WIDTH - 1; t++) {
                 buildButtons(x, y, i, t, btnIndex);
                 btnIndex++;
                 x += 45;
@@ -367,7 +364,7 @@ public class MyLocalController implements IController {
         int selectedY = giveXY(btnIdx)[1];
 
         // player clicks on field with his figure
-        if (BasicGameFunctionsHelper.isPlayerField(selectedX, selectedY, gamefield, getActivePlayer())) {
+        if (BasicGameFunctionsHelper.isPlayerField(selectedX, selectedY, game_field, getActivePlayer())) {
             buttons[btnIdx].setStyle(getActivePlayer().getSelection());
 
         } else if (getVal(selectedX, selectedY) == 0) {
@@ -407,7 +404,7 @@ public class MyLocalController implements IController {
      */
     private void unselectButton() {
         LOGGER.info("Removed field selection on [{}].", selectedButton[0]);
-        buttons[selectedButton[0]].setStyle(Player.getNonSelection());
+        buttons[selectedButton[0]].setStyle(Settings.NON_SELECTION_STYLE);
         selectedButton[0] = 0;
         selectedButton[1] = 0;
     }
@@ -424,7 +421,7 @@ public class MyLocalController implements IController {
     public void startButtonClicked() {
         if (gameActive) {
             LOGGER.info("{} clicked on reset. Ending the game!", getActivePlayer().getName());
-            startButton.setText(BUTTON_START_TEXT);
+            startButton.setText(Settings.BUTTON_START_TEXT);
             gameActive = false;
             player1.setActive(false);
             player2.setActive(false);
@@ -434,7 +431,7 @@ public class MyLocalController implements IController {
             setPlayers();
         } else {
             LOGGER.info("Starting the game...");
-            startButton.setText("RE" + BUTTON_START_TEXT);
+            startButton.setText(Settings.BUTTON_RESTART_TEXT);
             infoLabel.setText("LET'S PLAY");
             gameActive = true;
             setPlayers();
@@ -456,7 +453,7 @@ public class MyLocalController implements IController {
         ending.createWinningPopUp("Congratulations, " + getOppositePlayer(getActivePlayer()).getName()
                 + " won the game!\nThank you for playing!\nHave a nice day :)");
         ending.showPopUp();
-        startButton.setText(BUTTON_START_TEXT);
+        startButton.setText(Settings.BUTTON_START_TEXT);
         infoLabel.setText("PRESS START");
     }
 
@@ -464,7 +461,7 @@ public class MyLocalController implements IController {
      * Exports the current game field to a file
      */
     public void exportButtonClicked() {
-        String response = BasicGameFunctionsHelper.tryExport(gamefield);
+        String response = BasicGameFunctionsHelper.tryExport(game_field);
         if (!response.isBlank())
             infoUser(response);
     }
@@ -509,32 +506,28 @@ public class MyLocalController implements IController {
         }
 
         // read from file
-        BufferedReader buffR = null;
-        try {
-            buffR = Files.newBufferedReader(gameFile.toPath(), StandardCharsets.UTF_8);
-            String myline = "";
-            int line = 0;
-            while ((myline = buffR.readLine()) != null) {
-                String[] parts = myline.split(" ");
+        try (BufferedReader buffR = Files.newBufferedReader(gameFile.toPath(), StandardCharsets.UTF_8)) {
+            String myLine;
+            int y = 0;
+            while ((myLine = buffR.readLine()) != null) {
+                String[] parts = myLine.split(" ");
                 for (int i = 0; i < parts.length; i++) {
                     try {
-                        gamefield[i][line] = Integer.parseInt(parts[i]);
+                        game_field[i][y] = Integer.parseInt(parts[i]);
                     } catch (NumberFormatException e) {
                         LOGGER.error("Error on parsing gamefile: {}, tried to convert: {}.", gameFile.getName(),
                                 parts[i]);
                         infoUser("Error on parsing gamefile: " + gameFile.getName() + ".");
                         resetGlobalVars();
-                        buffR.close();
                         return;
                     }
                 }
-                line++;
+                y++;
             }
-            if (!BasicGameFunctionsHelper.checkGamefieldValidity(gamefield)) {
+            if (!BasicGameFunctionsHelper.checkGamefieldValidity(game_field)) {
                 LOGGER.warn("Invalid import of gamefield file! Building standard gamefield...");
                 infoUser("Import was not successful.\nTried to import invalid gamefield!");
                 resetGlobalVars();
-                buffR.close();
                 return;
             }
             // visually update the gamefield
@@ -542,13 +535,6 @@ public class MyLocalController implements IController {
             LOGGER.info("Successfully parsed gamefile and updated figure locations!");
         } catch (IOException e) {
             LOGGER.warn("Buffered Reader Error! = {}", e.getMessage());
-        } finally {
-            try {
-                if (buffR != null)
-                    buffR.close();
-            } catch (IOException e) {
-                LOGGER.warn("Could not close Buffered Reader! = {}", e.getMessage());
-            }
         }
     }
 
@@ -567,8 +553,8 @@ public class MyLocalController implements IController {
         int newX = lastMove[2];
         int newY = lastMove[3];
 
-        gamefield[oldX][oldY] = getVal(newX, newY);
-        gamefield[newX][newY] = 0;
+        game_field[oldX][oldY] = getVal(newX, newY);
+        game_field[newX][newY] = 0;
 
         setPlayers();
         LOGGER.info("Reset last move, [x:{},y:{}] is back to 0 and [x:{},y:{}] is back to {}", newX, newY, oldX, oldY,
@@ -590,8 +576,8 @@ public class MyLocalController implements IController {
         lastMove[2] = newX;
         lastMove[3] = newY;
 
-        gamefield[newX][newY] = getVal(oldX, oldY);
-        gamefield[oldX][oldY] = 0;
+        game_field[newX][newY] = getVal(oldX, oldY);
+        game_field[oldX][oldY] = 0;
 
         setPlayers();
         LOGGER.info("Valid move, [x:{},y:{}] is now val=0 and [x:{},y:{}] is now val={}", oldX, oldY, newX, newY,
@@ -633,8 +619,8 @@ public class MyLocalController implements IController {
      * Sets the active player names to the label
      */
     private void setPlayerNames() {
-        player1Text.setText(player1.getName());
-        player2Text.setText(player2.getName());
+        player1Text.setText(player1.getShortName());
+        player2Text.setText(player2.getShortName());
     }
 
     /**
@@ -647,10 +633,10 @@ public class MyLocalController implements IController {
             return;
         }
         PopUp playerSet = new PopUp();
-        playerSet.createInputPopUp("Player1", "Player2");
+        playerSet.createInputPopUp(Settings.PLAYER_1_DEFAULT, Settings.PLAYER_2_DEFAULT);
         List<Optional<String>> players = playerSet.showInputPopUp();
-        player1 = new Player(1, players.get(0).orElse(Settings.PLAYER_1_DEFAULT));
-        player2 = new Player(2, players.get(1).orElse(Settings.PLAYER_2_DEFAULT));
+        player1 = new Player(Settings.PLAYER_1_ID, players.get(0).orElse(Settings.PLAYER_1_DEFAULT));
+        player2 = new Player(Settings.PLAYER_2_ID, players.get(1).orElse(Settings.PLAYER_2_DEFAULT));
 
         setPlayerNames();
     }
@@ -668,7 +654,7 @@ public class MyLocalController implements IController {
         lastMove[1] = 0;
         lastMove[2] = 0;
         lastMove[3] = 0;
-        gamefield = BasicGameFunctionsHelper.createGamefield();
+        game_field = BasicGameFunctionsHelper.createGamefield();
         LOGGER.info("Reset global variables, created new gamefield!");
     }
 
@@ -677,14 +663,21 @@ public class MyLocalController implements IController {
      */
     private void setRandomPlayerActive() {
         SecureRandom rnd = new SecureRandom();
-        if (rnd.nextInt(2) == 0) {
+        int result = rnd.nextInt(2) + 1;
+
+        setPlayerActive(result == 1 ? Settings.PLAYER_1_ID : Settings.PLAYER_2_ID);
+    }
+
+    private void setPlayerActive(int id) {
+        if (id == Settings.PLAYER_1_ID) {
             player1.setActive(true);
             player2.setActive(false);
-        } else {
+        } else if (id == Settings.PLAYER_2_ID) {
             player1.setActive(false);
             player2.setActive(true);
+        } else {
+            LOGGER.error("Could not set new active Player! ID {} neither fits to Player-1-ID ({}) nor to Player-2-ID ({})!", id, Settings.PLAYER_1_ID, Settings.PLAYER_2_ID);
         }
-
     }
 
     /**
@@ -693,8 +686,8 @@ public class MyLocalController implements IController {
      */
     private void setPlayers() {
         int z = 1;
-        for (int i = 1; i < 9; i++) {
-            for (int k = 1; k < 9; k++) {
+        for (int i = 1; i < Settings.GAME_FIELD_HEIGHT - 1; i++) {
+            for (int k = 1; k < Settings.GAME_FIELD_WIDTH - 1; k++) {
                 if (getVal(k, i) == 0)
                     setBackground(i, k, z);
 
@@ -752,7 +745,7 @@ public class MyLocalController implements IController {
                         break;
 
                 }
-                buttons[z].setStyle(Player.getNonSelection());
+                buttons[z].setStyle(Settings.NON_SELECTION_STYLE);
                 z++;
             }
         }
@@ -767,19 +760,7 @@ public class MyLocalController implements IController {
      * @param z Button Index
      */
     private void setBackground(int y, int x, int z) {
-        if (y % 2 == 0) {
-            if (x % 2 == 0) {
-                buttons[z].setBackground(Settings.WHITE);
-            } else {
-                buttons[z].setBackground(Settings.BLACK);
-            }
-        } else {
-            if (x % 2 == 0) {
-                buttons[z].setBackground(Settings.BLACK);
-            } else {
-                buttons[z].setBackground(Settings.WHITE);
-            }
-        }
+        buttons[z].setBackground((y % 2 == 0) ? ((x % 2 == 0) ? Settings.WHITE : Settings.BLACK) : ((x % 2 == 0) ? Settings.BLACK : Settings.WHITE));
     }
 
 //====================================================================================================
@@ -797,7 +778,7 @@ public class MyLocalController implements IController {
      * @return true if the field is blocked, false if it is not blocked
      */
     private boolean checkIfFieldBlocked(int x, int y, Player player) {
-        return BasicGameFunctionsHelper.checkIfFieldBlocked(x, y, gamefield, player);
+        return BasicGameFunctionsHelper.checkIfFieldBlocked(x, y, game_field, player);
     }
 
     /**
@@ -810,7 +791,7 @@ public class MyLocalController implements IController {
      * @return true, if king is in problematic situation and false, if he is not
      */
     private boolean isCheck(Player player) {
-        int[] kingXY = BasicGameFunctionsHelper.isChecked(player, gamefield, player1, player2);
+        int[] kingXY = BasicGameFunctionsHelper.isChecked(player, game_field, player1, player2);
 
         if (kingXY[0] == 0 && kingXY[1] == 0)
             return false;
@@ -833,7 +814,7 @@ public class MyLocalController implements IController {
      * on if the position is blocked)
      */
     private boolean tryMove(int oldX, int oldY, int newX, int newY, Player player) {
-        return BasicGameFunctionsHelper.tryMove(oldX, oldY, newX, newY, gamefield, player);
+        return BasicGameFunctionsHelper.tryMove(oldX, oldY, newX, newY, game_field, player);
     }
 
     /**
@@ -844,7 +825,7 @@ public class MyLocalController implements IController {
      * @return true, if there is a checkmate and false, if there is none
      */
     private boolean isCheckmate() {
-        return BasicGameFunctionsHelper.isCheckmate(problemKing[0], problemKing[1], gamefield, player1, player2);
+        return BasicGameFunctionsHelper.isCheckmate(problemKing[0], problemKing[1], game_field, player1, player2);
     }
 
     /**
@@ -867,10 +848,7 @@ public class MyLocalController implements IController {
      * @return Player-Object
      */
     public Player getOppositePlayer(Player player) {
-        if (player == player1)
-            return player2;
-        else
-            return player1;
+        return player == player1 ? player2 : player1;
     }
 
     /**
@@ -894,10 +872,7 @@ public class MyLocalController implements IController {
      * @return -1 if out of bound, or gamefield[x][y] value
      */
     private int getVal(int x, int y) {
-        if (x < 1 || x > 8 || y < 1 || y > 8)
-            return -1;
-        else
-            return gamefield[x][y];
+        return (x < 1 || x > 8 || y < 1 || y > 8) ? -1 : game_field[x][y];
     }
 
 //====================================================================================================

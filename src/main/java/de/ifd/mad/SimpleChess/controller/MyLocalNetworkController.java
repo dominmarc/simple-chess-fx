@@ -15,9 +15,6 @@ import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.stage.Stage;
 
@@ -129,24 +126,20 @@ public class MyLocalNetworkController implements IController {
      * 0 = oldX, 1 = oldY, 2 = newX, 3 = newY</br>
      * old = former position, new = current position
      */
-    private int[] lastMove = {0, 0, 0, 0};
+    private final int[] lastMove = {0, 0, 0, 0};
 
     /**
      * [0]=ButtonIndex (1...64) </br>
      * [1]=PlayerInfo (1,2) </br>
      * zeroes mean no selected button
      */
-    private int[] selectedButton = {0, 0};
+    private final int[] selectedButton = {0, 0};
 
     /**
      * [0] = X</br>
      * [1] = Y
      */
-    private int[] problemKing = {0, 0};
-
-    // gamefield button backgrounds representing the game fields
-    Background white;
-    Background black;
+    private final int[] problemKing = {0, 0};
 
     // check if the game is active
     private boolean gameActive = false;
@@ -241,7 +234,7 @@ public class MyLocalNetworkController implements IController {
 
         // parse port
         try {
-            this.port = Integer.valueOf(passedPort);
+            this.port = Integer.parseInt(passedPort);
         } catch (NumberFormatException e) {
             LOGGER.error("Failure on converting port: " + passedPort + " to integer!");
             startable = false;
@@ -270,8 +263,8 @@ public class MyLocalNetworkController implements IController {
         int x = 0;
         int y = 0;
         int btnIndex = 1;
-        for (int i = 1; i < 9; i++) {
-            for (int t = 1; t < 9; t++) {
+        for (int i = 1; i < Settings.GAME_FIELD_HEIGHT - 1; i++) {
+            for (int t = 1; t < Settings.GAME_FIELD_WIDTH - 1; t++) {
                 buildButtons(x, y, i, t, btnIndex);
                 btnIndex++;
                 x += 45;
@@ -315,21 +308,9 @@ public class MyLocalNetworkController implements IController {
         buttons[btnIndex].setPrefWidth(45);
         buttons[btnIndex].setPrefHeight(45);
         buttons[btnIndex].setPadding(new Insets(0));
-        white = new Background(new BackgroundFill(Color.rgb(224, 201, 160), null, null));
-        black = new Background(new BackgroundFill(Color.rgb(164, 120, 91), null, null));
 
         // chess-like color switching on game fields
-        if (i % 2 == 0) {
-            if (t % 2 == 0)
-                buttons[btnIndex].setBackground(white);
-            else
-                buttons[btnIndex].setBackground(black);
-        } else {
-            if (t % 2 == 0)
-                buttons[btnIndex].setBackground(black);
-            else
-                buttons[btnIndex].setBackground(white);
-        }
+        setBackground(i, t, btnIndex);
 
         // finalize variable in order to use in enclosing scope (mouse event)
         final int btnIdx = btnIndex;
@@ -1097,12 +1078,12 @@ public class MyLocalNetworkController implements IController {
         int check = 0;
         int checkmate = 0;
         try {
-            oldX = Integer.valueOf(telegramMsg.substring(0, 2));
-            oldY = Integer.valueOf(telegramMsg.substring(2, 4));
-            newX = Integer.valueOf(telegramMsg.substring(4, 6));
-            newY = Integer.valueOf(telegramMsg.substring(6, 8));
-            check = Integer.valueOf(telegramMsg.substring(8, 10));
-            checkmate = Integer.valueOf(telegramMsg.substring(10, telegramMsg.length()));
+            oldX = Integer.parseInt(telegramMsg.substring(0, 2));
+            oldY = Integer.parseInt(telegramMsg.substring(2, 4));
+            newX = Integer.parseInt(telegramMsg.substring(4, 6));
+            newY = Integer.parseInt(telegramMsg.substring(6, 8));
+            check = Integer.parseInt(telegramMsg.substring(8, 10));
+            checkmate = Integer.parseInt(telegramMsg.substring(10, telegramMsg.length()));
         } catch (NumberFormatException e) {
             infoUser("Parsing error!\nYour partner made a move that was not able to get to you!\nYou may restart!");
             LOGGER.error("Parsing error on telegram message: [{}] with {}", telegramMsg, e.getMessage());
@@ -1274,8 +1255,8 @@ public class MyLocalNetworkController implements IController {
      * Sets the active player names to the label
      */
     private void setPlayerNames() {
-        player1Text.setText(player1.getName());
-        player2Text.setText(player2.getName());
+        player1Text.setText(player1.getShortName());
+        player2Text.setText(player2.getShortName());
     }
 
     /**
@@ -1291,20 +1272,8 @@ public class MyLocalNetworkController implements IController {
      * Sets the backgrounds on the game field (arranges the rights colors to the
      * right buttons)
      */
-    private void setBackgrounds(int i, int k, int z) {
-        if (i % 2 == 0) {
-            if (k % 2 == 0) {
-                buttons[z].setBackground(white);
-            } else {
-                buttons[z].setBackground(black);
-            }
-        } else {
-            if (k % 2 == 0) {
-                buttons[z].setBackground(black);
-            } else {
-                buttons[z].setBackground(white);
-            }
-        }
+    private void setBackground(int y, int x, int z) {
+        buttons[z].setBackground((y % 2 == 0) ? ((x % 2 == 0) ? Settings.WHITE : Settings.BLACK) : ((x % 2 == 0) ? Settings.BLACK : Settings.WHITE));
     }
 
     /**
@@ -1316,7 +1285,7 @@ public class MyLocalNetworkController implements IController {
         for (int i = 1; i < 9; i++) {
             for (int k = 1; k < 9; k++) {
                 if (gamefield[k][i] == 0) {
-                    setBackgrounds(i, k, z);
+                    setBackground(i, k, z);
                 }
                 buttons[z].setGraphic(null);
                 switch (gamefield[k][i]) {
@@ -1372,7 +1341,7 @@ public class MyLocalNetworkController implements IController {
                         break;
 
                 }
-                buttons[z].setStyle(Player.getNonSelection());
+                buttons[z].setStyle(Settings.NON_SELECTION_STYLE);
                 z++;
             }
         }
@@ -1409,7 +1378,7 @@ public class MyLocalNetworkController implements IController {
      */
     private void unselectButton() {
         LOGGER.info("Removing field selection...");
-        buttons[selectedButton[0]].setStyle(Player.getNonSelection());
+        buttons[selectedButton[0]].setStyle(Settings.NON_SELECTION_STYLE);
         selectedButton[0] = 0;
         selectedButton[1] = 0;
     }
@@ -1472,8 +1441,8 @@ public class MyLocalNetworkController implements IController {
     /**
      * Checks if the new position is free to move to (just this field)
      *
-     * @param x   figures new x position
-     * @param y   figures new y position
+     * @param x      figures new x position
+     * @param y      figures new y position
      * @param player object to identify the related player
      * @return true if the field is blocked, false if it is not blocked
      */
