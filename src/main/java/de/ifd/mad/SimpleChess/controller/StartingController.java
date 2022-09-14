@@ -10,10 +10,10 @@ import java.net.URL;
 import java.security.SecureRandom;
 
 import de.ifd.mad.SimpleChess.helpers.ChessLogger;
+import de.ifd.mad.SimpleChess.helpers.PopUpProvider;
 import de.ifd.mad.SimpleChess.interfaces.IController;
 import de.ifd.mad.SimpleChess.helpers.FileProvider;
 import de.ifd.mad.SimpleChess.helpers.FxmlOpener;
-import de.ifd.mad.SimpleChess.helpers.PopUp;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -57,8 +57,8 @@ public class StartingController implements IController {
 	@FXML
 	ListView<String> adressView = new ListView<>();
 
-	/* PopUp-Object */
-	PopUp info;
+	/* PopUpProvider-Object */
+	final PopUpProvider info = PopUpProvider.createInfoPopUp(INFO_MSG);
 
 	private static final ChessLogger LOGGER = ChessLogger.createLogger(StartingController.class);
 
@@ -75,8 +75,6 @@ public class StartingController implements IController {
 	@Override
 	public void initialize() {
 		LOGGER.info("Initializing starting page...");
-		info = new PopUp();
-		info.createInfoPopUp(INFO_MSG);
 		fillAdressList();
 		LOGGER.info("Initialized starting page!");
 	}
@@ -185,9 +183,7 @@ public class StartingController implements IController {
 	}
 
 	private void popUp(String msg) {
-		PopUp portInfo = new PopUp();
-		portInfo.createInfoPopUp(msg);
-		portInfo.showNonWaitingPopUp();
+		PopUpProvider.createInfoPopUp(msg).showPopUp();
 	}
 
 	/**

@@ -7,7 +7,7 @@ package de.ifd.mad.SimpleChess.controller;
 import de.ifd.mad.SimpleChess.helpers.BasicGameFunctionsHelper;
 import de.ifd.mad.SimpleChess.helpers.ChessLogger;
 import de.ifd.mad.SimpleChess.helpers.ImageProvider;
-import de.ifd.mad.SimpleChess.helpers.PopUp;
+import de.ifd.mad.SimpleChess.helpers.PopUpProvider;
 import de.ifd.mad.SimpleChess.interfaces.IController;
 import de.ifd.mad.SimpleChess.main.Settings;
 import de.ifd.mad.SimpleChess.players.Player;
@@ -21,6 +21,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.shape.Line;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.util.Pair;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.SecureRandom;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
@@ -190,32 +192,10 @@ public class MyLocalController implements IController {
         buttons = new Button[82];
 
         // build all buttons (9x9 gamefield)
-        LOGGER.info("Building the gamefield...");
-        int x = 0;
-        int y = 0;
-        int btnIndex = 1;
-        for (int i = 1; i < Settings.GAME_FIELD_HEIGHT - 1; i++) {
-            for (int t = 1; t < Settings.GAME_FIELD_WIDTH - 1; t++) {
-                buildButtons(x, y, i, t, btnIndex);
-                btnIndex++;
-                x += 45;
-            }
-            x = 0;
-            y += 45;
-        }
-        LOGGER.info("Successfully built the field!");
-        LOGGER.info("Drawing lines...");
-        // draw game field lines
-        for (int l = 0; l <= 360; l += 45) {
-            Line line = new Line(0, 0, 0, 360);
-            line.setLayoutX(l);
-            buttonPane.getChildren().add(line);
-            Line line2 = new Line(0, 0, 360, 0);
-            buttonPane.getChildren().add(line2);
-            line2.setLayoutY(l);
-        }
+        buildGamefield();
+
+        drawLines();
         resetGlobalVars();
-        LOGGER.info("Successfully drew lines!");
         LOGGER.info("Initialization finished!");
         LOGGER.info(BasicGameFunctionsHelper.getPrintBar());
     }
@@ -229,7 +209,7 @@ public class MyLocalController implements IController {
      * @param t        gamefield field x coordinate
      * @param btnIndex Index of the buttons (1...81)
      */
-    private void buildButtons(int x, int y, int i, int t, int btnIndex) {
+    private void buildButton(int x, int y, int i, int t, int btnIndex) {
         // Instantiate the buttons and add them to the button container
         buttons[btnIndex] = new Button();
         buttonPane.getChildren().add(buttons[btnIndex]);
@@ -251,7 +231,7 @@ public class MyLocalController implements IController {
         buttons[btnIndex].setOnMouseClicked(e -> {
             // check if game is running
             if (!gameActive) {
-                infoUser("Please start the game!");
+                PopUpProvider.createInfoPopUp("Please start the game!").showPopUp();
                 return;
             }
 
@@ -262,6 +242,38 @@ public class MyLocalController implements IController {
                 removeClickOnField(btnIdx);
 
         });
+    }
+
+    private void buildGamefield() {
+        LOGGER.info("Building the gamefield...");
+        int x = 0;
+        int y = 0;
+        int btnIndex = 1;
+        for (int i = 1; i < Settings.GAME_FIELD_HEIGHT - 1; i++) {
+            for (int t = 1; t < Settings.GAME_FIELD_WIDTH - 1; t++) {
+                buildButton(x, y, i, t, btnIndex);
+                btnIndex++;
+                x += 45;
+            }
+            x = 0;
+            y += 45;
+        }
+        LOGGER.info("Successfully built the field!");
+    }
+
+    private void drawLines() {
+        LOGGER.info("Drawing lines...");
+        // draw game field lines
+        for (int l = 0; l <= 360; l += 45) {
+            Line line = new Line(0, 0, 0, 360);
+            line.setLayoutX(l);
+            buttonPane.getChildren().add(line);
+            Line line2 = new Line(0, 0, 360, 0);
+            buttonPane.getChildren().add(line2);
+            line2.setLayoutY(l);
+        }
+
+        LOGGER.info("Successfully drew lines!");
     }
 
 //====================================================================================================
@@ -299,7 +311,7 @@ public class MyLocalController implements IController {
             if ((!tryMove(oldX, oldY, newX, newY, getActivePlayer()))
                     || (checkIfFieldBlocked(newX, newY, getActivePlayer()))) {
                 // show information
-                infoUser("Can not move player!\nInvalid move!");
+                PopUpProvider.createInfoPopUp("Can not move player!\nInvalid move!").showPopUp();
 
                 LOGGER.warn("Cannot perform move! Invalid action: field blocked or invalid movement.");
 
@@ -318,14 +330,14 @@ public class MyLocalController implements IController {
             // if you did so --> move the last move back and set the correct active player
             if (isCheck(getActivePlayer())) {
                 LOGGER.info("User [{}] is checked! Resetting his last move...", getActivePlayer().getName());
-                infoUser("Wrong move! \nYou are checked!");
+                PopUpProvider.createInfoPopUp("Wrong move! \nYou are checked!").showPopUp();
                 stepBack();
                 return;
             }
 
             // check if you checked your enemy
             if (isCheck(getOppositePlayer(getActivePlayer()))) {
-                infoUser("CHECK!" + "\n\nCan you end the game?");
+                PopUpProvider.createInfoPopUp("CHECK!" + "\n\nCan you end the game?").showPopUp();
                 LOGGER.info("User [{}] checked [{}].", getActivePlayer().getName(),
                         getOppositePlayer(getActivePlayer()).getName());
 
@@ -334,10 +346,8 @@ public class MyLocalController implements IController {
                     LOGGER.warn("User [{}] is checkmate, [{}] won! Ending the game!",
                             getOppositePlayer(getActivePlayer()).getName(), getActivePlayer().getName());
                     gameActive = false;
-                    PopUp ending = new PopUp();
-                    ending.createWinningPopUp("Congratulations, " + getActivePlayer().getName()
-                            + " won the game!\nThank you for playing!\nHave a nice day :)");
-                    ending.showPopUp();
+                    PopUpProvider.createPopUp("Game Over!", "Congratulations, " + getActivePlayer().getName()
+                            + " won the game!\nThank you for playing!\nHave a nice day :)").showPopUp();
                     return;
                 }
 
@@ -375,7 +385,7 @@ public class MyLocalController implements IController {
             // player wants to select field with enemy figure
         } else {
             LOGGER.warn("Enemy figure on field [{}] with field value={}.", btnIdx, getVal(selectedX, selectedY));
-            infoUser("Player " + getActivePlayer().getName() + " is active!\nMake your move!");
+            PopUpProvider.createInfoPopUp("Player " + getActivePlayer().getName() + " is active!\nMake your move!").showPopUp();
             return;
         }
 
@@ -447,12 +457,15 @@ public class MyLocalController implements IController {
      * Ends the game, shows the winner
      */
     public void surrenderButtonClicked() {
+        if (!gameActive) {
+            PopUpProvider.createInfoPopUp("Game is not active!").showPopUp();
+            return;
+        }
+
         LOGGER.info("{} surrendered! Ending the game!", getActivePlayer());
         gameActive = false;
-        PopUp ending = new PopUp();
-        ending.createWinningPopUp("Congratulations, " + getOppositePlayer(getActivePlayer()).getName()
-                + " won the game!\nThank you for playing!\nHave a nice day :)");
-        ending.showPopUp();
+        PopUpProvider.createPopUp("Game Over!", "Congratulations, " + getOppositePlayer(getActivePlayer()).getName()
+                + " won the game!\nThank you for playing!\nHave a nice day :)").showPopUp();
         startButton.setText(Settings.BUTTON_START_TEXT);
         infoLabel.setText("PRESS START");
     }
@@ -463,7 +476,7 @@ public class MyLocalController implements IController {
     public void exportButtonClicked() {
         String response = BasicGameFunctionsHelper.tryExport(game_field);
         if (!response.isBlank())
-            infoUser(response);
+            PopUpProvider.createInfoPopUp(response).showPopUp();
     }
 
     /**
@@ -471,7 +484,7 @@ public class MyLocalController implements IController {
      */
     public void switchButtonClicked() {
         if (selectedButton[0] != 0)
-            infoUser("Please first unselect a field or make your move!");
+            PopUpProvider.createInfoPopUp("Please first unselect a field or make your move!").showPopUp();
         else
             switchPlayer();
     }
@@ -483,8 +496,7 @@ public class MyLocalController implements IController {
     public void importButtonClicked() {
         // ask user for restart
         if (gameActive) {
-            PopUp decision = new PopUp();
-            decision.createDecisionPopUp("This will restart the current game.\nContinue?");
+            PopUpProvider decision = PopUpProvider.createDecisionPopUp("This will restart the current game.\nContinue?");
             if (decision.showPopUp())
                 startButtonClicked();
         }
@@ -500,7 +512,7 @@ public class MyLocalController implements IController {
         File gameFile = chooser.showOpenDialog(null);
         if (gameFile == null) {
             // not able to create file
-            infoUser("Error on opening file!");
+            PopUpProvider.createInfoPopUp("Error on opening file!").showPopUp();
             LOGGER.error("Error on opening a file!");
             return;
         }
@@ -517,7 +529,7 @@ public class MyLocalController implements IController {
                     } catch (NumberFormatException e) {
                         LOGGER.error("Error on parsing gamefile: {}, tried to convert: {}.", gameFile.getName(),
                                 parts[i]);
-                        infoUser("Error on parsing gamefile: " + gameFile.getName() + ".");
+                        PopUpProvider.createInfoPopUp("Error on parsing gamefile: " + gameFile.getName() + ".").showPopUp();
                         resetGlobalVars();
                         return;
                     }
@@ -526,7 +538,7 @@ public class MyLocalController implements IController {
             }
             if (!BasicGameFunctionsHelper.checkGamefieldValidity(game_field)) {
                 LOGGER.warn("Invalid import of gamefield file! Building standard gamefield...");
-                infoUser("Import was not successful.\nTried to import invalid gamefield!");
+                PopUpProvider.createInfoPopUp("Import was not successful.\nTried to import invalid gamefield!").showPopUp();
                 resetGlobalVars();
                 return;
             }
@@ -596,17 +608,6 @@ public class MyLocalController implements IController {
     }
 
     /**
-     * Shows an information pop up
-     *
-     * @param msg the Message to be shown
-     */
-    private void infoUser(String msg) {
-        PopUp info = new PopUp();
-        info.createInfoPopUp(msg);
-        info.showPopUp();
-    }
-
-    /**
      * Sets the red or green background to show what player is active
      */
     private void setStatusLabelBackgrounds() {
@@ -629,14 +630,15 @@ public class MyLocalController implements IController {
     private void askForPlayers() {
         LOGGER.info("Asking for players...");
         if (gameActive) {
-            infoUser("Game is already active!\nEnd the game!");
+            PopUpProvider.createInfoPopUp("Game is already active!\nEnd the game!").showPopUp();
             return;
         }
-        PopUp playerSet = new PopUp();
-        playerSet.createInputPopUp(Settings.PLAYER_1_DEFAULT, Settings.PLAYER_2_DEFAULT);
-        List<Optional<String>> players = playerSet.showInputPopUp();
-        player1 = new Player(Settings.PLAYER_1_ID, players.get(0).orElse(Settings.PLAYER_1_DEFAULT));
-        player2 = new Player(Settings.PLAYER_2_ID, players.get(1).orElse(Settings.PLAYER_2_DEFAULT));
+        PopUpProvider playerSet = PopUpProvider.createInputPopUp(new LinkedList<>(List.of(
+                new Pair<>("Player1:", Settings.PLAYER_1_DEFAULT),
+                new Pair<>("Player2:", Settings.PLAYER_2_DEFAULT))));
+        List<String> players = playerSet.showInputPopUp(2);
+        player1 = new Player(Settings.PLAYER_1_ID, players.get(0) != null ? players.get(0) : (Settings.PLAYER_1_DEFAULT));
+        player2 = new Player(Settings.PLAYER_2_ID, players.get(1) != null ? players.get(1) : (Settings.PLAYER_2_DEFAULT));
 
         setPlayerNames();
     }

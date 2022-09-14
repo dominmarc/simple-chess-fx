@@ -180,9 +180,7 @@ public class BasicGameFunctionsHelper {
 		default:
 			LOGGER.error("Figure-Selection-Error in function: {}, with variables: gamefield-value={}", "tryMove",
 					gamefield[oldX][oldY]);
-			PopUp info = new PopUp();
-			info.createInfoPopUp("Figure-Selection-Error\nYou may restart the game!");
-			info.showNonWaitingPopUp();
+			PopUpProvider.createInfoPopUp("Figure-Selection-Error\nYou may restart the game!").showNonWaitingPopUp();
 			return false;
 
 		}

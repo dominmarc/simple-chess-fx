@@ -17,6 +17,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.shape.Line;
 import javafx.stage.Stage;
+import javafx.util.Pair;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -25,10 +26,7 @@ import java.nio.CharBuffer;
 import java.nio.channels.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Local network multi-player controller for new simplechess game
@@ -493,8 +491,7 @@ public class MyLocalNetworkController implements IController {
 
         if (gameActive) {
             LOGGER.info("A game is active!");
-            PopUp decision = new PopUp();
-            decision.createDecisionPopUp("Are you sure you want to request a restart of the game?");
+            PopUpProvider decision = PopUpProvider.createDecisionPopUp("Are you sure you want to request a restart of the game?");
             if (decision.showPopUp()) {
                 LOGGER.info("User wants to restart the game...");
                 sendTelegram(getChannel(), getPrefix(3) + "00");
@@ -997,8 +994,7 @@ public class MyLocalNetworkController implements IController {
             LOGGER.info("Received a restart message from {}.", sender);
             if (Integer.parseInt(message) == 0) {
                 LOGGER.info("Received a restart request ({}) from {}.", message, sender);
-                PopUp decision = new PopUp();
-                decision.createDecisionPopUp(getOpponent(null).getName() + " asks for a restart!\nDo you accept that?");
+                PopUpProvider decision = PopUpProvider.createDecisionPopUp(getOpponent(null).getName() + " asks for a restart!\nDo you accept that?");
                 if (!decision.showPopUp()) {
                     LOGGER.info("Declined the restart request!");
                     sendTelegram(getChannel(), getPrefix(3) + "02");
@@ -1161,9 +1157,7 @@ public class MyLocalNetworkController implements IController {
         LOGGER.info("Ending the game!");
         gameActive = false;
         getOpponent(null).setReady(false);
-        PopUp ending = new PopUp();
-        ending.createWinningPopUp(message);
-        ending.showPopUp();
+        PopUpProvider.createPopUp("Game Over!", message).showPopUp();
         startButton.setText("START GAME");
         infoLabel.setText("PRESS START");
     }
@@ -1222,15 +1216,14 @@ public class MyLocalNetworkController implements IController {
             infoUser("Game is already active!\nEnd the game!").showPopUp();
             return;
         }
-        PopUp playerSet = new PopUp();
-        playerSet.createInputPopUp("Player1", "");
-        List<Optional<String>> players = playerSet.showInputPopUp();
+        PopUpProvider playerSet = PopUpProvider.createInputPopUp(new LinkedList<>(List.of(new Pair<>("Player1", ""))));
+        List<String> players = playerSet.showInputPopUp(1);
 
         if (clientState == 2)
-            player1 = new Player(1, players.get(0).orElse(Settings.PLAYER_1_DEFAULT));
+            player1 = new Player(1, players.get(0) != null ? players.get(0) : (Settings.PLAYER_1_DEFAULT));
 
         if (clientState == 1) {
-            player2 = new Player(2, players.get(0).orElse(Settings.PLAYER_2_DEFAULT));
+            player2 = new Player(2, players.get(0) != null ? players.get(0) : (Settings.PLAYER_2_DEFAULT));
             sendTelegram(getChannel(), getPrefix(1) + player2.getName());
         }
 
@@ -1351,12 +1344,10 @@ public class MyLocalNetworkController implements IController {
      * Creates a new infoPopUp
      *
      * @param message you want to display to the user
-     * @return the created PopUp
+     * @return the created PopUpProvider
      */
-    private PopUp infoUser(String message) {
-        PopUp info = new PopUp();
-        info.createInfoPopUp(message);
-        return info;
+    private PopUpProvider infoUser(String message) {
+        return PopUpProvider.createInfoPopUp(message);
     }
 
     /**
@@ -1499,14 +1490,7 @@ public class MyLocalNetworkController implements IController {
         if (player == player2)
             return player1;
 
-        if (player == null) {
-            if (clientState == 1)
-                return player1;
-            else
-                return player2;
-        }
-
-        return null;
+        return player == null ? (clientState == 1 ? player1 : player2) : null;
     }
 
     /**
@@ -1530,10 +1514,7 @@ public class MyLocalNetworkController implements IController {
      * @return -1 if out of bound, or gamefield[x][y] value
      */
     private int getVal(int x, int y) {
-        if (x < 1 || x > 8 || y < 1 || y > 8)
-            return -1;
-        else
-            return gamefield[x][y];
+        return (x < 1 || x > 8 || y < 1 || y > 8) ? -1 : gamefield[x][y];
     }
 
 //====================================================================================================
