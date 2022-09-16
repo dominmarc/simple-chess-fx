@@ -1,10 +1,16 @@
 package de.ifd.mad.SimpleChess.helpers;
 
+import java.io.Serial;
+
 public class FileLoadingException extends Exception {
-	private static final long serialVersionUID = 1L;
+    @Serial
+    private static final long serialVersionUID = 1L;
 
-	public FileLoadingException(String fileName) {
-		super("Failed to load necessary game file: " + fileName + "...");
-	}
+    public FileLoadingException(final String fileName) {
+        super("FileLoadingException: " + fileName);
+    }
 
+    public FileLoadingException(final String fileName, final Exception e) {
+        super("FileLoadingException: " + fileName + " with " + e.getClass().getSimpleName() + ": " + e.getMessage());
+    }
 }

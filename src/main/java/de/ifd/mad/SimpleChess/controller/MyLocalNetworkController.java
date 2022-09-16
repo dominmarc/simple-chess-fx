@@ -26,7 +26,9 @@ import java.nio.CharBuffer;
 import java.nio.channels.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Local network multi-player controller for new simplechess game
@@ -186,7 +188,7 @@ public class MyLocalNetworkController implements IController {
      * specifies whether this plays server or client </br>
      * 1 means client, 2 means server
      */
-    private int clientState = 0;
+    private ClientState clientState = ClientState.NONE;
 
 //====================================================================================================
 //==																								==	
@@ -221,9 +223,9 @@ public class MyLocalNetworkController implements IController {
 
         // parse mode
         if (passedMode.contentEquals("01")) {
-            clientState = 1;
+            clientState = ClientState.CLIENT;
         } else if (passedMode.contentEquals("02")) {
-            clientState = 2;
+            clientState = ClientState.SERVER;
         } else {
             LOGGER.error("Failure on parsing passed mode = " + passedMode);
             startable = false;
@@ -518,7 +520,7 @@ public class MyLocalNetworkController implements IController {
             // no connection --> start server or client
             if (workerThread == null) {
                 LOGGER.info("No active connection!");
-                if (clientState == 1)
+                if (clientState == ClientState.CLIENT)
                     tryConnect();
                 else
                     startServer();
@@ -734,9 +736,9 @@ public class MyLocalNetworkController implements IController {
      * @return the clientState related SocketChannel
      */
     private SocketChannel getChannel() {
-        if (clientState == 1)
+        if (clientState == ClientState.CLIENT)
             return clientChannel;
-        if (clientState == 2)
+        if (clientState == ClientState.SERVER)
             return serverChannel;
         return null;
     }
@@ -871,9 +873,9 @@ public class MyLocalNetworkController implements IController {
      * @return correct (clientState related) telegram prefix
      */
     private String getPrefix(int method) {
-        if (clientState == 1)
+        if (clientState == ClientState.CLIENT)
             return ("0" + method);
-        if (clientState == 2)
+        if (clientState == ClientState.SERVER)
             return (method + "0");
         return "";
     }
@@ -1219,10 +1221,10 @@ public class MyLocalNetworkController implements IController {
         PopUpProvider playerSet = PopUpProvider.createInputPopUp(new LinkedList<>(List.of(new Pair<>("Player1", ""))));
         List<String> players = playerSet.showInputPopUp(1);
 
-        if (clientState == 2)
+        if (clientState == ClientState.SERVER)
             player1 = new Player(1, players.get(0) != null ? players.get(0) : (Settings.PLAYER_1_DEFAULT));
 
-        if (clientState == 1) {
+        if (clientState == ClientState.CLIENT) {
             player2 = new Player(2, players.get(0) != null ? players.get(0) : (Settings.PLAYER_2_DEFAULT));
             sendTelegram(getChannel(), getPrefix(1) + player2.getName());
         }
@@ -1282,57 +1284,27 @@ public class MyLocalNetworkController implements IController {
                 }
                 buttons[z].setGraphic(null);
                 switch (gamefield[k][i]) {
-                    case 1:
-                        buttons[z].setGraphic(new ImageView(ImageProvider.getPawnBlack()));
-                        break;
-
-                    case 2:
-                        buttons[z].setGraphic(new ImageView(ImageProvider.getRookBlack()));
-                        break;
-
-                    case 3:
-                        buttons[z].setGraphic(new ImageView(ImageProvider.getKnightBlack()));
-                        break;
-
-                    case 4:
-                        buttons[z].setGraphic(new ImageView(ImageProvider.getBishopBlack()));
-                        break;
-
-                    case 5:
-                        buttons[z].setGraphic(new ImageView(ImageProvider.getQueenBlack()));
-                        break;
-
-                    case 6:
-                        buttons[z].setGraphic(new ImageView(ImageProvider.getKingBlack()));
-                        break;
-
-                    case 7:
-                        buttons[z].setGraphic(new ImageView(ImageProvider.getPawnWhite()));
-                        break;
-
-                    case 8:
-                        buttons[z].setGraphic(new ImageView(ImageProvider.getRookWhite()));
-                        break;
-
-                    case 9:
-                        buttons[z].setGraphic(new ImageView(ImageProvider.getKnightWhite()));
-                        break;
-
-                    case 10:
-                        buttons[z].setGraphic(new ImageView(ImageProvider.getBishopWhite()));
-                        break;
-
-                    case 11:
-                        buttons[z].setGraphic(new ImageView(ImageProvider.getQueenWhite()));
-                        break;
-
-                    case 12:
-                        buttons[z].setGraphic(new ImageView(ImageProvider.getKingWhite()));
-                        break;
-
-                    default:
-                        break;
-
+                    case 1 -> buttons[z].setGraphic(new ImageView(ImageProvider.get().getAsImage(Constants.PAWN1_IMG)));
+                    case 2 -> buttons[z].setGraphic(new ImageView(ImageProvider.get().getAsImage(Constants.ROOK1_IMG)));
+                    case 3 ->
+                            buttons[z].setGraphic(new ImageView(ImageProvider.get().getAsImage(Constants.KNIGHT1_IMG)));
+                    case 4 ->
+                            buttons[z].setGraphic(new ImageView(ImageProvider.get().getAsImage(Constants.BISHOP1_IMG)));
+                    case 5 ->
+                            buttons[z].setGraphic(new ImageView(ImageProvider.get().getAsImage(Constants.QUEEN1_IMG)));
+                    case 6 -> buttons[z].setGraphic(new ImageView(ImageProvider.get().getAsImage(Constants.KING1_IMG)));
+                    case 7 -> buttons[z].setGraphic(new ImageView(ImageProvider.get().getAsImage(Constants.PAWN2_IMG)));
+                    case 8 -> buttons[z].setGraphic(new ImageView(ImageProvider.get().getAsImage(Constants.ROOK2_IMG)));
+                    case 9 ->
+                            buttons[z].setGraphic(new ImageView(ImageProvider.get().getAsImage(Constants.KNIGHT2_IMG)));
+                    case 10 ->
+                            buttons[z].setGraphic(new ImageView(ImageProvider.get().getAsImage(Constants.BISHOP2_IMG)));
+                    case 11 ->
+                            buttons[z].setGraphic(new ImageView(ImageProvider.get().getAsImage(Constants.QUEEN2_IMG)));
+                    case 12 ->
+                            buttons[z].setGraphic(new ImageView(ImageProvider.get().getAsImage(Constants.KING2_IMG)));
+                    default -> {
+                    }
                 }
                 buttons[z].setStyle(Settings.NON_SELECTION_STYLE);
                 z++;
@@ -1447,7 +1419,7 @@ public class MyLocalNetworkController implements IController {
      * @return true if your move should be locked and false if not
      */
     private boolean moveLock() {
-        return (clientState == 2 && getActivePlayer() == player2 || (clientState == 1 && getActivePlayer() == player1));
+        return (clientState == ClientState.SERVER && getActivePlayer() == player2 || (clientState == ClientState.CLIENT && getActivePlayer() == player1));
     }
 
     /**
@@ -1490,7 +1462,7 @@ public class MyLocalNetworkController implements IController {
         if (player == player2)
             return player1;
 
-        return player == null ? (clientState == 1 ? player1 : player2) : null;
+        return player == null ? (clientState == ClientState.CLIENT ? player1 : player2) : null;
     }
 
     /**
@@ -1552,23 +1524,22 @@ public class MyLocalNetworkController implements IController {
         // load FXML
         FxmlOpener newFXML;
         try {
-            newFXML = new FxmlOpener(FileProvider.getGameMenuURL(), 0, null,
-                    Objects.requireNonNull(FileProvider.getGameMenuStyleURL()).toString());
+            newFXML = new FxmlOpener(FileProvider.get().getFile(Constants.GAME_MENU_FILE), 0, null,
+                    FileProvider.get().getFile(Constants.GAME_MENU_STYLE));
         } catch (Exception e) {
             // FileProvider not loaded
             LOGGER.error("{}", e.getMessage());
             return;
         }
         // open FXML
-        if (!newFXML.open()) {
-            LOGGER.error("Error on opening file!");
-        } else {
+        if (newFXML.open()) {
             LOGGER.info("Success... closing start window...");
             // close current window
             Stage current = (Stage) mainPane.getScene().getWindow();
             current.close();
+        } else {
+            LOGGER.error("Error on opening file!");
         }
-
     }
 
     /**

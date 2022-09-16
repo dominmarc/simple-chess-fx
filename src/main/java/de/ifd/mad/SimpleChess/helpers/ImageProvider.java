@@ -1,235 +1,64 @@
-/* 
+/*
  * Copyright (c) 2021 iFD  Chemnitz http://www.ifd-.com
  */
 package de.ifd.mad.SimpleChess.helpers;
 
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-
 import javafx.scene.image.Image;
+
+import java.io.FileNotFoundException;
+import java.nio.file.Path;
 
 /**
  * Class for loading all the necessary images.</br>
  * Please make use of the class' getters in order to use the images.
- * 
+ *
  * @author MAD
  */
-public class ImageProvider {
-	/** player 1, pawn image */
-	private static Path pawn1;
-	/** player 2, pawn image */
-	private static Path pawn2;
-	/** player 1, queen image */
-	private static Path queen1;
-	/** player 2, queen image */
-	private static Path queen2;
-	/** player 1, king image */
-	private static Path king1;
-	/** player 2, king image */
-	private static Path king2;
-	/** player 1, knight image */
-	private static Path knight1;
-	/** player 2, knight image */
-	private static Path knight2;
-	/** player 1, bishop image */
-	private static Path bishop1;
-	/** player 2, bishop image */
-	private static Path bishop2;
-	/** player 1, rook image */
-	private static Path rook1;
-	/** player 2, rook image */
-	private static Path rook2;
+public class ImageProvider extends FileProvider {
+    static final ChessLogger LOGGER = ChessLogger.createLogger(ImageProvider.class);
 
-	/** represents the status of the image provider */
-	private static boolean loaded;
+    public static ImageProvider provider = new ImageProvider();
 
-	static final ChessLogger LOGGER = ChessLogger.createLogger(ImageProvider.class);
+    /**
+     * Constructor</br>
+     * Loads all the necessary files.
+     */
+    private ImageProvider() {
+        super();
+    }
 
-	/**
-	 * Constructor</br>
-	 * Loads all the necessary files.
-	 */
-	private ImageProvider() {
-	}
+    /**
+     * Instance getter of {@link ImageProvider}.
+     */
+    public static ImageProvider get() {
+        return provider;
+    }
 
-	/**
-	 * Indicates weather all files are loaded or not.
-	 * 
-	 * @return true, if files are loaded and false, if not
-	 */
-	public static boolean isLoaded() {
-		return loaded;
-	}
+    public void loadImages() throws FileLoadingException {
+        LOGGER.info("Loading game images...");
+        super.loadFiles();
 
-	/**
-	 * Tries to load all the given files.</br>
-	 * (Checks for their existence.)
-	 */
-	public static void loadFiles() throws FileLoadingException, URISyntaxException {
-		LOGGER.info("Loading game image files...");
+        for (Path file : super.getFiles()) {
+            try {
+                new Image(file.toUri().toURL().toString());
+            } catch (Exception e) {
+                throw new FileLoadingException("Image not loadable, can not construct image object!", e);
+            }
+        }
 
-		// reference all files here:
-		pawn1 = Paths.get(ImageProvider.class.getResource("/de/ifd/mad/SimpleChess/images/bauer1.png").toURI());
-		pawn2 = Paths.get(ImageProvider.class.getResource("/de/ifd/mad/SimpleChess/images/bauer2.png").toURI());
+        LOGGER.info("Successfully loaded game images!");
+    }
 
-		queen1 = Paths.get(ImageProvider.class.getResource("/de/ifd/mad/SimpleChess/images/dame1.png").toURI());
-		queen2 = Paths.get(ImageProvider.class.getResource("/de/ifd/mad/SimpleChess/images/dame2.png").toURI());
+    public Path getImage(final String name) throws FileNotFoundException {
+        return super.getFile(name);
+    }
 
-		king1 = Paths.get(ImageProvider.class.getResource("/de/ifd/mad/SimpleChess/images/king1.png").toURI());
-		king2 = Paths.get(ImageProvider.class.getResource("/de/ifd/mad/SimpleChess/images/king2.png").toURI());
-
-		knight1 = Paths.get(ImageProvider.class.getResource("/de/ifd/mad/SimpleChess/images/pferd1.png").toURI());
-		knight2 = Paths.get(ImageProvider.class.getResource("/de/ifd/mad/SimpleChess/images/pferd2.png").toURI());
-
-		bishop1 = Paths.get(ImageProvider.class.getResource("/de/ifd/mad/SimpleChess/images/springer1.png").toURI());
-		bishop2 = Paths.get(ImageProvider.class.getResource("/de/ifd/mad/SimpleChess/images/springer2.png").toURI());
-
-		rook1 = Paths.get(ImageProvider.class.getResource("/de/ifd/mad/SimpleChess/images/turm1.png").toURI());
-		rook2 = Paths.get(ImageProvider.class.getResource("/de/ifd/mad/SimpleChess/images/turm2.png").toURI());
-
-		// add all files here:
-		ArrayList<Path> files = new ArrayList<>();
-		files.add(pawn1);
-		files.add(pawn2);
-		files.add(queen1);
-		files.add(queen2);
-		files.add(king1);
-		files.add(king2);
-		files.add(knight1);
-		files.add(knight2);
-		files.add(bishop1);
-		files.add(bishop2);
-		files.add(rook1);
-		files.add(rook2);
-
-		for (Path p : files)
-			if (!load(p)) {
-				loaded = false;
-				throw new FileLoadingException(p.getFileName().toString());
-			}
-
-		LOGGER.info("Successfully loaded game image files!");
-		loaded = true;
-	}
-
-	/**
-	 * Method to load the files</br>
-	 * 
-	 * @return
-	 */
-	private static boolean load(Path path) {
-		return Files.exists(path);
-	}
-
-	public static Image getRookBlack() {
-		try {
-			return new Image(rook1.toUri().toURL().toString());
-		} catch (MalformedURLException e) {
-			LOGGER.error("", e);
-			return null;
-		}
-	}
-
-	public static Image getRookWhite() {
-		try {
-			return new Image(rook2.toUri().toURL().toString());
-		} catch (MalformedURLException e) {
-			LOGGER.error("", e);
-			return null;
-		}
-	}
-
-	public static Image getPawnBlack() {
-		try {
-			return new Image(pawn1.toUri().toURL().toString());
-		} catch (MalformedURLException e) {
-			LOGGER.error("", e);
-			return null;
-		}
-	}
-
-	public static Image getPawnWhite() {
-		try {
-			return new Image(pawn2.toUri().toURL().toString());
-		} catch (MalformedURLException e) {
-			LOGGER.error("", e);
-			return null;
-		}
-	}
-
-	public static Image getQueenBlack() {
-		try {
-			return new Image(queen1.toUri().toURL().toString());
-		} catch (MalformedURLException e) {
-			LOGGER.error("", e);
-			return null;
-		}
-	}
-
-	public static Image getQueenWhite() {
-		try {
-			return new Image(queen2.toUri().toURL().toString());
-		} catch (MalformedURLException e) {
-			LOGGER.error("", e);
-			return null;
-		}
-	}
-
-	public static Image getKingBlack() {
-		try {
-			return new Image(king1.toUri().toURL().toString());
-		} catch (MalformedURLException e) {
-			LOGGER.error("", e);
-			return null;
-		}
-	}
-
-	public static Image getKingWhite() {
-		try {
-			return new Image(king2.toUri().toURL().toString());
-		} catch (MalformedURLException e) {
-			LOGGER.error("", e);
-			return null;
-		}
-	}
-
-	public static Image getBishopBlack() {
-		try {
-			return new Image(bishop1.toUri().toURL().toString());
-		} catch (MalformedURLException e) {
-			LOGGER.error("", e);
-			return null;
-		}
-	}
-
-	public static Image getBishopWhite() {
-		try {
-			return new Image(bishop2.toUri().toURL().toString());
-		} catch (MalformedURLException e) {
-			LOGGER.error("", e);
-			return null;
-		}
-	}
-
-	public static Image getKnightBlack() {
-		try {
-			return new Image(knight1.toUri().toURL().toString());
-		} catch (MalformedURLException e) {
-			LOGGER.error("", e);
-			return null;
-		}
-	}
-
-	public static Image getKnightWhite() {
-		try {
-			return new Image(knight2.toUri().toURL().toString());
-		} catch (MalformedURLException e) {
-			LOGGER.error("", e);
-			return null;
-		}
-	}
+    public Image getAsImage(final String name) {
+        try {
+            Path file = getImage(name);
+            return new Image(file.toUri().toURL().toString());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

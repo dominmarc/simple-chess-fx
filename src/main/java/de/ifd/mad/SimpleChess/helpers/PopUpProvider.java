@@ -3,8 +3,6 @@
  */
 package de.ifd.mad.SimpleChess.helpers;
 
-import java.util.*;
-
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -18,6 +16,10 @@ import javafx.scene.text.TextAlignment;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Pair;
+
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Class for popUp's
@@ -297,7 +299,7 @@ public class PopUpProvider {
         popUp.initModality(Modality.APPLICATION_MODAL);
         popUp.setMinHeight(250);
         popUp.setMinWidth(300);
-        popUp.getIcons().add(ImageProvider.getKingBlack());
+        popUp.getIcons().add(ImageProvider.get().getAsImage(Constants.KING1_IMG));
         popUp.setTitle(title);
     }
 

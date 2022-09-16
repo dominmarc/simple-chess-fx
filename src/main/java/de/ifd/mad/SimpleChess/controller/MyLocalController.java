@@ -4,10 +4,7 @@
 
 package de.ifd.mad.SimpleChess.controller;
 
-import de.ifd.mad.SimpleChess.helpers.BasicGameFunctionsHelper;
-import de.ifd.mad.SimpleChess.helpers.ChessLogger;
-import de.ifd.mad.SimpleChess.helpers.ImageProvider;
-import de.ifd.mad.SimpleChess.helpers.PopUpProvider;
+import de.ifd.mad.SimpleChess.helpers.*;
 import de.ifd.mad.SimpleChess.interfaces.IController;
 import de.ifd.mad.SimpleChess.main.Settings;
 import de.ifd.mad.SimpleChess.players.Player;
@@ -31,7 +28,6 @@ import java.nio.file.Files;
 import java.security.SecureRandom;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Local multiplayer controller for new SimpleChess game
@@ -695,57 +691,27 @@ public class MyLocalController implements IController {
 
                 buttons[z].setGraphic(null);
                 switch (getVal(k, i)) {
-                    case 1:
-                        buttons[z].setGraphic(new ImageView(ImageProvider.getPawnBlack()));
-                        break;
-
-                    case 2:
-                        buttons[z].setGraphic(new ImageView(ImageProvider.getRookBlack()));
-                        break;
-
-                    case 3:
-                        buttons[z].setGraphic(new ImageView(ImageProvider.getKnightBlack()));
-                        break;
-
-                    case 4:
-                        buttons[z].setGraphic(new ImageView(ImageProvider.getBishopBlack()));
-                        break;
-
-                    case 5:
-                        buttons[z].setGraphic(new ImageView(ImageProvider.getQueenBlack()));
-                        break;
-
-                    case 6:
-                        buttons[z].setGraphic(new ImageView(ImageProvider.getKingBlack()));
-                        break;
-
-                    case 7:
-                        buttons[z].setGraphic(new ImageView(ImageProvider.getPawnWhite()));
-                        break;
-
-                    case 8:
-                        buttons[z].setGraphic(new ImageView(ImageProvider.getRookWhite()));
-                        break;
-
-                    case 9:
-                        buttons[z].setGraphic(new ImageView(ImageProvider.getKnightWhite()));
-                        break;
-
-                    case 10:
-                        buttons[z].setGraphic(new ImageView(ImageProvider.getBishopWhite()));
-                        break;
-
-                    case 11:
-                        buttons[z].setGraphic(new ImageView(ImageProvider.getQueenWhite()));
-                        break;
-
-                    case 12:
-                        buttons[z].setGraphic(new ImageView(ImageProvider.getKingWhite()));
-                        break;
-
-                    default:
-                        break;
-
+                    case 1 -> buttons[z].setGraphic(new ImageView(ImageProvider.get().getAsImage(Constants.PAWN1_IMG)));
+                    case 2 -> buttons[z].setGraphic(new ImageView(ImageProvider.get().getAsImage(Constants.ROOK1_IMG)));
+                    case 3 ->
+                            buttons[z].setGraphic(new ImageView(ImageProvider.get().getAsImage(Constants.KNIGHT1_IMG)));
+                    case 4 ->
+                            buttons[z].setGraphic(new ImageView(ImageProvider.get().getAsImage(Constants.BISHOP1_IMG)));
+                    case 5 ->
+                            buttons[z].setGraphic(new ImageView(ImageProvider.get().getAsImage(Constants.QUEEN1_IMG)));
+                    case 6 -> buttons[z].setGraphic(new ImageView(ImageProvider.get().getAsImage(Constants.KING1_IMG)));
+                    case 7 -> buttons[z].setGraphic(new ImageView(ImageProvider.get().getAsImage(Constants.PAWN2_IMG)));
+                    case 8 -> buttons[z].setGraphic(new ImageView(ImageProvider.get().getAsImage(Constants.ROOK2_IMG)));
+                    case 9 ->
+                            buttons[z].setGraphic(new ImageView(ImageProvider.get().getAsImage(Constants.KNIGHT2_IMG)));
+                    case 10 ->
+                            buttons[z].setGraphic(new ImageView(ImageProvider.get().getAsImage(Constants.BISHOP2_IMG)));
+                    case 11 ->
+                            buttons[z].setGraphic(new ImageView(ImageProvider.get().getAsImage(Constants.QUEEN2_IMG)));
+                    case 12 ->
+                            buttons[z].setGraphic(new ImageView(ImageProvider.get().getAsImage(Constants.KING2_IMG)));
+                    default -> {
+                    }
                 }
                 buttons[z].setStyle(Settings.NON_SELECTION_STYLE);
                 z++;

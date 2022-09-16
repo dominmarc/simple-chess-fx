@@ -1,159 +1,162 @@
 package de.ifd.mad.SimpleChess.helpers;
 
-import java.net.MalformedURLException;
+import java.io.FileNotFoundException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.InvalidKeyException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Class for loading all the necessary game files, such as fxml documents or css
  * stylesheets.</br>
- * Please make use of the class' getters in order to use the files.
- * 
+ *
  * @author MAD
  */
-public final class FileProvider {
-	/** Local network multiplayer */
-	private static Path localNetworkGame;
-	/** Local multiplayer */
-	private static Path localGame;
-	/** game style */
-	private static Path gameStyle;
-	/** game menu */
-	private static Path gameMenu;
-	/** game menu style */
-	private static Path gameMenuStyle;
+public class FileProvider {
+    /**
+     * represents the status of the file provider
+     */
+    private boolean loaded;
 
-	/** represents the status of the file provider */
-	private static boolean loaded;
+    static final ChessLogger LOGGER = ChessLogger.createLogger(FileProvider.class);
 
-	static final ChessLogger LOGGER = ChessLogger.createLogger(FileProvider.class);
+    public static final FileProvider provider = new FileProvider();
 
-	/**
-	 * Constructor</br>
-	 * Loads all the necessary files.
-	 */
-	private FileProvider() {
-	}
+    private final Map<String, Path> files;
 
-	/**
-	 * Indicates weather all files are loaded or not.
-	 * 
-	 * @return true, if files are loaded and false, if not
-	 */
-	public static boolean isLoaded() {
-		return loaded;
-	}
+    /**
+     * Constructor</br>
+     * Loads all the necessary files.
+     */
+    protected FileProvider() {
+        files = new HashMap<>();
+        loaded = false;
+    }
 
-	/**
-	 * Tries to load all the given files.</br>
-	 * (Checks for their existence.)
-	 */
-	public static void loadFiles() throws FileLoadingException, URISyntaxException {
-		LOGGER.info("Loading game files...");
+    /**
+     * Instance getter of {@link FileProvider}.
+     */
+    public static FileProvider get() {
+        return provider;
+    }
 
-		// reference all files here:
-		localNetworkGame = Paths
-				.get(FileProvider.class.getResource("/de/ifd/mad/SimpleChess/main/LocalNetworkChess.fxml").toURI());
-		localGame = Paths.get(FileProvider.class.getResource("/de/ifd/mad/SimpleChess/main/LocalChess.fxml").toURI());
-		gameStyle = Paths
-				.get(FileProvider.class.getResource("/de/ifd/mad/SimpleChess/main/LocalStyleFile.css").toURI());
-		gameMenu = Paths.get(FileProvider.class.getResource("/de/ifd/mad/SimpleChess/main/StartingForm.fxml").toURI());
-		gameMenuStyle = Paths
-				.get(FileProvider.class.getResource("/de/ifd/mad/SimpleChess/main/StartingFileStyle.css").toURI());
+    /**
+     * Adds a file to {@link FileProvider}.<br/>
+     * Make sure file is on resource folder!<br/>
+     * E.g. /com/company/name/project/yourFile.txt
+     *
+     * @param name unique identifier for file/ path
+     * @param path relative to resource folder
+     * @throws URISyntaxException    for invalid URI
+     * @throws FileNotFoundException for invalid path
+     * @throws InvalidKeyException   for duplicate/ invalid name
+     */
+    public void addFile(final String name, final String path) throws URISyntaxException, FileNotFoundException, InvalidKeyException {
+        if (files.containsKey(name)) {
+            throw new InvalidKeyException("Name of the file already exists!");
+        }
+        URL url = FileProvider.class.getResource(path);
+        if (url == null) {
+            throw new FileNotFoundException("File with path: [" + path + "] cannot be found!");
+        }
+        Path file = Paths.get(url.toURI());
 
-		// add all files here:
-		ArrayList<Path> files = new ArrayList<>();
-		files.add(localNetworkGame);
-		files.add(localGame);
-		files.add(gameStyle);
-		files.add(gameMenu);
-		files.add(gameMenuStyle);
+        if (Files.exists(file)) {
+            files.put(name, file);
+        } else {
+            throw new FileNotFoundException("Could not find path: [" + file + "]!");
+        }
+    }
 
-		for (Path p : files)
-			if (!load(p)) {
-				loaded = false;
-				throw new FileLoadingException(p.getFileName().toString());
-			}
+    /**
+     * Gets a file based on the {@link FileProvider} name.
+     *
+     * @param name of the file
+     * @return the file or null
+     */
+    public Path getFile(final String name) throws FileNotFoundException {
+        Path file = files.get(name);
+        if (file == null) {
+            throw new FileNotFoundException("FileProvider has no such file! [" + name + "]");
+        }
+        return file;
+    }
 
-		LOGGER.info("Successfully loaded game files!");
-		loaded = true;
-	}
+    /**
+     * Getter for the name of a file.
+     *
+     * @param path to the file
+     * @return the ({@link FileProvider}) name of the file or null
+     */
+    public String getName(final Path path) {
+        for (var entry : files.entrySet()) {
+            if (entry.getValue().equals(path)) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
 
-	/**
-	 * Method to load the files</br>
-	 * 
-	 * @return
-	 */
-	private static boolean load(Path path) {
-		return Files.exists(path);
-	}
+    /**
+     * @return all loaded files
+     */
+    public List<Path> getFiles() {
+        ArrayList<Path> fileList = new ArrayList<>();
+        for (var file : files.entrySet()) {
+            fileList.add(file.getValue());
+        }
+        return fileList;
+    }
 
-	public static Path getGameMenu() {
-		return gameMenu;
-	}
+    /**
+     * @return names of all loaded files
+     */
+    public List<String> getNames() {
+        return new ArrayList<>(files.keySet());
+    }
 
-	public static Path getLocalGame() {
-		return localGame;
-	}
+    /**
+     * Indicates weather all files are loaded or not.
+     *
+     * @return true, if files are loaded and false, if not
+     */
+    public boolean isLoaded() {
+        return loaded;
+    }
 
-	public static Path getGameStyle() {
-		return gameStyle;
-	}
+    /**
+     * Tries to load all the given files.</br>
+     * (Checks for their existence.)
+     */
+    public void loadFiles() throws FileLoadingException {
+        LOGGER.info("Loading game files...");
 
-	public static Path getNetworkGame() {
-		return localNetworkGame;
-	}
+        for (String name : files.keySet()) {
+            final Path file = files.get(name);
+            if (!load(file)) {
+                loaded = false;
+                throw new FileLoadingException(file.getFileName().toString());
+            }
+        }
 
-	public static Path getGameMenuStyle() {
-		return gameMenuStyle;
-	}
+        LOGGER.info("Successfully loaded game files!");
+        loaded = true;
+    }
 
-	public static URL getGameMenuStyleURL() {
-		try {
-			return gameMenuStyle.toUri().toURL();
-		} catch (MalformedURLException e) {
-			LOGGER.error("", e);
-			return null;
-		}
-	}
-
-	public static URL getNetworkGameURL() {
-		try {
-			return localNetworkGame.toUri().toURL();
-		} catch (MalformedURLException e) {
-			LOGGER.error("", e);
-			return null;
-		}
-	}
-
-	public static URL getGameMenuURL() {
-		try {
-			return gameMenu.toUri().toURL();
-		} catch (MalformedURLException e) {
-			LOGGER.error("", e);
-			return null;
-		}
-	}
-
-	public static URL getLocalGameURL() {
-		try {
-			return localGame.toUri().toURL();
-		} catch (MalformedURLException e) {
-			LOGGER.error("", e);
-			return null;
-		}
-	}
-
-	public static URL getGameStyleURL() {
-		try {
-			return gameStyle.toUri().toURL();
-		} catch (MalformedURLException e) {
-			LOGGER.error("", e);
-			return null;
-		}
-	}
+    /**
+     * Method to indicate whether the file is able to load.</br>
+     */
+    private boolean load(Path path) {
+        try {
+            return Files.exists(path);
+        } catch (SecurityException e) {
+            return false;
+        }
+    }
 }
