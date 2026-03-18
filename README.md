@@ -1,6 +1,8 @@
 # SimpleChess
 SimpleChess is able to perform a casual 1v1 chess game!<br/>
 
+#### From the time of my apprenticeship as a software developer (2020)
+
 ### Local Multiplayer
 Player against your friends right away on your pc in face to face battle action! 
 
